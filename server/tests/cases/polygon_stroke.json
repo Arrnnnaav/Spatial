@@ -1,0 +1,75 @@
+{
+  "description": "open freehand stroke: client pads the bbox (geometry.strokeToMark) and the server honours the client bbox",
+  "canvas": {
+    "width": 1000,
+    "height": 600
+  },
+  "marks": [
+    {
+      "type": "polygon",
+      "role": "reference",
+      "points": [
+        [
+          120,
+          110
+        ],
+        [
+          380,
+          105
+        ],
+        [
+          390,
+          170
+        ],
+        [
+          125,
+          175
+        ],
+        [
+          118,
+          112
+        ]
+      ],
+      "x": 78,
+      "y": 65,
+      "width": 352,
+      "height": 150
+    }
+  ],
+  "anchors": [
+    {
+      "id": "eq",
+      "type": "span",
+      "text": "θt+1 = θt − η ∇L(θt)",
+      "bbox": {
+        "x": 130,
+        "y": 120,
+        "width": 240,
+        "height": 40
+      }
+    },
+    {
+      "id": "cap",
+      "type": "figcaption",
+      "text": "Figure 1",
+      "bbox": {
+        "x": 130,
+        "y": 400,
+        "width": 240,
+        "height": 20
+      }
+    }
+  ],
+  "expect": {
+    "top": "eq",
+    "ranked": [
+      "eq"
+    ],
+    "bbox": {
+      "x": 78,
+      "y": 65,
+      "width": 352,
+      "height": 150
+    }
+  }
+}

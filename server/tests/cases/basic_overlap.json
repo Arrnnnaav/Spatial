@@ -1,0 +1,58 @@
+{
+  "description": "rectangle over one paragraph among three (p1 does not touch the mark)",
+  "canvas": {
+    "width": 1280,
+    "height": 720
+  },
+  "marks": [
+    {
+      "type": "rectangle",
+      "role": "reference",
+      "x": 100,
+      "y": 200,
+      "width": 400,
+      "height": 80
+    }
+  ],
+  "anchors": [
+    {
+      "id": "p1",
+      "type": "p",
+      "text": "First paragraph about gradients",
+      "bbox": {
+        "x": 90,
+        "y": 100,
+        "width": 500,
+        "height": 60
+      }
+    },
+    {
+      "id": "p2",
+      "type": "p",
+      "text": "Second paragraph, the one circled",
+      "bbox": {
+        "x": 90,
+        "y": 190,
+        "width": 500,
+        "height": 90
+      }
+    },
+    {
+      "id": "p3",
+      "type": "p",
+      "text": "Third paragraph",
+      "bbox": {
+        "x": 90,
+        "y": 300,
+        "width": 500,
+        "height": 60
+      }
+    }
+  ],
+  "expect": {
+    "top": "p2",
+    "ranked": [
+      "p2"
+    ]
+  }
+}

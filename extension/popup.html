@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Point &amp; Ask</title>
+  <style>
+    body { width: 340px; margin: 0; padding: 14px; font: 13px/1.45 system-ui, sans-serif; color: #17171c; background: #fff; }
+    h1 { font-size: 15px; margin: 0 0 2px; }
+    .eyebrow { font-size: 10px; letter-spacing: .08em; color: #ff3d7f; font-weight: 700; }
+    p { margin: 6px 0 10px; color: #6b6b7b; }
+    label { display: block; font-size: 11px; color: #6b6b7b; margin-top: 8px; }
+    label.row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #17171c; margin-top: 8px; }
+    input, select { width: 100%; box-sizing: border-box; border: 1px solid #d9d9e3; border-radius: 8px; padding: 7px 9px; font: inherit; margin-top: 3px; }
+    input[type=checkbox] { width: auto; margin: 0; }
+    button { all: unset; cursor: pointer; display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 9px; border-radius: 10px; font-weight: 600; margin-top: 10px; }
+    .primary { background: #ff3d7f; color: #fff; }
+    .ghost { background: #f1f1f6; color: #17171c; }
+    .status { margin-top: 10px; font-size: 12px; color: #6b6b7b; min-height: 16px; white-space: pre-wrap; }
+    .status.ok { color: #1a7f4b; } .status.err { color: #b3261e; }
+    kbd { background: #f1f1f6; border-radius: 4px; padding: 1px 5px; font-family: inherit; }
+    details { margin-top: 10px; } summary { cursor: pointer; font-size: 12px; color: #6b6b7b; }
+    a { color: #ff3d7f; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="eyebrow" id="eyebrow">POINT &amp; ASK</div>
+  <h1 id="title">Point &amp; Ask</h1>
+  <p>Press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> on any page or PDF, circle the confusing part, ask (type or 🎤).</p>
+  <button class="primary" id="start">Start marking on this tab</button>
+  <button class="ghost" id="openPdf" hidden>Open this PDF in the Point &amp; Ask viewer</button>
+
+  <section id="account" hidden>
+    <div id="signedOut">
+      <p id="quota"></p>
+      <label>Email<input id="email" type="email" autocomplete="username"></label>
+      <label>Password<input id="password" type="password" autocomplete="current-password"></label>
+      <button class="ghost" id="login">Sign in</button>
+      <p style="font-size:11px">No account? <a id="registerLink" href="#" target="_blank">Create one</a> — your anonymous history moves with you.</p>
+    </div>
+    <div id="signedIn" hidden>
+      <p id="who"></p>
+      <button class="ghost" id="dashboard">Open my marks &amp; tutor</button>
+      <button class="ghost" id="signout">Sign out</button>
+    </div>
+  </section>
+
+  <label>What leaves this browser
+    <select id="privacy">
+      <option value="crop_only">Crop of the marked region + text under it (default)</option>
+      <option value="anchors_only">Text under the mark only, no pixels</option>
+      <option value="full_frame">Whole visible tab + text</option>
+    </select>
+  </label>
+  <label class="row"><input type="checkbox" id="research"> Verify with web sources (precise, cited, ~5 s slower)</label>
+  <label class="row"><input type="checkbox" id="readAloud"> Read answers aloud automatically</label>
+  <label class="row"><input type="checkbox" id="pdfViewer"> Always open PDFs in the Point &amp; Ask viewer</label>
+  <label class="row"><input type="checkbox" id="powerMode"> Power mode (local models &amp; server speech)</label>
+
+  <details id="advanced">
+    <summary>Server &amp; Power mode settings</summary>
+    <label id="providerLabel">Model provider
+      <select id="provider"><option value="">Auto (server order)</option></select>
+    </label>
+    <label>Server URL<input id="apiBase"></label>
+    <label id="tokenLabel">API token (self-hosted servers with SPATIAL_API_TOKEN)<input id="token" type="password" autocomplete="off"></label>
+    <label>Voice for server read-aloud (alba, jane, paul)<input id="voice" placeholder="alba"></label>
+    <label>Extra blocked sites (comma separated hosts)<input id="blocklistExtra" placeholder="intranet.example.com"></label>
+    <button class="ghost" id="save">Save &amp; test connection</button>
+  </details>
+  <div class="status" id="status"></div>
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

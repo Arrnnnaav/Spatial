@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Point &amp; Ask dev harness</title>
+<style>
+  body { font: 16px/1.6 Georgia, serif; max-width: 760px; margin: 40px auto; padding: 0 20px; color: #222; }
+  h1 { font-size: 30px; } .eq { font-family: "Cambria Math", serif; font-size: 22px; padding: 12px 18px; background: #f6f6f2; display: inline-block; }
+  figure { margin: 24px 0; } figcaption { font-size: 13px; color: #666; }
+  pre { background: #1e1e24; color: #eee; padding: 14px; border-radius: 8px; font-size: 13px; }
+  .note { position: fixed; top: 10px; right: 10px; background: #ff3d7f; color: #fff; padding: 8px 12px; border-radius: 8px; font: 13px system-ui; }
+</style>
+</head>
+<body>
+<div class="note">Dev harness: chrome.* stubbed, asks go to http://127.0.0.1:8787</div>
+<h1>Gradient descent, step by step</h1>
+<p id="intro">Gradient descent updates parameters in the direction that most quickly reduces the loss. The learning rate controls how far each step goes.</p>
+<p class="eq" id="eq">θ<sub>t+1</sub> = θ<sub>t</sub> − η ∇L(θ<sub>t</sub>)</p>
+<p id="explain">Here η is the learning rate and ∇L is the gradient of the loss with respect to the parameters. Too large an η overshoots the minimum; too small makes convergence slow.</p>
+<figure><svg width="360" height="180" viewBox="0 0 360 180" role="img" aria-label="Loss curve with descending steps"><path d="M10 20 Q180 300 350 20" fill="none" stroke="#166b4a" stroke-width="3"/><circle cx="60" cy="90" r="6" fill="#f2a65a"/><circle cx="120" cy="140" r="6" fill="#f2a65a"/><circle cx="180" cy="160" r="6" fill="#f2a65a"/></svg><figcaption>Figure 1. Each orange dot is one update step down the loss surface.</figcaption></figure>
+<pre id="code">for step in range(epochs):
+    grad = loss_gradient(theta)
+    theta = theta - lr * grad</pre>
+<script>
+  // Minimal stand-in for the extension runtime so content.js runs as a plain page script.
+  const API = 'http://127.0.0.1:8787';
+  let listener = null;
+  const runtime = { lastError: null,
+    onMessage: { addListener(fn) { listener = fn; } },
+    sendMessage(message, callback) {
+      (async () => {
+        if (message.type === 'spatial:capture') return callback({ ok: true, image: null });
+        if (message.type === 'spatial:settings') return callback({ ok: true, settings: { readAloud: false } });
+        if (message.type === 'spatial:speak') { const r = await fetch(API + '/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: message.text }) }); if (!r.ok) return callback({ ok: false, error: 'tts ' + r.status }); const b = await r.blob(); const reader = new FileReader(); reader.onload = () => callback({ ok: true, audio: reader.result }); reader.readAsDataURL(b); return; }
+        if (message.type === 'spatial:transcribe') { const blob = await (await fetch(message.audio)).blob(); const form = new FormData(); form.append('audio', blob, 'q.webm'); const r = await fetch(API + '/api/stt', { method: 'POST', body: form }); const d = await r.json(); return callback(r.ok ? { ok: true, text: d.text } : { ok: false, error: d.detail }); }
+        if (message.type === 'spatial:ask') {
+          const response = await fetch(API + '/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...message.payload, privacy_policy: 'anchors_only' }) });
+          const data = await response.json();
+          return callback(response.ok ? { ok: true, result: data } : { ok: false, error: data.detail || 'failed' });
+        }
+        callback({ ok: false, error: 'unknown' });
+      })();
+    } };
+  // window.chrome is a special host object in Chromium; attach to it or replace it.
+  try { window.chrome.runtime = runtime; } catch (_) {}
+  if (!window.chrome || !window.chrome.runtime) Object.defineProperty(window, 'chrome', { value: { runtime }, configurable: true });
+  window.__harnessToggle = () => listener && listener({ type: 'spatial:toggle' }, null, () => {});
+  document.addEventListener('spatial:toggle-harness', () => window.__harnessToggle());
+  document.documentElement.dataset.harness = 'ready';
+</script>
+<script src="../geometry.js"></script>
+<script src="../content.js"></script>
+</body>
+</html>

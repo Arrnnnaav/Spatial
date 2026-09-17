@@ -1,0 +1,6 @@
+server/.env
+server/.venv/
+server/spatial.db
+server/tests/test_spatial.db
+__pycache__/
+*.pyc

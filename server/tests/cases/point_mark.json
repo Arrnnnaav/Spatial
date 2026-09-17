@@ -1,0 +1,58 @@
+{
+  "description": "a point mark picks the anchor containing it",
+  "canvas": {
+    "width": 800,
+    "height": 600
+  },
+  "marks": [
+    {
+      "type": "point",
+      "role": "reference",
+      "x": 400,
+      "y": 300
+    }
+  ],
+  "anchors": [
+    {
+      "id": "outer",
+      "type": "section",
+      "text": "Outer section with lots of text inside",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "width": 800,
+        "height": 600
+      }
+    },
+    {
+      "id": "inner",
+      "type": "button",
+      "text": "Submit",
+      "bbox": {
+        "x": 380,
+        "y": 290,
+        "width": 60,
+        "height": 24
+      }
+    },
+    {
+      "id": "far",
+      "type": "p",
+      "text": "Elsewhere",
+      "bbox": {
+        "x": 0,
+        "y": 500,
+        "width": 100,
+        "height": 20
+      }
+    }
+  ],
+  "expect": {
+    "top": "outer",
+    "ranked": [
+      "outer",
+      "inner"
+    ],
+    "note": "both contain the point (0.95); longer text wins the tie — a UX reason to prefer selection anchors"
+  }
+}

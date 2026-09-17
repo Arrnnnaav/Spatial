@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDF · Point & Ask</title>
+  <link rel="stylesheet" href="vendor/pdf_viewer.css">
+  <style>
+    html, body { margin: 0; background: #e9e9ee; font: 13px system-ui, sans-serif; color: #17171c; }
+    .bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px; padding: 8px 14px; background: #14141a; color: #fff; }
+    .bar .title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar button { all: unset; cursor: pointer; background: #ff3d7f; color: #fff; padding: 6px 12px; border-radius: 999px; font-weight: 600; }
+    .bar .muted { color: #9a9ab0; }
+    #pages { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 18px 0 60px; }
+    .page { position: relative; background: #fff; box-shadow: 0 6px 24px rgba(0,0,0,.18); }
+    .page canvas { display: block; }
+    .textLayer { position: absolute; inset: 0; overflow: hidden; line-height: 1; opacity: 1; }
+    .textLayer span { color: transparent; position: absolute; white-space: pre; cursor: text; transform-origin: 0 0; }
+    .textLayer ::selection { background: rgba(255,61,127,.35); }
+    #status { padding: 40px; text-align: center; color: #6b6b7b; }
+    #status a { color: #ff3d7f; }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <span class="title" id="title">Loading PDF…</span>
+    <span class="muted" id="count"></span>
+    <button id="mark">Point &amp; Ask (Alt+Shift+A)</button>
+  </div>
+  <div id="status"></div>
+  <div id="pages"></div>
+  <script src="config.js"></script>
+  <script src="geometry.js"></script>
+  <script src="content.js"></script>
+  <script type="module" src="viewer.js"></script>
+</body>
+</html>

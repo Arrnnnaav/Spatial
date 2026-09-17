@@ -1,0 +1,85 @@
+{
+  "description": "merged pdf text block outranks glyph fragments; fragments tie at 0.96 and longer text wins",
+  "canvas": {
+    "width": 1280,
+    "height": 720
+  },
+  "marks": [
+    {
+      "type": "polygon",
+      "role": "reference",
+      "points": [
+        [
+          300,
+          300
+        ],
+        [
+          900,
+          300
+        ],
+        [
+          900,
+          420
+        ],
+        [
+          300,
+          420
+        ],
+        [
+          300,
+          302
+        ]
+      ],
+      "x": 260,
+      "y": 260,
+      "width": 680,
+      "height": 200
+    }
+  ],
+  "anchors": [
+    {
+      "id": "pdf-0-1",
+      "type": "pdf-text",
+      "page": 1,
+      "text": "ABSTRACT An important paradigm of natural language processing",
+      "bbox": {
+        "x": 310,
+        "y": 310,
+        "width": 560,
+        "height": 100
+      }
+    },
+    {
+      "id": "el-3",
+      "type": "span",
+      "page": 1,
+      "text": "BSTRACT",
+      "bbox": {
+        "x": 600,
+        "y": 310,
+        "width": 80,
+        "height": 18
+      }
+    },
+    {
+      "id": "el-9",
+      "type": "span",
+      "page": 1,
+      "text": "(Version 2)",
+      "bbox": {
+        "x": 310,
+        "y": 380,
+        "width": 90,
+        "height": 16
+      }
+    }
+  ],
+  "expect": {
+    "top": "pdf-0-1",
+    "ranked": [
+      "pdf-0-1",
+      "el-9",
+      "el-3"
+    ]
+  }
+}

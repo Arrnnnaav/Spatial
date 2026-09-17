@@ -1,0 +1,61 @@
+{
+  "manifest_version": 3,
+  "name": "Spatial — Point & Ask",
+  "description": "Circle anything you are reading in the browser or a PDF and ask about exactly that region. Local-first: Ollama, NVIDIA, OpenRouter, OpenAI, Anthropic.",
+  "version": "0.2.0",
+  "minimum_chrome_version": "116",
+  "action": {
+    "default_title": "Point & Ask (Alt+Shift+A)",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "offscreen",
+    "contextMenus",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "commands": {
+    "toggle-spatial": {
+      "suggested_key": {
+        "default": "Alt+Shift+A"
+      },
+      "description": "Start or stop marking on the current page"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "viewer.html",
+        "viewer.js",
+        "config.js",
+        "vendor/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

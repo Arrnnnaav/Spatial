@@ -1,0 +1,59 @@
+{
+  "description": "two marks with roles each resolve to their own anchor",
+  "canvas": {
+    "width": 1280,
+    "height": 720
+  },
+  "marks": [
+    {
+      "type": "rectangle",
+      "role": "source",
+      "x": 50,
+      "y": 50,
+      "width": 200,
+      "height": 100
+    },
+    {
+      "type": "rectangle",
+      "role": "target",
+      "x": 700,
+      "y": 400,
+      "width": 200,
+      "height": 100
+    }
+  ],
+  "anchors": [
+    {
+      "id": "a",
+      "type": "div",
+      "text": "Card A",
+      "bbox": {
+        "x": 60,
+        "y": 60,
+        "width": 180,
+        "height": 80
+      }
+    },
+    {
+      "id": "b",
+      "type": "div",
+      "text": "Card B",
+      "bbox": {
+        "x": 710,
+        "y": 410,
+        "width": 180,
+        "height": 80
+      }
+    }
+  ],
+  "expect": {
+    "tops": [
+      "a",
+      "b"
+    ],
+    "roles": [
+      "source",
+      "target"
+    ]
+  }
+}

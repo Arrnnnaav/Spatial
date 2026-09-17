@@ -1,0 +1,34 @@
+{
+  "description": "mark far from every anchor yields no candidate anchor",
+  "canvas": {
+    "width": 800,
+    "height": 600
+  },
+  "marks": [
+    {
+      "type": "rectangle",
+      "role": "reference",
+      "x": 700,
+      "y": 500,
+      "width": 50,
+      "height": 50
+    }
+  ],
+  "anchors": [
+    {
+      "id": "p",
+      "type": "p",
+      "text": "Paragraph",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "width": 300,
+        "height": 100
+      }
+    }
+  ],
+  "expect": {
+    "top": null,
+    "ranked": []
+  }
+}

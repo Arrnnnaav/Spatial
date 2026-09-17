@@ -1,0 +1,60 @@
+{
+  "description": "mark spans a heading and an image; contained anchors win over partial overlap",
+  "canvas": {
+    "width": 1280,
+    "height": 720
+  },
+  "marks": [
+    {
+      "type": "circle",
+      "role": "reference",
+      "x": 200,
+      "y": 100,
+      "width": 300,
+      "height": 260
+    }
+  ],
+  "anchors": [
+    {
+      "id": "h",
+      "type": "h2",
+      "text": "Pectoralis major",
+      "bbox": {
+        "x": 210,
+        "y": 110,
+        "width": 200,
+        "height": 30
+      }
+    },
+    {
+      "id": "img",
+      "type": "img",
+      "text": "Chest muscles diagram",
+      "bbox": {
+        "x": 210,
+        "y": 150,
+        "width": 280,
+        "height": 200
+      }
+    },
+    {
+      "id": "side",
+      "type": "aside",
+      "text": "Sidebar",
+      "bbox": {
+        "x": 450,
+        "y": 0,
+        "width": 300,
+        "height": 700
+      }
+    }
+  ],
+  "expect": {
+    "top": "img",
+    "ranked": [
+      "img",
+      "h",
+      "side"
+    ]
+  }
+}
