@@ -9,7 +9,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 | # | Sub-project | Status | Spec / plan |
 |---|---|---|---|
 | 1 | Core foundation: independence, contract v3, OCR candidates, trace log, eval harness | Done on branch `feat/core-foundation` (review + merge pending) | `docs/superpowers/specs/2026-09-23-spatial-core-foundation-design.md` |
-| 2 | System-One resolver (`/v1/systemone`: Jev first, Laya second, geometry fallback) + clarification UI | Not started (key ready) | `docs/TYPESAFE_OPPORTUNITIES.md` |
+| 2 | System-One resolver (`/v1/systemone`: Jev first, Laya second, geometry fallback) + clarification UI | Spike done; spec next | `docs/TYPESAFE_OPPORTUNITIES.md` |
 | 3 | Windows UIA spike (throwaway) | Not started; can run in parallel | — |
 | 4 | Desktop app (Tauri, Windows → macOS) | Blocked on 1, 3 | — |
 | 5 | Desktop ↔ extension bridge, macOS AX | Blocked on 4 | — |
@@ -24,8 +24,9 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 - [x] Verify `TYPESAFE_API_KEY` in `server/.env` (live Jev call OK)
 - [x] Execute sub-project 1 plan (8 tasks + review fixes; 117 tests pass)
 - [x] Final whole-branch review (3 Important fixed)
-- [ ] Merge `feat/core-foundation` into `main`
-- [ ] Sub-project 2: experiments E1–E4 with Jev
+- [x] Merge `feat/core-foundation` into `main`
+- [x] Project automations (hooks, /eval, /sync-docs, privacy-reviewer, context7 + playwright MCP)
+- [x] Sub-project 2: Jev experiments E1 + E2
 
 ## Sub-project 1 — Core foundation (done)
 
@@ -40,8 +41,9 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 ## Sub-project 2 — System-One resolver (outline)
 
 - [x] User adds `TYPESAFE_API_KEY` to `server/.env`
-- [ ] Experiments E1–E4 — target the baseline misses: point-on-button (3), underline (1), and ambiguity never flagged (abstain 0% on 8 ambiguous cases).
-- [ ] Propose changes from experiment results (`docs/TYPESAFE_OPPORTUNITIES.md`)
+- [x] Experiments E1 + E2 (results in `docs/TYPESAFE_OPPORTUNITIES.md`): hybrid 48/49; routing strong
+- [ ] E3 passage rerank (during integration) · E4 Laya (needs impossibl key)
+- [~] Propose changes from experiment results → spec for System-One integration
 - [ ] `/v1/systemone` client with backend config (Jev / Laya / off)
 - [ ] Resolver integration + fallback + eval vs baseline
 - [ ] Clarification UI ("which one?") + correction capture into trace

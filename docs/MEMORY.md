@@ -45,6 +45,13 @@ code or git log. Newest first within each section. Remove entries that become wr
 - **2026-09-23** — With OCR candidates, the "diagram" note is only added when OCR also found no text.
 - **2026-09-23** — A request without `protocol_version` is v2; v3 = version >= 3 or a `context` field.
 
+- **2026-09-23** — Jev spike (E1/E2): hybrid (Jev pick if conf ≥ 0.5 else geometry) = 48/49 vs 45/49; geometry must be
+  described in **words** (numbers: 36/49); open strokes need their own wording ("drawn directly under this element").
+  Ambiguity = Jev answers `none` or p2/p1 ≥ 0.4 (0/40 false alarms); separate ambiguity Noul too noisy.
+  Routing: visual 40/40, same-target 6/6, mode 38/40, needs-facts use ≥ 0.8. ≈ $0.000026/ask.
+- **2026-09-23** — Jev latency from India: ≈ 1 s TLS setup per new connection; ≈ 470 ms per call on a kept-alive
+  connection. Use one persistent client and warm it at server start.
+
 ## Gotchas
 
 - JS `slice()` can cut an emoji in half; Python/pydantic reject lone surrogates. v2 text goes through `contracts._text` to repair them.

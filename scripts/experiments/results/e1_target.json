@@ -1,0 +1,2186 @@
+[
+ {
+  "case": "basic_overlap",
+  "category": "golden",
+  "variant": "qual",
+  "intended": [
+   "p2"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "p2",
+  "deterministic_ok": true,
+  "jev": "p2",
+  "jev_ok": true,
+  "confidence": 0.97,
+  "probabilities": {
+   "none": 0.02,
+   "A": 0.98
+  },
+  "p_ambiguous": 0.08,
+  "latency_ms": 1422,
+  "tokens": 515
+ },
+ {
+  "case": "basic_overlap",
+  "category": "golden",
+  "variant": "num",
+  "intended": [
+   "p2"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "p2",
+  "deterministic_ok": true,
+  "jev": "p2",
+  "jev_ok": true,
+  "confidence": 0.94,
+  "probabilities": {
+   "A": 0.97,
+   "none": 0.03
+  },
+  "p_ambiguous": 0.07,
+  "latency_ms": 1362,
+  "tokens": 523
+ },
+ {
+  "case": "multi_anchor",
+  "category": "golden",
+  "variant": "qual",
+  "intended": [
+   "img"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "img",
+  "deterministic_ok": true,
+  "jev": "img",
+  "jev_ok": true,
+  "confidence": 0.78,
+  "probabilities": {
+   "A": 0.83,
+   "B": 0.03,
+   "none": 0.11,
+   "C": 0.03
+  },
+  "p_ambiguous": 0.74,
+  "latency_ms": 1382,
+  "tokens": 646
+ },
+ {
+  "case": "multi_anchor",
+  "category": "golden",
+  "variant": "num",
+  "intended": [
+   "img"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "img",
+  "deterministic_ok": true,
+  "jev": "img",
+  "jev_ok": true,
+  "confidence": 0.82,
+  "probabilities": {
+   "A": 0.87,
+   "none": 0.11,
+   "B": 0.01,
+   "C": 0.01
+  },
+  "p_ambiguous": 0.63,
+  "latency_ms": 1382,
+  "tokens": 688
+ },
+ {
+  "case": "no_match",
+  "category": "golden",
+  "variant": "qual",
+  "intended": [
+   null
+  ],
+  "ambiguous_label": false,
+  "deterministic": null,
+  "deterministic_ok": true,
+  "jev": null,
+  "jev_ok": true,
+  "confidence": null,
+  "p_ambiguous": null,
+  "latency_ms": 0,
+  "tokens": 0
+ },
+ {
+  "case": "no_match",
+  "category": "golden",
+  "variant": "num",
+  "intended": [
+   null
+  ],
+  "ambiguous_label": false,
+  "deterministic": null,
+  "deterministic_ok": true,
+  "jev": null,
+  "jev_ok": true,
+  "confidence": null,
+  "p_ambiguous": null,
+  "latency_ms": 0,
+  "tokens": 0
+ },
+ {
+  "case": "pdf_page",
+  "category": "golden",
+  "variant": "qual",
+  "intended": [
+   "pdf-0-1"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "pdf-0-1",
+  "deterministic_ok": true,
+  "jev": "pdf-0-1",
+  "jev_ok": true,
+  "confidence": 0.93,
+  "probabilities": {
+   "A": 0.95,
+   "none": 0.04,
+   "B": 0.0,
+   "C": 0.01
+  },
+  "p_ambiguous": 0.71,
+  "latency_ms": 1382,
+  "tokens": 703
+ },
+ {
+  "case": "pdf_page",
+  "category": "golden",
+  "variant": "num",
+  "intended": [
+   "pdf-0-1"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "pdf-0-1",
+  "deterministic_ok": true,
+  "jev": "pdf-0-1",
+  "jev_ok": true,
+  "confidence": 0.91,
+  "probabilities": {
+   "A": 0.93,
+   "C": 0.02,
+   "B": 0.0,
+   "none": 0.05
+  },
+  "p_ambiguous": 0.61,
+  "latency_ms": 1409,
+  "tokens": 744
+ },
+ {
+  "case": "point_mark",
+  "category": "golden",
+  "variant": "qual",
+  "intended": [
+   "outer"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "outer",
+  "deterministic_ok": true,
+  "jev": "inner",
+  "jev_ok": false,
+  "confidence": 0.84,
+  "probabilities": {
+   "none": 0.02,
+   "A": 0.09,
+   "B": 0.89
+  },
+  "p_ambiguous": 0.65,
+  "latency_ms": 1408,
+  "tokens": 573
+ },
+ {
+  "case": "point_mark",
+  "category": "golden",
+  "variant": "num",
+  "intended": [
+   "outer"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "outer",
+  "deterministic_ok": true,
+  "jev": "inner",
+  "jev_ok": false,
+  "confidence": 0.7,
+  "probabilities": {
+   "A": 0.11,
+   "none": 0.1,
+   "B": 0.79
+  },
+  "p_ambiguous": 0.53,
+  "latency_ms": 1347,
+  "tokens": 583
+ },
+ {
+  "case": "polygon_stroke",
+  "category": "golden",
+  "variant": "qual",
+  "intended": [
+   "eq"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "eq",
+  "deterministic_ok": true,
+  "jev": "eq",
+  "jev_ok": true,
+  "confidence": 0.92,
+  "probabilities": {
+   "none": 0.04,
+   "A": 0.96
+  },
+  "p_ambiguous": 0.05,
+  "latency_ms": 1467,
+  "tokens": 528
+ },
+ {
+  "case": "polygon_stroke",
+  "category": "golden",
+  "variant": "num",
+  "intended": [
+   "eq"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "eq",
+  "deterministic_ok": true,
+  "jev": "eq",
+  "jev_ok": true,
+  "confidence": 0.92,
+  "probabilities": {
+   "none": 0.04,
+   "A": 0.96
+  },
+  "p_ambiguous": 0.05,
+  "latency_ms": 1460,
+  "tokens": 542
+ },
+ {
+  "case": "ambiguous_between_0",
+  "category": "ambiguous",
+  "variant": "qual",
+  "intended": [
+   "p2",
+   "p3"
+  ],
+  "ambiguous_label": true,
+  "deterministic": "p2",
+  "deterministic_ok": true,
+  "jev": null,
+  "jev_ok": false,
+  "confidence": 0.33,
+  "probabilities": {
+   "A": 0.39,
+   "none": 0.55,
+   "B": 0.06
+  },
+  "p_ambiguous": 0.89,
+  "latency_ms": 1488,
+  "tokens": 611
+ },
+ {
+  "case": "ambiguous_between_0",
+  "category": "ambiguous",
+  "variant": "num",
+  "intended": [
+   "p2",
+   "p3"
+  ],
+  "ambiguous_label": true,
+  "deterministic": "p2",
+  "deterministic_ok": true,
+  "jev": null,
+  "jev_ok": false,
+  "confidence": 0.51,
+  "probabilities": {
+   "A": 0.3,
+   "none": 0.67,
+   "B": 0.03
+  },
+  "p_ambiguous": 0.8,
+  "latency_ms": 1425,
+  "tokens": 639
+ },
+ {
+  "case": "ambiguous_between_1",
+  "category": "ambiguous",
+  "variant": "qual",
+  "intended": [
+   "p0",
+   "p1"
+  ],
+  "ambiguous_label": true,
+  "deterministic": "p0",
+  "deterministic_ok": true,
+  "jev": "p0",
+  "jev_ok": true,
+  "confidence": 0.22,
+  "probabilities": {
+   "none": 0.41,
+   "B": 0.11,
+   "A": 0.48
+  },
+  "p_ambiguous": 0.88,
+  "latency_ms": 1509,
+  "tokens": 607
+ },
+ {
+  "case": "ambiguous_between_1",
+  "category": "ambiguous",
+  "variant": "num",
+  "intended": [
+   "p0",
+   "p1"
+  ],
+  "ambiguous_label": true,
+  "deterministic": "p0",
+  "deterministic_ok": true,
+  "jev": null,
+  "jev_ok": false,
+  "confidence": 0.31,
+  "probabilities": {
+   "none": 0.54,
+   "A": 0.43,
+   "B": 0.03
+  },
+  "p_ambiguous": 0.83,
+  "latency_ms": 1488,
+  "tokens": 635
+ },
+ {
+  "case": "ambiguous_between_2",
+  "category": "ambiguous",
+  "variant": "qual",
+  "intended": [
+   "p1",
+   "p2"
+  ],
+  "ambiguous_label": true,
+  "deterministic": "p2",
+  "deterministic_ok": true,
+  "jev": null,
+  "jev_ok": false,
+  "confidence": 0.35,
+  "probabilities": {
+   "B": 0.12,
+   "A": 0.31,
+   "none": 0.5700000000000001
+  },
+  "p_ambiguous": 0.86,
+  "latency_ms": 1486,
+  "tokens": 611
+ },
+ {
+  "case": "ambiguous_between_2",
+  "category": "ambiguous",
+  "variant": "num",
+  "intended": [
+   "p1",
+   "p2"
+  ],
+  "ambiguous_label": true,
+  "deterministic": "p2",
+  "deterministic_ok": true,
+  "jev": null,
+  "jev_ok": false,
+  "confidence": 0.42,
+  "probabilities": {
+   "A": 0.34,
+   "B": 0.05,
+   "none": 0.61
+  },
+  "p_ambiguous": 0.82,
+  "latency_ms": 1460,
+  "tokens": 639
+ },
+ {
+  "case": "ambiguous_between_3",
+  "category": "ambiguous",
+  "variant": "qual",
+  "intended": [
+   "p0",
+   "p1"
+  ],
+  "ambiguous_label": true,
+  "deterministic": "p0",
+  "deterministic_ok": true,
+  "jev": "p0",
+  "jev_ok": true,
+  "confidence": 0.19,
+  "probabilities": {
+   "A": 0.46,
+   "none": 0.42,
+   "B": 0.12
+  },
+  "p_ambiguous": 0.86,
+  "latency_ms": 2664,
+  "tokens": 607
+ },
+ {
+  "case": "ambiguous_between_3",
+  "category": "ambiguous",
+  "variant": "num",
+  "intended": [
+   "p0",
+   "p1"
+  ],
+  "ambiguous_label": true,
+  "deterministic": "p0",
+  "deterministic_ok": true,
+  "jev": null,
+  "jev_ok": false,
+  "confidence": 0.33,
+  "probabilities": {
+   "A": 0.42,
+   "none": 0.55,
+   "B": 0.03
+  },
+  "p_ambiguous": 0.82,
+  "latency_ms": 2659,
+  "tokens": 635
+ },
+ {
+  "case": "ambiguous_cells_0",
+  "category": "ambiguous",
+  "variant": "qual",
+  "intended": [
+   "c0",
+   "c1"
+  ],
+  "ambiguous_label": true,
+  "deterministic": "c0",
+  "deterministic_ok": true,
+  "jev": "c1",
+  "jev_ok": true,
+  "confidence": 0.77,
+  "probabilities": {
+   "none": 0.13,
+   "A": 0.03,
+   "B": 0.84
+  },
+  "p_ambiguous": 0.77,
+  "latency_ms": 2696,
+  "tokens": 581
+ },
+ {
+  "case": "ambiguous_cells_0",
+  "category": "ambiguous",
+  "variant": "num",
+  "intended": [
+   "c0",
+   "c1"
+  ],
+  "ambiguous_label": true,
+  "deterministic": "c0",
+  "deterministic_ok": true,
+  "jev": "c1",
+  "jev_ok": true,
+  "confidence": 0.8,
+  "probabilities": {
+   "B": 0.87,
+   "none": 0.1,
+   "A": 0.03
+  },
+  "p_ambiguous": 0.76,
+  "latency_ms": 2692,
+  "tokens": 609
+ },
+ {
+  "case": "ambiguous_cells_1",
+  "category": "ambiguous",
+  "variant": "qual",
+  "intended": [
+   "c2",
+   "c3"
+  ],
+  "ambiguous_label": true,
+  "deterministic": "c2",
+  "deterministic_ok": true,
+  "jev": "c3",
+  "jev_ok": true,
+  "confidence": 0.82,
+  "probabilities": {
+   "A": 0.02,
+   "none": 0.1,
+   "B": 0.88
+  },
+  "p_ambiguous": 0.74,
+  "latency_ms": 2626,
+  "tokens": 581
+ },
+ {
+  "case": "ambiguous_cells_1",
+  "category": "ambiguous",
+  "variant": "num",
+  "intended": [
+   "c2",
+   "c3"
+  ],
+  "ambiguous_label": true,
+  "deterministic": "c2",
+  "deterministic_ok": true,
+  "jev": "c3",
+  "jev_ok": true,
+  "confidence": 0.79,
+  "probabilities": {
+   "none": 0.11,
+   "B": 0.86,
+   "A": 0.03
+  },
+  "p_ambiguous": 0.74,
+  "latency_ms": 2598,
+  "tokens": 609
+ },
+ {
+  "case": "ambiguous_figure_0",
+  "category": "ambiguous",
+  "variant": "qual",
+  "intended": [
+   "img",
+   "caption"
+  ],
+  "ambiguous_label": true,
+  "deterministic": "caption",
+  "deterministic_ok": true,
+  "jev": "img",
+  "jev_ok": true,
+  "confidence": 0.97,
+  "probabilities": {
+   "B": 0.98,
+   "none": 0.01,
+   "A": 0.01
+  },
+  "p_ambiguous": 0.65,
+  "latency_ms": 2647,
+  "tokens": 592
+ },
+ {
+  "case": "ambiguous_figure_0",
+  "category": "ambiguous",
+  "variant": "num",
+  "intended": [
+   "img",
+   "caption"
+  ],
+  "ambiguous_label": true,
+  "deterministic": "caption",
+  "deterministic_ok": true,
+  "jev": "img",
+  "jev_ok": true,
+  "confidence": 0.97,
+  "probabilities": {
+   "B": 0.98,
+   "A": 0.01,
+   "none": 0.01
+  },
+  "p_ambiguous": 0.57,
+  "latency_ms": 2644,
+  "tokens": 619
+ },
+ {
+  "case": "ambiguous_figure_1",
+  "category": "ambiguous",
+  "variant": "qual",
+  "intended": [
+   "img",
+   "caption"
+  ],
+  "ambiguous_label": true,
+  "deterministic": "caption",
+  "deterministic_ok": true,
+  "jev": "img",
+  "jev_ok": true,
+  "confidence": 0.97,
+  "probabilities": {
+   "none": 0.01,
+   "B": 0.98,
+   "A": 0.01
+  },
+  "p_ambiguous": 0.62,
+  "latency_ms": 2578,
+  "tokens": 592
+ },
+ {
+  "case": "ambiguous_figure_1",
+  "category": "ambiguous",
+  "variant": "num",
+  "intended": [
+   "img",
+   "caption"
+  ],
+  "ambiguous_label": true,
+  "deterministic": "caption",
+  "deterministic_ok": true,
+  "jev": "img",
+  "jev_ok": true,
+  "confidence": 0.98,
+  "probabilities": {
+   "A": 0.01,
+   "none": 0.0,
+   "B": 0.99
+  },
+  "p_ambiguous": 0.48,
+  "latency_ms": 2470,
+  "tokens": 617
+ },
+ {
+  "case": "ocr_chart_legend0",
+  "category": "ocr",
+  "variant": "qual",
+  "intended": [
+   "ocr-1"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "ocr-1",
+  "deterministic_ok": true,
+  "jev": "ocr-1",
+  "jev_ok": true,
+  "confidence": 0.8,
+  "probabilities": {
+   "B": 0.12,
+   "A": 0.87,
+   "none": 0.01
+  },
+  "p_ambiguous": 0.6,
+  "latency_ms": 2559,
+  "tokens": 605
+ },
+ {
+  "case": "ocr_chart_legend0",
+  "category": "ocr",
+  "variant": "num",
+  "intended": [
+   "ocr-1"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "ocr-1",
+  "deterministic_ok": true,
+  "jev": "chart",
+  "jev_ok": false,
+  "confidence": 0.29,
+  "probabilities": {
+   "A": 0.39,
+   "none": 0.09,
+   "B": 0.52
+  },
+  "p_ambiguous": 0.53,
+  "latency_ms": 2552,
+  "tokens": 626
+ },
+ {
+  "case": "ocr_chart_legend1",
+  "category": "ocr",
+  "variant": "qual",
+  "intended": [
+   "ocr-2"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "ocr-2",
+  "deterministic_ok": true,
+  "jev": "ocr-2",
+  "jev_ok": true,
+  "confidence": 0.78,
+  "probabilities": {
+   "B": 0.13,
+   "none": 0.02,
+   "A": 0.85
+  },
+  "p_ambiguous": 0.62,
+  "latency_ms": 2534,
+  "tokens": 605
+ },
+ {
+  "case": "ocr_chart_legend1",
+  "category": "ocr",
+  "variant": "num",
+  "intended": [
+   "ocr-2"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "ocr-2",
+  "deterministic_ok": true,
+  "jev": "ocr-2",
+  "jev_ok": true,
+  "confidence": 0.23,
+  "probabilities": {
+   "none": 0.08,
+   "A": 0.49,
+   "B": 0.43
+  },
+  "p_ambiguous": 0.56,
+  "latency_ms": 2552,
+  "tokens": 627
+ },
+ {
+  "case": "ocr_chart_note",
+  "category": "ocr",
+  "variant": "qual",
+  "intended": [
+   "ocr-6"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "ocr-6",
+  "deterministic_ok": true,
+  "jev": "ocr-6",
+  "jev_ok": true,
+  "confidence": 0.96,
+  "probabilities": {
+   "none": 0.01,
+   "B": 0.02,
+   "A": 0.97
+  },
+  "p_ambiguous": 0.28,
+  "latency_ms": 2762,
+  "tokens": 578
+ },
+ {
+  "case": "ocr_chart_note",
+  "category": "ocr",
+  "variant": "num",
+  "intended": [
+   "ocr-6"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "ocr-6",
+  "deterministic_ok": true,
+  "jev": "ocr-6",
+  "jev_ok": true,
+  "confidence": 0.54,
+  "probabilities": {
+   "none": 0.08,
+   "A": 0.69,
+   "B": 0.23
+  },
+  "p_ambiguous": 0.57,
+  "latency_ms": 2535,
+  "tokens": 607
+ },
+ {
+  "case": "ocr_chart_peak",
+  "category": "ocr",
+  "variant": "qual",
+  "intended": [
+   "ocr-5"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "ocr-5",
+  "deterministic_ok": true,
+  "jev": "ocr-5",
+  "jev_ok": true,
+  "confidence": 0.73,
+  "probabilities": {
+   "none": 0.02,
+   "A": 0.82,
+   "B": 0.16
+  },
+  "p_ambiguous": 0.62,
+  "latency_ms": 2414,
+  "tokens": 603
+ },
+ {
+  "case": "ocr_chart_peak",
+  "category": "ocr",
+  "variant": "num",
+  "intended": [
+   "ocr-5"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "ocr-5",
+  "deterministic_ok": true,
+  "jev": "chart",
+  "jev_ok": false,
+  "confidence": 0.43,
+  "probabilities": {
+   "none": 0.04,
+   "A": 0.34,
+   "B": 0.62
+  },
+  "p_ambiguous": 0.55,
+  "latency_ms": 2470,
+  "tokens": 623
+ },
+ {
+  "case": "ocr_chart_q3",
+  "category": "ocr",
+  "variant": "qual",
+  "intended": [
+   "ocr-7"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "ocr-7",
+  "deterministic_ok": true,
+  "jev": "ocr-7",
+  "jev_ok": true,
+  "confidence": 0.71,
+  "probabilities": {
+   "B": 0.18,
+   "A": 0.81,
+   "none": 0.01
+  },
+  "p_ambiguous": 0.59,
+  "latency_ms": 2462,
+  "tokens": 601
+ },
+ {
+  "case": "ocr_chart_q3",
+  "category": "ocr",
+  "variant": "num",
+  "intended": [
+   "ocr-7"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "ocr-7",
+  "deterministic_ok": true,
+  "jev": "chart",
+  "jev_ok": false,
+  "confidence": 0.42,
+  "probabilities": {
+   "none": 0.05,
+   "B": 0.61,
+   "A": 0.34
+  },
+  "p_ambiguous": 0.52,
+  "latency_ms": 2490,
+  "tokens": 621
+ },
+ {
+  "case": "ocr_chart_title",
+  "category": "ocr",
+  "variant": "qual",
+  "intended": [
+   "ocr-0"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "ocr-0",
+  "deterministic_ok": true,
+  "jev": "ocr-0",
+  "jev_ok": true,
+  "confidence": 0.56,
+  "probabilities": {
+   "none": 0.01,
+   "B": 0.28,
+   "A": 0.71
+  },
+  "p_ambiguous": 0.67,
+  "latency_ms": 2478,
+  "tokens": 603
+ },
+ {
+  "case": "ocr_chart_title",
+  "category": "ocr",
+  "variant": "num",
+  "intended": [
+   "ocr-0"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "ocr-0",
+  "deterministic_ok": true,
+  "jev": "chart",
+  "jev_ok": false,
+  "confidence": 0.37,
+  "probabilities": {
+   "none": 0.03,
+   "B": 0.58,
+   "A": 0.39
+  },
+  "p_ambiguous": 0.59,
+  "latency_ms": 2457,
+  "tokens": 625
+ },
+ {
+  "case": "ocr_chart_xlabel",
+  "category": "ocr",
+  "variant": "qual",
+  "intended": [
+   "ocr-3"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "ocr-3",
+  "deterministic_ok": true,
+  "jev": "ocr-3",
+  "jev_ok": true,
+  "confidence": 0.76,
+  "probabilities": {
+   "A": 0.84,
+   "none": 0.01,
+   "B": 0.15
+  },
+  "p_ambiguous": 0.61,
+  "latency_ms": 2434,
+  "tokens": 599
+ },
+ {
+  "case": "ocr_chart_xlabel",
+  "category": "ocr",
+  "variant": "num",
+  "intended": [
+   "ocr-3"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "ocr-3",
+  "deterministic_ok": true,
+  "jev": "chart",
+  "jev_ok": false,
+  "confidence": 0.37,
+  "probabilities": {
+   "B": 0.58,
+   "A": 0.38,
+   "none": 0.04
+  },
+  "p_ambiguous": 0.59,
+  "latency_ms": 2343,
+  "tokens": 622
+ },
+ {
+  "case": "ocr_chart_ylabel",
+  "category": "ocr",
+  "variant": "qual",
+  "intended": [
+   "ocr-4"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "ocr-4",
+  "deterministic_ok": true,
+  "jev": "ocr-4",
+  "jev_ok": true,
+  "confidence": 0.77,
+  "probabilities": {
+   "A": 0.85,
+   "none": 0.01,
+   "B": 0.14
+  },
+  "p_ambiguous": 0.59,
+  "latency_ms": 2226,
+  "tokens": 606
+ },
+ {
+  "case": "ocr_chart_ylabel",
+  "category": "ocr",
+  "variant": "num",
+  "intended": [
+   "ocr-4"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "ocr-4",
+  "deterministic_ok": true,
+  "jev": "ocr-4",
+  "jev_ok": true,
+  "confidence": 0.25,
+  "probabilities": {
+   "A": 0.5,
+   "B": 0.43,
+   "none": 0.07
+  },
+  "p_ambiguous": 0.58,
+  "latency_ms": 2447,
+  "tokens": 629
+ },
+ {
+  "case": "pdf_block_0",
+  "category": "pdf",
+  "variant": "qual",
+  "intended": [
+   "pdf-0-2"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "pdf-0-2",
+  "deterministic_ok": true,
+  "jev": "pdf-0-2",
+  "jev_ok": true,
+  "confidence": 0.98,
+  "probabilities": {
+   "C": 0.0,
+   "none": 0.01,
+   "A": 0.99,
+   "B": 0.0,
+   "D": 0.0
+  },
+  "p_ambiguous": 0.46,
+  "latency_ms": 2505,
+  "tokens": 788
+ },
+ {
+  "case": "pdf_block_0",
+  "category": "pdf",
+  "variant": "num",
+  "intended": [
+   "pdf-0-2"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "pdf-0-2",
+  "deterministic_ok": true,
+  "jev": "pdf-0-2",
+  "jev_ok": true,
+  "confidence": 0.98,
+  "probabilities": {
+   "B": 0.01,
+   "A": 0.99,
+   "D": 0.0,
+   "none": 0.0,
+   "C": 0.0
+  },
+  "p_ambiguous": 0.35,
+  "latency_ms": 2474,
+  "tokens": 843
+ },
+ {
+  "case": "pdf_block_1",
+  "category": "pdf",
+  "variant": "qual",
+  "intended": [
+   "pdf-1-3"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "pdf-1-3",
+  "deterministic_ok": true,
+  "jev": "pdf-1-3",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "none": 0.0,
+   "C": 0.0,
+   "D": 0.0,
+   "A": 1.0,
+   "B": 0.0
+  },
+  "p_ambiguous": 0.38,
+  "latency_ms": 2454,
+  "tokens": 788
+ },
+ {
+  "case": "pdf_block_1",
+  "category": "pdf",
+  "variant": "num",
+  "intended": [
+   "pdf-1-3"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "pdf-1-3",
+  "deterministic_ok": true,
+  "jev": "pdf-1-3",
+  "jev_ok": true,
+  "confidence": 0.98,
+  "probabilities": {
+   "none": 0.0,
+   "D": 0.01,
+   "A": 0.99,
+   "B": 0.0,
+   "C": 0.0
+  },
+  "p_ambiguous": 0.41,
+  "latency_ms": 2461,
+  "tokens": 843
+ },
+ {
+  "case": "pdf_block_2",
+  "category": "pdf",
+  "variant": "qual",
+  "intended": [
+   "pdf-2-1"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "pdf-2-1",
+  "deterministic_ok": true,
+  "jev": "pdf-2-1",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "none": 0.0,
+   "C": 0.0,
+   "D": 0.0,
+   "A": 1.0,
+   "B": 0.0
+  },
+  "p_ambiguous": 0.44,
+  "latency_ms": 2506,
+  "tokens": 784
+ },
+ {
+  "case": "pdf_block_2",
+  "category": "pdf",
+  "variant": "num",
+  "intended": [
+   "pdf-2-1"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "pdf-2-1",
+  "deterministic_ok": true,
+  "jev": "pdf-2-1",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "C": 0.0,
+   "D": 0.0,
+   "A": 0.99,
+   "B": 0.01,
+   "none": 0.0
+  },
+  "p_ambiguous": 0.43,
+  "latency_ms": 2444,
+  "tokens": 839
+ },
+ {
+  "case": "pdf_block_3",
+  "category": "pdf",
+  "variant": "qual",
+  "intended": [
+   "pdf-3-2"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "pdf-3-2",
+  "deterministic_ok": true,
+  "jev": "pdf-3-2",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "A": 0.99,
+   "D": 0.0,
+   "none": 0.01,
+   "B": 0.0,
+   "C": 0.0
+  },
+  "p_ambiguous": 0.47,
+  "latency_ms": 2064,
+  "tokens": 776
+ },
+ {
+  "case": "pdf_block_3",
+  "category": "pdf",
+  "variant": "num",
+  "intended": [
+   "pdf-3-2"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "pdf-3-2",
+  "deterministic_ok": true,
+  "jev": "pdf-3-2",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "B": 0.0,
+   "D": 0.0,
+   "C": 0.0,
+   "A": 1.0,
+   "none": 0.0
+  },
+  "p_ambiguous": 0.33,
+  "latency_ms": 2474,
+  "tokens": 831
+ },
+ {
+  "case": "pdf_block_4",
+  "category": "pdf",
+  "variant": "qual",
+  "intended": [
+   "pdf-4-2"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "pdf-4-2",
+  "deterministic_ok": true,
+  "jev": "pdf-4-2",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "B": 0.0,
+   "none": 0.01,
+   "D": 0.0,
+   "A": 0.99,
+   "C": 0.0
+  },
+  "p_ambiguous": 0.47,
+  "latency_ms": 2467,
+  "tokens": 780
+ },
+ {
+  "case": "pdf_block_4",
+  "category": "pdf",
+  "variant": "num",
+  "intended": [
+   "pdf-4-2"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "pdf-4-2",
+  "deterministic_ok": true,
+  "jev": "pdf-4-2",
+  "jev_ok": true,
+  "confidence": 0.97,
+  "probabilities": {
+   "C": 0.0,
+   "none": 0.01,
+   "D": 0.0,
+   "A": 0.98,
+   "B": 0.01
+  },
+  "p_ambiguous": 0.43,
+  "latency_ms": 2446,
+  "tokens": 835
+ },
+ {
+  "case": "pdf_block_5",
+  "category": "pdf",
+  "variant": "qual",
+  "intended": [
+   "pdf-5-2"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "pdf-5-2",
+  "deterministic_ok": true,
+  "jev": "pdf-5-2",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "A": 1.0,
+   "C": 0.0,
+   "D": 0.0,
+   "none": 0.0,
+   "B": 0.0
+  },
+  "p_ambiguous": 0.45,
+  "latency_ms": 2514,
+  "tokens": 776
+ },
+ {
+  "case": "pdf_block_5",
+  "category": "pdf",
+  "variant": "num",
+  "intended": [
+   "pdf-5-2"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "pdf-5-2",
+  "deterministic_ok": true,
+  "jev": "pdf-5-2",
+  "jev_ok": true,
+  "confidence": 0.97,
+  "probabilities": {
+   "A": 0.97,
+   "none": 0.01,
+   "C": 0.01,
+   "D": 0.0,
+   "B": 0.01
+  },
+  "p_ambiguous": 0.48,
+  "latency_ms": 2399,
+  "tokens": 831
+ },
+ {
+  "case": "pdf_equation_0",
+  "category": "pdf",
+  "variant": "qual",
+  "intended": [
+   "eq"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "eq",
+  "deterministic_ok": true,
+  "jev": "eq",
+  "jev_ok": true,
+  "confidence": 0.98,
+  "probabilities": {
+   "A": 0.99,
+   "none": 0.01
+  },
+  "p_ambiguous": 0.04,
+  "latency_ms": 2394,
+  "tokens": 522
+ },
+ {
+  "case": "pdf_equation_0",
+  "category": "pdf",
+  "variant": "num",
+  "intended": [
+   "eq"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "eq",
+  "deterministic_ok": true,
+  "jev": "eq",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "A": 1.0,
+   "none": 0.0
+  },
+  "p_ambiguous": 0.04,
+  "latency_ms": 2374,
+  "tokens": 535
+ },
+ {
+  "case": "pdf_equation_1",
+  "category": "pdf",
+  "variant": "qual",
+  "intended": [
+   "eq"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "eq",
+  "deterministic_ok": true,
+  "jev": "eq",
+  "jev_ok": true,
+  "confidence": 0.98,
+  "probabilities": {
+   "A": 0.99,
+   "none": 0.01
+  },
+  "p_ambiguous": 0.05,
+  "latency_ms": 1463,
+  "tokens": 516
+ },
+ {
+  "case": "pdf_equation_1",
+  "category": "pdf",
+  "variant": "num",
+  "intended": [
+   "eq"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "eq",
+  "deterministic_ok": true,
+  "jev": "eq",
+  "jev_ok": true,
+  "confidence": 0.98,
+  "probabilities": {
+   "none": 0.01,
+   "A": 0.99
+  },
+  "p_ambiguous": 0.04,
+  "latency_ms": 2515,
+  "tokens": 529
+ },
+ {
+  "case": "pdf_equation_2",
+  "category": "pdf",
+  "variant": "qual",
+  "intended": [
+   "eq"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "eq",
+  "deterministic_ok": true,
+  "jev": "eq",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "A": 0.99,
+   "none": 0.01
+  },
+  "p_ambiguous": 0.05,
+  "latency_ms": 2505,
+  "tokens": 521
+ },
+ {
+  "case": "pdf_equation_2",
+  "category": "pdf",
+  "variant": "num",
+  "intended": [
+   "eq"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "eq",
+  "deterministic_ok": true,
+  "jev": "eq",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "A": 0.99,
+   "none": 0.01
+  },
+  "p_ambiguous": 0.04,
+  "latency_ms": 2515,
+  "tokens": 534
+ },
+ {
+  "case": "pdf_underline_0",
+  "category": "pdf",
+  "variant": "qual",
+  "intended": [
+   "l2"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "l2",
+  "deterministic_ok": true,
+  "jev": null,
+  "jev_ok": false,
+  "confidence": 0.7,
+  "probabilities": {
+   "A": 0.17,
+   "B": 0.03,
+   "none": 0.8
+  },
+  "p_ambiguous": 0.84,
+  "latency_ms": 2576,
+  "tokens": 619
+ },
+ {
+  "case": "pdf_underline_0",
+  "category": "pdf",
+  "variant": "num",
+  "intended": [
+   "l2"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "l2",
+  "deterministic_ok": true,
+  "jev": null,
+  "jev_ok": false,
+  "confidence": 0.29,
+  "probabilities": {
+   "none": 0.53,
+   "A": 0.44,
+   "B": 0.03
+  },
+  "p_ambiguous": 0.84,
+  "latency_ms": 2466,
+  "tokens": 647
+ },
+ {
+  "case": "pdf_underline_1",
+  "category": "pdf",
+  "variant": "qual",
+  "intended": [
+   "l4"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "l5",
+  "deterministic_ok": false,
+  "jev": null,
+  "jev_ok": false,
+  "confidence": 0.66,
+  "probabilities": {
+   "none": 0.77,
+   "B": 0.08,
+   "A": 0.15
+  },
+  "p_ambiguous": 0.86,
+  "latency_ms": 2495,
+  "tokens": 615
+ },
+ {
+  "case": "pdf_underline_1",
+  "category": "pdf",
+  "variant": "num",
+  "intended": [
+   "l4"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "l5",
+  "deterministic_ok": false,
+  "jev": null,
+  "jev_ok": false,
+  "confidence": 0.37,
+  "probabilities": {
+   "none": 0.58,
+   "B": 0.13,
+   "A": 0.29
+  },
+  "p_ambiguous": 0.88,
+  "latency_ms": 2457,
+  "tokens": 643
+ },
+ {
+  "case": "pdf_underline_2",
+  "category": "pdf",
+  "variant": "qual",
+  "intended": [
+   "l4"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "l4",
+  "deterministic_ok": true,
+  "jev": null,
+  "jev_ok": false,
+  "confidence": 0.7,
+  "probabilities": {
+   "A": 0.17,
+   "none": 0.8,
+   "B": 0.03
+  },
+  "p_ambiguous": 0.85,
+  "latency_ms": 2183,
+  "tokens": 615
+ },
+ {
+  "case": "pdf_underline_2",
+  "category": "pdf",
+  "variant": "num",
+  "intended": [
+   "l4"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "l4",
+  "deterministic_ok": true,
+  "jev": null,
+  "jev_ok": false,
+  "confidence": 0.27,
+  "probabilities": {
+   "B": 0.06,
+   "A": 0.42,
+   "none": 0.52
+  },
+  "p_ambiguous": 0.85,
+  "latency_ms": 2500,
+  "tokens": 643
+ },
+ {
+  "case": "web_nested_link_0",
+  "category": "web",
+  "variant": "qual",
+  "intended": [
+   "link"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "link",
+  "deterministic_ok": true,
+  "jev": "link",
+  "jev_ok": true,
+  "confidence": 0.94,
+  "probabilities": {
+   "A": 0.95,
+   "B": 0.02,
+   "C": 0.02,
+   "none": 0.01
+  },
+  "p_ambiguous": 0.63,
+  "latency_ms": 2497,
+  "tokens": 772
+ },
+ {
+  "case": "web_nested_link_0",
+  "category": "web",
+  "variant": "num",
+  "intended": [
+   "link"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "link",
+  "deterministic_ok": true,
+  "jev": "link",
+  "jev_ok": true,
+  "confidence": 0.82,
+  "probabilities": {
+   "A": 0.87,
+   "none": 0.02,
+   "B": 0.09,
+   "C": 0.02
+  },
+  "p_ambiguous": 0.62,
+  "latency_ms": 2569,
+  "tokens": 804
+ },
+ {
+  "case": "web_nested_link_1",
+  "category": "web",
+  "variant": "qual",
+  "intended": [
+   "link"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "link",
+  "deterministic_ok": true,
+  "jev": "link",
+  "jev_ok": true,
+  "confidence": 0.93,
+  "probabilities": {
+   "A": 0.95,
+   "none": 0.01,
+   "B": 0.03,
+   "C": 0.01
+  },
+  "p_ambiguous": 0.58,
+  "latency_ms": 2486,
+  "tokens": 772
+ },
+ {
+  "case": "web_nested_link_1",
+  "category": "web",
+  "variant": "num",
+  "intended": [
+   "link"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "link",
+  "deterministic_ok": true,
+  "jev": "link",
+  "jev_ok": true,
+  "confidence": 0.81,
+  "probabilities": {
+   "C": 0.03,
+   "B": 0.09,
+   "A": 0.85,
+   "none": 0.03
+  },
+  "p_ambiguous": 0.64,
+  "latency_ms": 2497,
+  "tokens": 804
+ },
+ {
+  "case": "web_nested_section_2",
+  "category": "web",
+  "variant": "qual",
+  "intended": [
+   "section"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "section",
+  "deterministic_ok": true,
+  "jev": "section",
+  "jev_ok": true,
+  "confidence": 0.98,
+  "probabilities": {
+   "C": 0.0,
+   "E": 0.0,
+   "D": 0.0,
+   "A": 0.99,
+   "B": 0.0,
+   "none": 0.01
+  },
+  "p_ambiguous": 0.55,
+  "latency_ms": 2554,
+  "tokens": 959
+ },
+ {
+  "case": "web_nested_section_2",
+  "category": "web",
+  "variant": "num",
+  "intended": [
+   "section"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "section",
+  "deterministic_ok": true,
+  "jev": "section",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "D": 0.0,
+   "B": 0.0,
+   "E": 0.0,
+   "C": 0.0,
+   "none": 0.0,
+   "A": 1.0
+  },
+  "p_ambiguous": 0.53,
+  "latency_ms": 2513,
+  "tokens": 1026
+ },
+ {
+  "case": "web_nested_section_3",
+  "category": "web",
+  "variant": "qual",
+  "intended": [
+   "section"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "section",
+  "deterministic_ok": true,
+  "jev": "section",
+  "jev_ok": true,
+  "confidence": 0.98,
+  "probabilities": {
+   "D": 0.0,
+   "B": 0.0,
+   "E": 0.0,
+   "C": 0.0,
+   "A": 0.99,
+   "none": 0.01
+  },
+  "p_ambiguous": 0.53,
+  "latency_ms": 2343,
+  "tokens": 959
+ },
+ {
+  "case": "web_nested_section_3",
+  "category": "web",
+  "variant": "num",
+  "intended": [
+   "section"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "section",
+  "deterministic_ok": true,
+  "jev": "section",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "D": 0.0,
+   "B": 0.0,
+   "E": 0.0,
+   "C": 0.0,
+   "none": 0.0,
+   "A": 1.0
+  },
+  "p_ambiguous": 0.53,
+  "latency_ms": 2472,
+  "tokens": 1026
+ },
+ {
+  "case": "web_paragraph_0",
+  "category": "web",
+  "variant": "qual",
+  "intended": [
+   "p1"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "p1",
+  "deterministic_ok": true,
+  "jev": "p1",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "none": 0.01,
+   "A": 0.99
+  },
+  "p_ambiguous": 0.04,
+  "latency_ms": 2437,
+  "tokens": 518
+ },
+ {
+  "case": "web_paragraph_0",
+  "category": "web",
+  "variant": "num",
+  "intended": [
+   "p1"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "p1",
+  "deterministic_ok": true,
+  "jev": "p1",
+  "jev_ok": true,
+  "confidence": 0.94,
+  "probabilities": {
+   "none": 0.03,
+   "A": 0.97
+  },
+  "p_ambiguous": 0.06,
+  "latency_ms": 2545,
+  "tokens": 529
+ },
+ {
+  "case": "web_paragraph_1",
+  "category": "web",
+  "variant": "qual",
+  "intended": [
+   "p1"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "p1",
+  "deterministic_ok": true,
+  "jev": "p1",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "A": 0.99,
+   "none": 0.01
+  },
+  "p_ambiguous": 0.04,
+  "latency_ms": 2417,
+  "tokens": 518
+ },
+ {
+  "case": "web_paragraph_1",
+  "category": "web",
+  "variant": "num",
+  "intended": [
+   "p1"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "p1",
+  "deterministic_ok": true,
+  "jev": "p1",
+  "jev_ok": true,
+  "confidence": 0.94,
+  "probabilities": {
+   "A": 0.97,
+   "none": 0.03
+  },
+  "p_ambiguous": 0.06,
+  "latency_ms": 2494,
+  "tokens": 531
+ },
+ {
+  "case": "web_paragraph_2",
+  "category": "web",
+  "variant": "qual",
+  "intended": [
+   "p1"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "p1",
+  "deterministic_ok": true,
+  "jev": "p1",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "A": 1.0,
+   "none": 0.0
+  },
+  "p_ambiguous": 0.04,
+  "latency_ms": 2453,
+  "tokens": 518
+ },
+ {
+  "case": "web_paragraph_2",
+  "category": "web",
+  "variant": "num",
+  "intended": [
+   "p1"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "p1",
+  "deterministic_ok": true,
+  "jev": "p1",
+  "jev_ok": true,
+  "confidence": 0.97,
+  "probabilities": {
+   "A": 0.98,
+   "none": 0.02
+  },
+  "p_ambiguous": 0.05,
+  "latency_ms": 2491,
+  "tokens": 531
+ },
+ {
+  "case": "web_paragraph_3",
+  "category": "web",
+  "variant": "qual",
+  "intended": [
+   "p0"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "p0",
+  "deterministic_ok": true,
+  "jev": "p0",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "A": 1.0,
+   "none": 0.0
+  },
+  "p_ambiguous": 0.04,
+  "latency_ms": 2380,
+  "tokens": 520
+ },
+ {
+  "case": "web_paragraph_3",
+  "category": "web",
+  "variant": "num",
+  "intended": [
+   "p0"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "p0",
+  "deterministic_ok": true,
+  "jev": "p0",
+  "jev_ok": true,
+  "confidence": 0.93,
+  "probabilities": {
+   "A": 0.97,
+   "none": 0.03
+  },
+  "p_ambiguous": 0.06,
+  "latency_ms": 2551,
+  "tokens": 531
+ },
+ {
+  "case": "web_paragraph_4",
+  "category": "web",
+  "variant": "qual",
+  "intended": [
+   "p0"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "p0",
+  "deterministic_ok": true,
+  "jev": "p0",
+  "jev_ok": true,
+  "confidence": 0.99,
+  "probabilities": {
+   "A": 1.0,
+   "none": 0.0
+  },
+  "p_ambiguous": 0.04,
+  "latency_ms": 2538,
+  "tokens": 520
+ },
+ {
+  "case": "web_paragraph_4",
+  "category": "web",
+  "variant": "num",
+  "intended": [
+   "p0"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "p0",
+  "deterministic_ok": true,
+  "jev": "p0",
+  "jev_ok": true,
+  "confidence": 0.96,
+  "probabilities": {
+   "A": 0.98,
+   "none": 0.02
+  },
+  "p_ambiguous": 0.05,
+  "latency_ms": 2479,
+  "tokens": 533
+ },
+ {
+  "case": "web_point_button_0",
+  "category": "web",
+  "variant": "qual",
+  "intended": [
+   "b1"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "toolbar",
+  "deterministic_ok": false,
+  "jev": "b1",
+  "jev_ok": true,
+  "confidence": 0.94,
+  "probabilities": {
+   "none": 0.0,
+   "A": 0.04,
+   "B": 0.96
+  },
+  "p_ambiguous": 0.49,
+  "latency_ms": 2514,
+  "tokens": 570
+ },
+ {
+  "case": "web_point_button_0",
+  "category": "web",
+  "variant": "num",
+  "intended": [
+   "b1"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "toolbar",
+  "deterministic_ok": false,
+  "jev": "b1",
+  "jev_ok": true,
+  "confidence": 0.75,
+  "probabilities": {
+   "A": 0.1,
+   "none": 0.07,
+   "B": 0.83
+  },
+  "p_ambiguous": 0.42,
+  "latency_ms": 2588,
+  "tokens": 579
+ },
+ {
+  "case": "web_point_button_1",
+  "category": "web",
+  "variant": "qual",
+  "intended": [
+   "b4"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "toolbar",
+  "deterministic_ok": false,
+  "jev": "b4",
+  "jev_ok": true,
+  "confidence": 0.96,
+  "probabilities": {
+   "B": 0.97,
+   "A": 0.03,
+   "none": 0.0
+  },
+  "p_ambiguous": 0.41,
+  "latency_ms": 2454,
+  "tokens": 570
+ },
+ {
+  "case": "web_point_button_1",
+  "category": "web",
+  "variant": "num",
+  "intended": [
+   "b4"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "toolbar",
+  "deterministic_ok": false,
+  "jev": "b4",
+  "jev_ok": true,
+  "confidence": 0.79,
+  "probabilities": {
+   "A": 0.1,
+   "none": 0.04,
+   "B": 0.86
+  },
+  "p_ambiguous": 0.41,
+  "latency_ms": 2474,
+  "tokens": 579
+ },
+ {
+  "case": "web_point_button_2",
+  "category": "web",
+  "variant": "qual",
+  "intended": [
+   "b3"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "toolbar",
+  "deterministic_ok": false,
+  "jev": "b3",
+  "jev_ok": true,
+  "confidence": 0.94,
+  "probabilities": {
+   "B": 0.97,
+   "none": 0.0,
+   "A": 0.03
+  },
+  "p_ambiguous": 0.43,
+  "latency_ms": 2471,
+  "tokens": 570
+ },
+ {
+  "case": "web_point_button_2",
+  "category": "web",
+  "variant": "num",
+  "intended": [
+   "b3"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "toolbar",
+  "deterministic_ok": false,
+  "jev": "b3",
+  "jev_ok": true,
+  "confidence": 0.78,
+  "probabilities": {
+   "A": 0.09,
+   "B": 0.85,
+   "none": 0.06
+  },
+  "p_ambiguous": 0.4,
+  "latency_ms": 2197,
+  "tokens": 579
+ },
+ {
+  "case": "web_table_cell_0",
+  "category": "web",
+  "variant": "qual",
+  "intended": [
+   "c00"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "c00",
+  "deterministic_ok": true,
+  "jev": "c00",
+  "jev_ok": true,
+  "confidence": 0.73,
+  "probabilities": {
+   "B": 0.14,
+   "A": 0.82,
+   "none": 0.04
+  },
+  "p_ambiguous": 0.45,
+  "latency_ms": 2471,
+  "tokens": 576
+ },
+ {
+  "case": "web_table_cell_0",
+  "category": "web",
+  "variant": "num",
+  "intended": [
+   "c00"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "c00",
+  "deterministic_ok": true,
+  "jev": "c00",
+  "jev_ok": true,
+  "confidence": 0.37,
+  "probabilities": {
+   "B": 0.34,
+   "none": 0.09,
+   "A": 0.57
+  },
+  "p_ambiguous": 0.48,
+  "latency_ms": 2356,
+  "tokens": 604
+ },
+ {
+  "case": "web_table_cell_1",
+  "category": "web",
+  "variant": "qual",
+  "intended": [
+   "c11"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "c11",
+  "deterministic_ok": true,
+  "jev": "c11",
+  "jev_ok": true,
+  "confidence": 0.9,
+  "probabilities": {
+   "A": 0.95,
+   "none": 0.05
+  },
+  "p_ambiguous": 0.04,
+  "latency_ms": 2302,
+  "tokens": 507
+ },
+ {
+  "case": "web_table_cell_1",
+  "category": "web",
+  "variant": "num",
+  "intended": [
+   "c11"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "c11",
+  "deterministic_ok": true,
+  "jev": "c11",
+  "jev_ok": true,
+  "confidence": 0.79,
+  "probabilities": {
+   "A": 0.9,
+   "none": 0.1
+  },
+  "p_ambiguous": 0.06,
+  "latency_ms": 2263,
+  "tokens": 520
+ },
+ {
+  "case": "web_table_cell_2",
+  "category": "web",
+  "variant": "qual",
+  "intended": [
+   "c00"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "c00",
+  "deterministic_ok": true,
+  "jev": "c00",
+  "jev_ok": true,
+  "confidence": 0.73,
+  "probabilities": {
+   "none": 0.04,
+   "A": 0.82,
+   "B": 0.14
+  },
+  "p_ambiguous": 0.47,
+  "latency_ms": 2337,
+  "tokens": 576
+ },
+ {
+  "case": "web_table_cell_2",
+  "category": "web",
+  "variant": "num",
+  "intended": [
+   "c00"
+  ],
+  "ambiguous_label": false,
+  "deterministic": "c00",
+  "deterministic_ok": true,
+  "jev": "c00",
+  "jev_ok": true,
+  "confidence": 0.34,
+  "probabilities": {
+   "none": 0.1,
+   "A": 0.56,
+   "B": 0.34
+  },
+  "p_ambiguous": 0.5,
+  "latency_ms": 2297,
+  "tokens": 603
+ }
+]
