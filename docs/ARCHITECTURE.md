@@ -39,7 +39,10 @@ tie-break longer text then smaller area). Golden cases in `server/tests/cases/` 
    **Data sent to TypeSafe per ask:** the question, previous question, page kind and up to 8 shortlisted element
    texts (≤ 300 chars, `data:`/base64 scrubbed) — never pixels. Sent even when a local answer model is chosen;
    opt out with `SPATIAL_SYSTEM_ONE=off`.
-4. Optional research: DuckDuckGo (+ Gemini) → fetch pages → term-overlap passage selection → numbered sources.
+4. Optional research (`research.py`, after the Cited Multi-Agent Researcher): one query, or one per mark for a
+   `compare` ask → **Tavily** `fast` search (ranked chunks; `TAVILY_API_KEY`) or DuckDuckGo + page fetch fallback →
+   dedupe + credibility → **Jev passage ranking** → numbered sources. After the answer, **Jev checks each citation**
+   (`citation_checks`, `unsupported_citations` → ⚠ in the extension). Gemini removed.
 5. Provider chain (`SPATIAL_PROVIDERS` order): vision model gets the crop; text models get OCR text. First
    provider that answers wins; if none, deterministic fallback quotes the marked text.
 6. Persist context + turn history in SQLite; follow-ups pass `context_id`.

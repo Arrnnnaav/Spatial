@@ -1,7 +1,7 @@
 # Research v2 (Tavily + Jev) and Answer Model — Design
 
 **Date:** 2026-09-24
-**Status:** Approved in chat 2026-09-24 ("we use tavily … lets move ahead")
+**Status:** Implemented 2026-09-24 (branch `feat/research-v2`); Tavily path awaits `TAVILY_API_KEY` for a live check
 **Inspired by:** `D:/PROJECTS/Cited Multi-Agent Researcher` (orchestrator → search agents → citation agent → synthesis → judge)
 
 ## Goal

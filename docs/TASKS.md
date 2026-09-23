@@ -48,6 +48,14 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 - [x] Resolver integration + fallback + eval vs baseline (hybrid 50/50 vs geometry 46/50 on recorded cassette)
 - [x] Clarification UI ("which one?") + correction capture into trace
 
+## Research v2 (2026-09-24, branch `feat/research-v2`)
+
+- [x] NVIDIA model probe → default `nemotron-3-super-120b-a12b`; one retry on transient errors
+- [x] Tavily search layer (+ DDG fallback), credibility dedupe, per-role compare queries; Gemini removed
+- [x] Jev passage ranking (E3) + live citation check; ⚠ marker in extension
+- [ ] User: add `TAVILY_API_KEY` to `server/.env`, then live-verify Tavily path
+- [ ] Offline research eval (10 questions, like the Cited Researcher's judge set)
+
 ## Sub-project 3 — Windows UIA spike (outline)
 
 - [ ] Hotkey → freeze-frame → box → dump UIA elements under box → POST v3 to `/api/ask`

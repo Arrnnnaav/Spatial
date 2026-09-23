@@ -59,7 +59,17 @@ code or git log. Newest first within each section. Remove entries that become wr
 - **2026-09-23** — Running one test file alone used to hit real providers from server/.env; `tests/conftest.py`
   now pins providers/System One off for every test.
 
+- **2026-09-24** — NVIDIA probe: `nemotron-3.5-lightning` times out (3/3); `nemotron-3-super-120b-a12b` answers in
+  1.5–4 s (now the default); `nemotron-3-ultra-550b` works but ~3–11 s; kimi-k3 / deepseek-v4.1-flash / gpt-oss-20b
+  time out; free tier 503s ~1 in 4 → one retry. `glm-5.3` good but 18 s.
+- **2026-09-24** — Tavily: CLI + skills installed, browser OAuth done, but keyless monthly cap reached → server
+  needs `TAVILY_API_KEY`. Live research ask (DDG fallback): 6.0 s total, Jev routing 371 ms, citation check flagged
+  an off-topic source correctly.
+
 ## Gotchas
+
+- Citation-check sentence split is naive (`. ` boundaries): initials like "Diederik P. Kingma" split a sentence;
+  checks still run per fragment. Improve if it causes false flags.
 
 - `providers._SYSTEM_OVERRIDE` is module-global state (prompt, level, mode): concurrent asks can cross-talk.
   Tolerable for a single-user local server; fix before any multi-user use (backlog).
