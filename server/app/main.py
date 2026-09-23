@@ -12,7 +12,7 @@ from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Upload
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response, StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from app import store
 from app.audio import audio_status, synthesize, transcribe
@@ -40,7 +40,7 @@ MIN_PROTOCOL_VERSION = (
 app = FastAPI(title="Spatial — Point & Ask", version="0.2.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    # Only the extension may call from a browser: a wildcard would let any web page read history and traces.
     allow_origin_regex=r"^(chrome|moz)-extension://.*$",
     allow_methods=["*"],
     allow_headers=["*"],
@@ -184,6 +184,8 @@ def to_context(payload: Ask) -> SpatialContext:
             privacy_policy=payload.privacy_policy,
             crop=payload.crop,
         )
+    except ValidationError as exc:  # a ValueError too: must not masquerade as NO_MARKS
+        raise HTTPException(422, {"code": "BAD_CONTEXT", "message": str(exc.errors()[0].get("msg", "invalid"))}) from None
     except ValueError:
         raise HTTPException(
             400, {"code": "NO_MARKS", "message": "no usable marks"}

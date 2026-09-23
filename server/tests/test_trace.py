@@ -121,3 +121,35 @@ def test_unwritable_dir_never_fails_the_ask(log_dir, monkeypatch):
         assert client.post("/api/ask", json=PAYLOAD).status_code == 200
         health = client.get("/api/health").json()
     assert health["trace"]["enabled"] is False and health["trace"]["error"]
+
+
+def test_lone_surrogate_in_anchor_text_does_not_fail_the_ask(log_dir):
+    anchors = [{**PAYLOAD["anchors"][0], "text": "Pectoralis major \ud83d"}, PAYLOAD["anchors"][1]]
+    trace.set_enabled(True)
+    with TestClient(main.app) as client:
+        # Browsers send JSON with the lone surrogate escaped as \ud83d; post the same bytes.
+        body = json.dumps({**PAYLOAD, "anchors": anchors})
+        response = client.post("/api/ask", content=body, headers={"Content-Type": "application/json"})
+        assert response.status_code == 200
+    assert len(lines(log_dir)) == 1
+
+
+def test_data_urls_in_any_v3_field_never_reach_the_trace(log_dir):
+    from tests.test_protocol import V3
+    icon = "data:image/png;base64," + "C" * 300
+    context = {**V3["context"], "surface": {**V3["context"]["surface"], "url": icon}}
+    context["candidates"] = [{**context["candidates"][0], "label": icon, "attributes": {"icon": icon},
+                              "src": icon}, context["candidates"][1]]
+    trace.set_enabled(True)
+    with TestClient(main.app) as client:
+        assert client.post("/api/ask", json={**V3, "context": context}).status_code == 200
+    raw = "".join(f.read_text(encoding="utf-8") for f in log_dir.glob("*.jsonl"))
+    assert raw and "data:image" not in raw and not BASE64_RUN.search(raw)
+
+
+def test_cors_only_allows_extension_origins():
+    with TestClient(main.app) as client:
+        evil = client.get("/api/traces/config", headers={"Origin": "https://evil.example"})
+        ext = client.get("/api/traces/config", headers={"Origin": "chrome-extension://abcdefghijklmnop"})
+    assert "access-control-allow-origin" not in evil.headers
+    assert ext.headers.get("access-control-allow-origin") == "chrome-extension://abcdefghijklmnop"

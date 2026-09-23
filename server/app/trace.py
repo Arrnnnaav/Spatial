@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import sys
 import threading
 from datetime import datetime, timedelta, timezone
@@ -68,8 +69,18 @@ def set_enabled(value: bool) -> None:
         _state["error"] = None
 
 
-def _no_data_url(value: str | None) -> str | None:
-    return None if value and value.lstrip().lower().startswith("data:") else value
+_DATA_URL = re.compile(r"^\s*data:[\w.+-]+/[\w.+-]+[;,]", re.I)
+
+
+def _scrub(value: Any) -> Any:
+    """Drop every data: URL (inline images, icons) anywhere in the record, whichever client sent it."""
+    if isinstance(value, str):
+        return None if _DATA_URL.match(value) else value
+    if isinstance(value, dict):
+        return {key: _scrub(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_scrub(item) for item in value]
+    return value
 
 
 def build_record(
@@ -84,34 +95,28 @@ def build_record(
     meta: dict,
     timings: dict,
 ) -> dict[str, Any]:
-    candidates = []
-    for candidate in ctx.candidates:
-        item = candidate.model_dump()
-        item["href"], item["src"] = (
-            _no_data_url(item["href"]),
-            _no_data_url(item["src"]),
-        )
-        candidates.append(item)
-    return {
-        "trace_version": TRACE_VERSION,
-        "request_id": request_id,
-        "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "context_id": context_id,
-        "client": client,
-        "surface": ctx.surface.model_dump(),
-        "privacy_policy": ctx.privacy_policy,
-        "image_attached": image_attached,
-        "marks": [m.model_dump() for m in ctx.marks],
-        "candidates": candidates,
-        "resolution": resolution.model_dump(),
-        "question": ctx.question,
-        "answer": answer,
-        "provider": meta.get("provider"),
-        "model": meta.get("model"),
-        "timings_ms": timings,
-        "errors": meta.get("errors", {}),
-        "cost_usd": meta.get("cost_usd", 0.0),
-    }
+    return _scrub(
+        {
+            "trace_version": TRACE_VERSION,
+            "request_id": request_id,
+            "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "context_id": context_id,
+            "client": client,
+            "surface": ctx.surface.model_dump(),
+            "privacy_policy": ctx.privacy_policy,
+            "image_attached": image_attached,
+            "marks": [m.model_dump() for m in ctx.marks],
+            "candidates": [c.model_dump() for c in ctx.candidates],
+            "resolution": resolution.model_dump(),
+            "question": ctx.question,
+            "answer": answer,
+            "provider": meta.get("provider"),
+            "model": meta.get("model"),
+            "timings_ms": timings,
+            "errors": meta.get("errors", {}),
+            "cost_usd": meta.get("cost_usd", 0.0),
+        }
+    )
 
 
 def _files(directory: Path) -> list[Path]:
@@ -145,8 +150,14 @@ def write(record: dict[str, Any]) -> None:
             directory.mkdir(parents=True, exist_ok=True)
             path = directory / f"{datetime.now().strftime('%Y-%m-%d')}.jsonl"
             with path.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+                # ASCII escapes keep lone surrogates (half an emoji cut by the client) writable.
+                handle.write(json.dumps(record, ensure_ascii=True) + "\n")
             _prune(directory)
+    except (
+        ValueError,
+        TypeError,
+    ) as exc:  # one unserialisable record: skip it, keep tracing
+        logger.warning("trace record skipped: %s", exc)
     except OSError as exc:
         _state["error"] = f"{type(exc).__name__}: {exc}"
         logger.warning("trace log disabled for this process: %s", _state["error"])

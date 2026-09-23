@@ -109,6 +109,11 @@ class SemanticResolution(BaseModel):
     latency_ms: int
 
 
+def _text(value: Any) -> str:
+    """Browser text can end in half an emoji (JS slices UTF-16); replace lone surrogates so validation passes."""
+    return str(value or "").encode("utf-8", "replace").decode("utf-8")
+
+
 # --- v2 (browser extension) -> v3 ----------------------------------------------------------------------------
 
 
@@ -178,7 +183,7 @@ def _candidate_from_v2(raw: Any, surface_kind: str) -> CandidateObject | None:
         candidate_id=str(raw["id"])[:200],
         source=source,
         object_type=kind,
-        text=str(raw.get("text") or "")[:1500],
+        text=_text(raw.get("text"))[:1500],
         bbox=bbox,
         page=page,
         href=str(raw["href"])[:500] if raw.get("href") else None,
@@ -214,13 +219,13 @@ def from_v2(
     return SpatialContext(
         surface=Surface(
             kind=surface_kind,
-            url=str(page.get("url") or "")[:2000],
-            title=str(page.get("title") or "")[:500],
+            url=_text(page.get("url"))[:2000],
+            title=_text(page.get("title"))[:500],
             viewport=viewport,
         ),
         marks=converted,
         candidates=candidates,
-        question=question,
+        question=_text(question),
         privacy_policy=privacy_policy
         if privacy_policy in _POLICIES
         else "anchors_only",
