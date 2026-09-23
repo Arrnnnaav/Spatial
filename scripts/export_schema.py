@@ -11,7 +11,8 @@ from app.contracts import schema_document  # noqa: E402
 
 target = ROOT / "schema" / "spatial-context.v3.json"
 target.parent.mkdir(exist_ok=True)
-target.write_text(
-    json.dumps(schema_document(), indent=2, sort_keys=True) + "\n", encoding="utf-8"
-)
+with target.open(
+    "w", encoding="utf-8", newline="\n"
+) as handle:  # LF on every OS: no churn
+    handle.write(json.dumps(schema_document(), indent=2, sort_keys=True) + "\n")
 print(f"wrote {target.relative_to(ROOT)}")

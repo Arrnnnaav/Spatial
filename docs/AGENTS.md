@@ -89,3 +89,10 @@ Never put keys in extension code. Relevant keys:
 - TypeSafe skill (`typesafe@typesafe-ai` plugin): guidance for Jev / System One question design. Live docs:
   https://docs.typesafe.ai/llms.txt (append `.md` to page paths).
 - Superpowers skills: brainstorming → writing-plans → executing-plans / TDD / verification.
+- Project automations (`.claude/`, `.mcp.json`):
+  - Hooks: `guard_secrets.py` blocks Read/Edit/Write of `server/.env` and edits of `*.db`;
+    `post_edit_checks.py` runs the geometry parity tests after editing `geometry.js`/`resolver.py`, and regenerates +
+    checks the schema after editing `contracts.py`.
+  - Skills: `/eval` (resolver eval vs baseline, logs to MEMORY), `/sync-docs` (update the living docs).
+  - Subagent: `privacy-reviewer` — run after changes to traces, contracts, routes/CORS, capture or UIA code.
+  - MCP: `context7` (current docs: Tauri, FastAPI, pydantic), `playwright` (drive Chromium with the unpacked extension).
