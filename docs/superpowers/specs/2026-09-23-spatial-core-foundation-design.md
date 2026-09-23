@@ -47,7 +47,7 @@ This repo becomes the single source of truth. Nothing is synced in or out.
 | `extension/geometry.js` | Drop `root.StudyOSGeometry` alias; comments reference `server/app/resolver.py` and `server/tests/cases`. |
 | `server/app/resolver.py`, `server/tests/test_resolver_cases.py` | Replace "SYNCED from StudyOS" docstrings. |
 | `README.md` | Remove "Origin and sync"; add short "Tracing" and "Eval" sections. |
-| `SPATIAL_PRODUCTION_CHECKLIST.md`, `docs/LEARNING_PATH.md` | Remove StudyOS references. |
+| `docs/SPATIAL_PRODUCTION_CHECKLIST.md`, `docs/LEARNING_PATH.md` | Remove StudyOS references. |
 
 Done when `grep -riE "studyos|sync_spatial|quiz|learning-platform" extension server README.md docs` returns nothing.
 
@@ -189,5 +189,5 @@ New: `server/app/contracts.py`, `server/app/candidates.py`, `server/app/trace.py
 `scripts/export_schema.py`, `schema/spatial-context.v3.json`, `server/tests/eval_baseline.json`,
 tests listed above, ~43 new case files.
 Modified: `server/app/main.py`, `server/app/ocr.py`, `server/app/config.py`, `server/app/resolver.py` (docstring),
-extension files in section A, `README.md`, checklist, `docs/LEARNING_PATH.md`, `docs/ARCHITECTURE.md`.
+extension files in section A, `README.md`, `docs/SPATIAL_PRODUCTION_CHECKLIST.md`, `docs/LEARNING_PATH.md`, `docs/ARCHITECTURE.md`.
 Deleted: `extension/detect.js`.

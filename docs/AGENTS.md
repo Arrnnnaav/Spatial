@@ -1,7 +1,7 @@
 # AGENTS.md — start here
 
 Entry point for any coding agent (Claude Code, Codex, Cursor, …) or new contributor working on **Spatial — Point & Ask**.
-Read this file first, then the docs it points to. These docs are living: update them as you work (see "Working loop").
+All project docs live in `docs/` (only `README.md` and the `CLAUDE.md` pointer stay at the root). Read this file first, then the docs it points to. These docs are living: update them as you work (see "Working loop").
 
 ## What Spatial is
 
@@ -18,22 +18,22 @@ structured, inspectable reference (`SpatialContext`) and answers about it.
 
 | File | What it holds | Update when |
 |---|---|---|
-| `AGENTS.md` | This entry point: orientation, commands, layout, working loop | Commands/layout/workflow change |
-| `PRD.md` | Product: problem, users, goals, scope, success metrics | Scope or priorities change |
-| `ARCHITECTURE.md` | How the system is built now and where it is going | Components, contracts, data flow change |
-| `DESIGN.md` | Interaction + UI design, visual language, key design decisions | UX or a design decision changes |
-| `RULES.md` | Working rules and conventions (defaults, not laws) | A rule stops serving the project |
-| `TASKS.md` | Roadmap + current task board with status | Every task start / finish |
-| `MEMORY.md` | Dated decisions, facts learned, gotchas, open questions | Something non-obvious is learned or decided |
+| `docs/AGENTS.md` | This entry point: orientation, commands, layout, working loop | Commands/layout/workflow change |
+| `docs/PRD.md` | Product: problem, users, goals, scope, success metrics | Scope or priorities change |
+| `docs/ARCHITECTURE.md` | How the system is built now and where it is going | Components, contracts, data flow change |
+| `docs/DESIGN.md` | Interaction + UI design, visual language, key design decisions | UX or a design decision changes |
+| `docs/RULES.md` | Working rules and conventions (defaults, not laws) | A rule stops serving the project |
+| `docs/TASKS.md` | Roadmap + current task board with status | Every task start / finish |
+| `docs/MEMORY.md` | Dated decisions, facts learned, gotchas, open questions | Something non-obvious is learned or decided |
 | `docs/superpowers/specs/` | Approved design specs per sub-project | New sub-project design |
 | `docs/superpowers/plans/` | Step-by-step implementation plans | Before implementing a spec |
 | `docs/HOW_TO_RUN_AND_USE.md`, `PROVIDERS.md`, `AUDIO.md`, `LEARNING_PATH.md` | User/learner guides | Behaviour they describe changes |
-| `SPATIAL_STANDALONE_MASTER_PLAN.md` | Long-horizon vision (60 sections, 13 phases). Reference, not the task list | Rarely |
-| `SPATIAL_PRODUCTION_CHECKLIST.md` | Release checklist | Release process changes |
+| `docs/SPATIAL_STANDALONE_MASTER_PLAN.md` | Long-horizon vision (60 sections, 13 phases). Reference, not the task list | Rarely |
+| `docs/SPATIAL_PRODUCTION_CHECKLIST.md` | Release checklist | Release process changes |
 
 ## Working loop (every session)
 
-1. Read `TASKS.md` (what is in progress / next) and `MEMORY.md` (recent decisions, gotchas).
+1. Read `docs/TASKS.md` (what is in progress / next) and `docs/MEMORY.md` (recent decisions, gotchas).
 2. Pick or confirm the task. Non-trivial new work → brainstorm → spec → plan before code.
 3. Work. Tests first where practical (`RULES.md`).
 4. Before finishing: run the test commands below; update `TASKS.md` status; add anything non-obvious to
