@@ -1,0 +1,277 @@
+{
+ "description": "sloppy circle around one merged PDF block; glyph spans inside it",
+ "category": "pdf",
+ "question": "explain this paragraph",
+ "surface": "pdf",
+ "canvas": {
+  "width": 1280,
+  "height": 720
+ },
+ "marks": [
+  {
+   "type": "polygon",
+   "role": "reference",
+   "closed": true,
+   "points": [
+    [
+     787,
+     275
+    ],
+    [
+     783,
+     286
+    ],
+    [
+     771,
+     297
+    ],
+    [
+     750,
+     308
+    ],
+    [
+     723,
+     317
+    ],
+    [
+     688,
+     326
+    ],
+    [
+     648,
+     333
+    ],
+    [
+     603,
+     339
+    ],
+    [
+     554,
+     343
+    ],
+    [
+     503,
+     346
+    ],
+    [
+     450,
+     347
+    ],
+    [
+     397,
+     346
+    ],
+    [
+     346,
+     343
+    ],
+    [
+     297,
+     339
+    ],
+    [
+     252,
+     333
+    ],
+    [
+     212,
+     326
+    ],
+    [
+     177,
+     317
+    ],
+    [
+     150,
+     308
+    ],
+    [
+     129,
+     297
+    ],
+    [
+     117,
+     286
+    ],
+    [
+     113,
+     275
+    ],
+    [
+     117,
+     264
+    ],
+    [
+     129,
+     253
+    ],
+    [
+     150,
+     242
+    ],
+    [
+     177,
+     233
+    ],
+    [
+     212,
+     224
+    ],
+    [
+     252,
+     217
+    ],
+    [
+     297,
+     211
+    ],
+    [
+     346,
+     207
+    ],
+    [
+     397,
+     204
+    ],
+    [
+     450,
+     203
+    ],
+    [
+     503,
+     204
+    ],
+    [
+     554,
+     207
+    ],
+    [
+     603,
+     211
+    ],
+    [
+     648,
+     217
+    ],
+    [
+     688,
+     224
+    ],
+    [
+     723,
+     233
+    ],
+    [
+     750,
+     242
+    ],
+    [
+     771,
+     253
+    ],
+    [
+     783,
+     264
+    ],
+    [
+     787,
+     275
+    ]
+   ],
+   "x": 113,
+   "y": 203,
+   "width": 674,
+   "height": 144
+  }
+ ],
+ "anchors": [
+  {
+   "id": "pdf-2-0",
+   "type": "pdf-text",
+   "text": "Momentum keeps a running average of past gradients to smooth the path.",
+   "bbox": {
+    "x": 140,
+    "y": 120,
+    "width": 620,
+    "height": 90
+   },
+   "page": 3
+  },
+  {
+   "id": "pdf-2-1",
+   "type": "pdf-text",
+   "text": "Batch normalization rescales activations so training stays stable.",
+   "bbox": {
+    "x": 140,
+    "y": 230,
+    "width": 620,
+    "height": 90
+   },
+   "page": 3
+  },
+  {
+   "id": "pdf-2-2",
+   "type": "pdf-text",
+   "text": "Dropout randomly disables units so the network cannot co-adapt.",
+   "bbox": {
+    "x": 140,
+    "y": 340,
+    "width": 620,
+    "height": 90
+   },
+   "page": 3
+  },
+  {
+   "id": "pdf-2-3",
+   "type": "pdf-text",
+   "text": "The validation loss rises when the model starts to overfit.",
+   "bbox": {
+    "x": 140,
+    "y": 450,
+    "width": 620,
+    "height": 90
+   },
+   "page": 3
+  },
+  {
+   "id": "frag-0",
+   "type": "span",
+   "text": "Batch",
+   "bbox": {
+    "x": 150,
+    "y": 238,
+    "width": 60,
+    "height": 18
+   },
+   "page": 3
+  },
+  {
+   "id": "frag-1",
+   "type": "span",
+   "text": "normalization",
+   "bbox": {
+    "x": 220,
+    "y": 238,
+    "width": 60,
+    "height": 18
+   },
+   "page": 3
+  },
+  {
+   "id": "frag-2",
+   "type": "span",
+   "text": "rescales",
+   "bbox": {
+    "x": 290,
+    "y": 238,
+    "width": 60,
+    "height": 18
+   },
+   "page": 3
+  }
+ ],
+ "intended": [
+  "pdf-2-1"
+ ],
+ "ambiguous": false
+}

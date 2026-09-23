@@ -1,0 +1,248 @@
+{
+ "description": "loose circle around a whole section",
+ "category": "web",
+ "question": "summarize this",
+ "surface": "web",
+ "canvas": {
+  "width": 1280,
+  "height": 720
+ },
+ "marks": [
+  {
+   "type": "polygon",
+   "role": "reference",
+   "closed": true,
+   "points": [
+    [
+     820,
+     260
+    ],
+    [
+     815,
+     288
+    ],
+    [
+     802,
+     316
+    ],
+    [
+     780,
+     342
+    ],
+    [
+     749,
+     366
+    ],
+    [
+     712,
+     387
+    ],
+    [
+     667,
+     406
+    ],
+    [
+     618,
+     420
+    ],
+    [
+     564,
+     431
+    ],
+    [
+     508,
+     438
+    ],
+    [
+     450,
+     440
+    ],
+    [
+     392,
+     438
+    ],
+    [
+     336,
+     431
+    ],
+    [
+     282,
+     420
+    ],
+    [
+     233,
+     406
+    ],
+    [
+     188,
+     387
+    ],
+    [
+     151,
+     366
+    ],
+    [
+     120,
+     342
+    ],
+    [
+     98,
+     316
+    ],
+    [
+     85,
+     288
+    ],
+    [
+     80,
+     260
+    ],
+    [
+     85,
+     232
+    ],
+    [
+     98,
+     204
+    ],
+    [
+     120,
+     178
+    ],
+    [
+     151,
+     154
+    ],
+    [
+     188,
+     133
+    ],
+    [
+     233,
+     114
+    ],
+    [
+     282,
+     100
+    ],
+    [
+     336,
+     89
+    ],
+    [
+     392,
+     82
+    ],
+    [
+     450,
+     80
+    ],
+    [
+     508,
+     82
+    ],
+    [
+     564,
+     89
+    ],
+    [
+     618,
+     100
+    ],
+    [
+     667,
+     114
+    ],
+    [
+     712,
+     133
+    ],
+    [
+     749,
+     154
+    ],
+    [
+     780,
+     178
+    ],
+    [
+     802,
+     204
+    ],
+    [
+     815,
+     232
+    ],
+    [
+     820,
+     260
+    ]
+   ],
+   "x": 80,
+   "y": 80,
+   "width": 740,
+   "height": 360
+  }
+ ],
+ "anchors": [
+  {
+   "id": "section",
+   "type": "section",
+   "text": "Optimisers Gradient descent updates each weight in the direction that lowers the loss. See Adam for details. Momentum keeps a running average of past gradients to smooth the path.",
+   "bbox": {
+    "x": 100,
+    "y": 100,
+    "width": 700,
+    "height": 320
+   }
+  },
+  {
+   "id": "h",
+   "type": "h2",
+   "text": "Optimisers",
+   "bbox": {
+    "x": 120,
+    "y": 115,
+    "width": 300,
+    "height": 36
+   }
+  },
+  {
+   "id": "p1",
+   "type": "p",
+   "text": "Gradient descent updates each weight in the direction that lowers the loss. See Adam for details.",
+   "bbox": {
+    "x": 120,
+    "y": 165,
+    "width": 660,
+    "height": 70
+   }
+  },
+  {
+   "id": "link",
+   "type": "a",
+   "text": "Adam",
+   "bbox": {
+    "x": 560,
+    "y": 190,
+    "width": 52,
+    "height": 20
+   }
+  },
+  {
+   "id": "p2",
+   "type": "p",
+   "text": "Momentum keeps a running average of past gradients to smooth the path.",
+   "bbox": {
+    "x": 120,
+    "y": 250,
+    "width": 660,
+    "height": 70
+   }
+  }
+ ],
+ "intended": [
+  "section"
+ ],
+ "ambiguous": false
+}

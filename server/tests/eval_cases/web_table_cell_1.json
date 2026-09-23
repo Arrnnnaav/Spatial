@@ -1,0 +1,158 @@
+{
+ "description": "box around one table cell",
+ "category": "web",
+ "question": "why is this negative?",
+ "surface": "web",
+ "canvas": {
+  "width": 1280,
+  "height": 720
+ },
+ "marks": [
+  {
+   "type": "rectangle",
+   "role": "reference",
+   "x": 287,
+   "y": 241,
+   "width": 146,
+   "height": 50
+  }
+ ],
+ "anchors": [
+  {
+   "id": "c00",
+   "type": "td",
+   "text": "Q1",
+   "bbox": {
+    "x": 150,
+    "y": 200,
+    "width": 140,
+    "height": 44
+   }
+  },
+  {
+   "id": "c01",
+   "type": "td",
+   "text": "Q2",
+   "bbox": {
+    "x": 290,
+    "y": 200,
+    "width": 140,
+    "height": 44
+   }
+  },
+  {
+   "id": "c02",
+   "type": "td",
+   "text": "Q3",
+   "bbox": {
+    "x": 430,
+    "y": 200,
+    "width": 140,
+    "height": 44
+   }
+  },
+  {
+   "id": "c03",
+   "type": "td",
+   "text": "Q4",
+   "bbox": {
+    "x": 570,
+    "y": 200,
+    "width": 140,
+    "height": 44
+   }
+  },
+  {
+   "id": "c10",
+   "type": "td",
+   "text": "$1.2M",
+   "bbox": {
+    "x": 150,
+    "y": 244,
+    "width": 140,
+    "height": 44
+   }
+  },
+  {
+   "id": "c11",
+   "type": "td",
+   "text": "$1.5M",
+   "bbox": {
+    "x": 290,
+    "y": 244,
+    "width": 140,
+    "height": 44
+   }
+  },
+  {
+   "id": "c12",
+   "type": "td",
+   "text": "$0.9M",
+   "bbox": {
+    "x": 430,
+    "y": 244,
+    "width": 140,
+    "height": 44
+   }
+  },
+  {
+   "id": "c13",
+   "type": "td",
+   "text": "$2.1M",
+   "bbox": {
+    "x": 570,
+    "y": 244,
+    "width": 140,
+    "height": 44
+   }
+  },
+  {
+   "id": "c20",
+   "type": "td",
+   "text": "+12%",
+   "bbox": {
+    "x": 150,
+    "y": 288,
+    "width": 140,
+    "height": 44
+   }
+  },
+  {
+   "id": "c21",
+   "type": "td",
+   "text": "+25%",
+   "bbox": {
+    "x": 290,
+    "y": 288,
+    "width": 140,
+    "height": 44
+   }
+  },
+  {
+   "id": "c22",
+   "type": "td",
+   "text": "-40%",
+   "bbox": {
+    "x": 430,
+    "y": 288,
+    "width": 140,
+    "height": 44
+   }
+  },
+  {
+   "id": "c23",
+   "type": "td",
+   "text": "+133%",
+   "bbox": {
+    "x": 570,
+    "y": 288,
+    "width": 140,
+    "height": 44
+   }
+  }
+ ],
+ "intended": [
+  "c11"
+ ],
+ "ambiguous": false
+}

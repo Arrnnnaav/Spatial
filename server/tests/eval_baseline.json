@@ -1,0 +1,38 @@
+{
+  "cases": 50,
+  "top1": 0.92,
+  "top3": 1.0,
+  "abstain_rate": 0.0,
+  "by_category": {
+    "ambiguous": {
+      "cases": 8,
+      "top1": 1.0,
+      "top3": 1.0,
+      "abstain_rate": 0.0
+    },
+    "golden": {
+      "cases": 7,
+      "top1": 1.0,
+      "top3": 1.0,
+      "abstain_rate": 0.0
+    },
+    "ocr": {
+      "cases": 8,
+      "top1": 1.0,
+      "top3": 1.0,
+      "abstain_rate": 0.0
+    },
+    "pdf": {
+      "cases": 12,
+      "top1": 0.9167,
+      "top3": 1.0,
+      "abstain_rate": 0.0
+    },
+    "web": {
+      "cases": 15,
+      "top1": 0.8,
+      "top3": 1.0,
+      "abstain_rate": 0.0
+    }
+  }
+}

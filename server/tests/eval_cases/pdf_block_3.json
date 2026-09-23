@@ -1,0 +1,277 @@
+{
+ "description": "sloppy circle around one merged PDF block; glyph spans inside it",
+ "category": "pdf",
+ "question": "explain this paragraph",
+ "surface": "pdf",
+ "canvas": {
+  "width": 1280,
+  "height": 720
+ },
+ "marks": [
+  {
+   "type": "polygon",
+   "role": "reference",
+   "closed": true,
+   "points": [
+    [
+     767,
+     385
+    ],
+    [
+     763,
+     393
+    ],
+    [
+     751,
+     401
+    ],
+    [
+     732,
+     409
+    ],
+    [
+     706,
+     416
+    ],
+    [
+     674,
+     422
+    ],
+    [
+     636,
+     427
+    ],
+    [
+     594,
+     431
+    ],
+    [
+     548,
+     434
+    ],
+    [
+     500,
+     436
+    ],
+    [
+     450,
+     437
+    ],
+    [
+     400,
+     436
+    ],
+    [
+     352,
+     434
+    ],
+    [
+     306,
+     431
+    ],
+    [
+     264,
+     427
+    ],
+    [
+     226,
+     422
+    ],
+    [
+     194,
+     416
+    ],
+    [
+     168,
+     409
+    ],
+    [
+     149,
+     401
+    ],
+    [
+     137,
+     393
+    ],
+    [
+     133,
+     385
+    ],
+    [
+     137,
+     377
+    ],
+    [
+     149,
+     369
+    ],
+    [
+     168,
+     361
+    ],
+    [
+     194,
+     354
+    ],
+    [
+     226,
+     348
+    ],
+    [
+     264,
+     343
+    ],
+    [
+     306,
+     339
+    ],
+    [
+     352,
+     336
+    ],
+    [
+     400,
+     334
+    ],
+    [
+     450,
+     333
+    ],
+    [
+     500,
+     334
+    ],
+    [
+     548,
+     336
+    ],
+    [
+     594,
+     339
+    ],
+    [
+     636,
+     343
+    ],
+    [
+     674,
+     348
+    ],
+    [
+     706,
+     354
+    ],
+    [
+     732,
+     361
+    ],
+    [
+     751,
+     369
+    ],
+    [
+     763,
+     377
+    ],
+    [
+     767,
+     385
+    ]
+   ],
+   "x": 133,
+   "y": 333,
+   "width": 634,
+   "height": 104
+  }
+ ],
+ "anchors": [
+  {
+   "id": "pdf-3-0",
+   "type": "pdf-text",
+   "text": "Batch normalization rescales activations so training stays stable.",
+   "bbox": {
+    "x": 140,
+    "y": 120,
+    "width": 620,
+    "height": 90
+   },
+   "page": 4
+  },
+  {
+   "id": "pdf-3-1",
+   "type": "pdf-text",
+   "text": "Dropout randomly disables units so the network cannot co-adapt.",
+   "bbox": {
+    "x": 140,
+    "y": 230,
+    "width": 620,
+    "height": 90
+   },
+   "page": 4
+  },
+  {
+   "id": "pdf-3-2",
+   "type": "pdf-text",
+   "text": "The validation loss rises when the model starts to overfit.",
+   "bbox": {
+    "x": 140,
+    "y": 340,
+    "width": 620,
+    "height": 90
+   },
+   "page": 4
+  },
+  {
+   "id": "pdf-3-3",
+   "type": "pdf-text",
+   "text": "Gradient descent updates each weight in the direction that lowers the loss.",
+   "bbox": {
+    "x": 140,
+    "y": 450,
+    "width": 620,
+    "height": 90
+   },
+   "page": 4
+  },
+  {
+   "id": "frag-0",
+   "type": "span",
+   "text": "The",
+   "bbox": {
+    "x": 150,
+    "y": 348,
+    "width": 60,
+    "height": 18
+   },
+   "page": 4
+  },
+  {
+   "id": "frag-1",
+   "type": "span",
+   "text": "validation",
+   "bbox": {
+    "x": 220,
+    "y": 348,
+    "width": 60,
+    "height": 18
+   },
+   "page": 4
+  },
+  {
+   "id": "frag-2",
+   "type": "span",
+   "text": "loss",
+   "bbox": {
+    "x": 290,
+    "y": 348,
+    "width": 60,
+    "height": 18
+   },
+   "page": 4
+  }
+ ],
+ "intended": [
+  "pdf-3-2"
+ ],
+ "ambiguous": false
+}
