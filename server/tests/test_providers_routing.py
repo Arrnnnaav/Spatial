@@ -122,3 +122,24 @@ def test_timeout_skips_straight_to_fallback_model(monkeypatch):
 def test_auth_error_is_not_retried(monkeypatch):
     calls, meta = run_flaky(monkeypatch, failures=5, error=401, fallbacks=("backup-model",))
     assert calls == ["main-model"] and meta["status"] == "fallback"
+
+
+def test_empty_answer_counts_as_busy_and_is_retried(monkeypatch):
+    fake = {"p": ProviderConfig("p", "https://example", "key", "main-model", None, "openai", ("backup-model",))}
+    monkeypatch.setattr(providers.settings, "providers", fake, raising=False)
+    monkeypatch.setattr(providers.settings, "provider_order", ("p",), raising=False)
+    monkeypatch.setattr(providers, "RETRY_DELAY", 0.0)
+    calls = []
+
+    def fake_stream(config, prompt, image_data, use_vision=True):
+        calls.append(config.model)
+        if len(calls) <= 3:  # main model returns nothing three times
+            yield {"provider": "p", "model": config.model, "vision": False}
+            return
+        yield "real answer"
+        yield {"provider": "p", "model": config.model, "vision": False}
+
+    monkeypatch.setattr(providers, "stream_provider", fake_stream)
+    items = list(providers.answer_stream("q", {"title": "t"}, [{"id": "a", "type": "p", "text": "x"}], None))
+    assert calls == ["main-model"] * 3 + ["backup-model"]
+    assert "real answer" in items and items[-1]["model"] == "backup-model"

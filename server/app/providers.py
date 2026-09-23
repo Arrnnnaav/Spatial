@@ -100,8 +100,14 @@ PROVIDER_ATTEMPTS = settings.provider_attempts  # tries per model on "busy" erro
 _BUSY_STATUS = {429, 500, 502, 503, 504}
 
 
+class _EmptyAnswer(Exception):
+    """The provider finished without any answer text."""
+
+
 def _failure_kind(exc: Exception) -> str:
     """busy: retry the same model; model: try the next model in the chain (slow/missing); fatal: stop this provider."""
+    if isinstance(exc, _EmptyAnswer):
+        return "busy"
     if isinstance(exc, httpx.HTTPStatusError):
         status = exc.response.status_code
         if status in _BUSY_STATUS:
@@ -120,6 +126,8 @@ def classify_error(exc: Exception) -> tuple[str, str]:
     """Map an exception to (code, short message) so the client can react without parsing strings."""
     if isinstance(exc, httpx.TimeoutException):
         return ERR_TIMEOUT, "provider timed out"
+    if isinstance(exc, _EmptyAnswer):
+        return ERR_UPSTREAM, "provider returned an empty answer"
     if isinstance(exc, httpx.HTTPStatusError):
         status = exc.response.status_code
         if status in (401, 403):
@@ -573,6 +581,8 @@ def answer_stream(
                     try:
                         for item in stream_provider(model_config, prompt, image_data if use_vision else None, use_vision):
                             if isinstance(item, dict):
+                                if not produced:  # free-tier models sometimes stream nothing: treat as busy
+                                    raise _EmptyAnswer()
                                 item.update({
                                     "status": "generated",
                                     "sources": sources,

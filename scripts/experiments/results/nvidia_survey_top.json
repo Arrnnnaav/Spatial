@@ -1,0 +1,342 @@
+[
+ {
+  "model": "z-ai/glm-5.3",
+  "success": 1.0,
+  "correct": 1.0,
+  "median_s": 4.6,
+  "results": {
+   "math": [
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 5.3,
+     "answer": "The \"divide by 2\" comes from the constant multiple rule in derivatives.\n\nThe function is y = x²/2, which is just (1/2)·x². When you take a derivative, any constant multiplying the function just stays as a multiplier:\n\nd/dx [ (1/2)·x² ] = (1/2) · d/dx [ x² ] = (1/2) · 2x = x\n\nSo the steps in your not"
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 4.4,
+     "answer": "The 2 comes from the constant factor in the function itself, not from the derivative rule.\n\nThe function is y = x²/2, which is the same as y = ½·x². When you take a derivative, constant multipliers just stay put:\n\n- d/dx (x²) = 2x\n- So d/dx (½·x²) = ½ · (2x) = 2x/2 = **x**\n\nIn other words: the deriv"
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 3.1,
+     "answer": "The 2 comes from the original function, not from the derivative rule.\n\nThe function is **y = x²/2** (that is, ½x²). When you differentiate x² you get 2x. But since the whole thing is multiplied by ½, the derivative is also multiplied by ½:\n\nd/dx (x²/2) = (2x)/2 = **x**\n\nSo dividing by 2 just applies"
+    }
+   ],
+   "cited": [
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 4.6,
+     "answer": "Adam was introduced in 2014 by Diederik Kingma and Jimmy Ba [1]."
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 1.4,
+     "answer": "Adam was invented by Diederik Kingma and Jimmy Ba in 2014 [1]."
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 0.9,
+     "answer": "Adam was introduced in 2014 by Diederik Kingma and Jimmy Ba [1]."
+    }
+   ],
+   "debug": [
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 5.6,
+     "answer": "This error means you're calling `.map()` on a variable that is `undefined` at the time the code runs.\n\n**Example:**\n```js\nconst data = undefined;\ndata.map(x => x); // TypeError: Cannot read properties of undefined (reading 'map')\n```\n\n**Common causes:**\n\n1. **Data hasn't loaded yet** — e.g. fetching"
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 5.1,
+     "answer": "This error means you called `.map()` on something that's `undefined` instead of an array.\n\n**Example:**\n```js\nconst data = undefined;\ndata.map(x => x * 2); // ❌ TypeError: Cannot read properties of undefined (reading 'map')\n```\n\n**Common causes:**\n\n1. **Data hasn't loaded yet** — e.g., you fetch dat"
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 6.0,
+     "answer": "This error means you called `.map()` on a variable that is `undefined` at the time it runs.\n\n**Why it happens:**\n\n```js\nitems.map(item => ...)\n```\n\nIf `items` is `undefined`, JavaScript tries to read the property `map` from it, and `undefined` has no properties — hence \"Cannot read properties of und"
+    }
+   ]
+  }
+ },
+ {
+  "model": "meta/muse-glimmer-30b",
+  "success": 1.0,
+  "correct": 1.0,
+  "median_s": 5.4,
+  "results": {
+   "math": [
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 20.1,
+     "answer": "The marked line is applying the constant-multiple rule for differentiation.\n\nYou have $y = \\frac{x^{2}}{2} = \\frac12\\,x^{2}$.\n\n$d/dx$ of $x^{2}$ is $2x$.  \nBecause the $x^{2}$ is multiplied by the constant $1/2$, its derivative is multiplied by the same constant:\n\n$\\displaystyle \\frac{d}{dx}\\!\\left["
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 5.4,
+     "answer": "The marked line is using the constant-multiple rule for derivatives.\n\nYou have $y = \\frac{x^{2}}{2} = \\frac12\\,x^{2}$.\n\n$d/dx$ of $x^{2}$ is $2x$. \nBecause the $x^{2}$ is multiplied by the constant $1/2$, the derivative of the whole product is the constant times the derivative:\n\n$\\displaystyle \\frac"
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 2.6,
+     "answer": "The marked line is applying the constant-multiple rule for differentiation.\n\nYou have $y = \\frac{x^{2}}{2} = \\frac12\\,x^{2}$.\n\n$d/dx$ of $x^{2}$ is $2x$. \nBecause $y$ is $\\tfrac12$ times $x^{2}$, the derivative is $\\tfrac12$ times the derivative of $x^{2}$:\n\n$\\displaystyle \\frac{d}{dx}\\!\\left[\\frac1"
+    }
+   ],
+   "cited": [
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 2.3,
+     "answer": "Diederik Kingma and Jimmy Ba introduced Adam in 2014 [1]."
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 2.0,
+     "answer": "Diederik Kingma and Jimmy Ba introduced it in 2014 [1]"
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 1.5,
+     "answer": "Diederik Kingma and Jimmy Ba introduced Adam in 2014 [1]."
+    }
+   ],
+   "debug": [
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 6.4,
+     "answer": "That error means you tried to call `.map(...)` on a value that is `undefined`.\n\n`reading 'map'` is the property access part, and `Cannot read properties of undefined` means the thing on the left of `.map` is `undefined`, not an array.\n\nTypical causes in Notes / web code:\n\n* You are doing `someValue."
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 20.3,
+     "answer": "That error means code is trying to do `.map(...)` on a value that is `undefined`.\n\n`Cannot read properties of undefined (reading 'map')` is JavaScript's way of saying:\n* you have a variable / expression that is `undefined`\n* and you then try to access `.map` on it, i.e. call it as an array method\n\nT"
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 20.1,
+     "answer": "That error means you are calling `.map()` on a value that is `undefined`.\n\n`Cannot read properties of undefined (reading 'map')` is JavaScript’s way of saying:\n\n* you have an expression like `something.map(...)`\n* but `something` is `undefined` at the time the code runs, so it has no `map` property "
+    }
+   ]
+  }
+ },
+ {
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "success": 0.8888888888888888,
+  "correct": 0.8888888888888888,
+  "median_s": 2.75,
+  "results": {
+   "math": [
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 3.3,
+     "answer": "The step divides by 2 because the function being considered is \\( y = \\frac{x^2}{2} \\), not \\( y = x^2 \\).  \n\nWe start with the derivative of \\( x^2 \\), which is \\( \\frac{d}{dx}(x^2) = 2x \\).  \n\nBut since \\( y = \\frac{x^2}{2} \\), we apply the constant multiple rule:  \n\\[\n\\frac{dy}{dx} = \\frac{d}{dx}"
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 3.3,
+     "answer": "The step divides by 2 because the function being considered is \\( y = \\frac{x^2}{2} \\), not \\( y = x^2 \\).  \n\nWe know that the derivative of \\( x^2 \\) is \\( 2x \\).  \nSo, for \\( y = \\frac{1}{2} x^2 \\), we apply the constant multiple rule:  \n\\[\n\\frac{d}{dx} \\left( \\frac{1}{2} x^2 \\right) = \\frac{1}{2}"
+    },
+    {
+     "ok": false,
+     "correct": false,
+     "seconds": 0.6,
+     "answer": ""
+    }
+   ],
+   "cited": [
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 2.0,
+     "answer": "Adam was introduced in 2014 by Diederik Kingma and Jimmy Ba. [1]"
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 2.6,
+     "answer": "Adam was introduced in 2014 by Diederik Kingma and Jimmy Ba. [1]"
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 0.7,
+     "answer": "Adam optimizer was invented by Diederik Kingma and Jimmy Ba in 2014. [1]"
+    }
+   ],
+   "debug": [
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 2.9,
+     "answer": "You're getting this error because you're trying to call `.map()` on a value that is `undefined`. This usually happens when you expect an array (like data from an API or state) but it hasn't been initialized or loaded yet.\n\nFor example:\n```javascript\n// ❌ This causes the error if `items` is undefined"
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 3.1,
+     "answer": "You're getting this error because you're trying to call `.map()` on a value that is `undefined`. In JavaScript, only arrays (and some other iterables) have a `.map()` method. If the variable you're calling `.map()` on hasn't been assigned a value or is explicitly `undefined`, this error occurs.\n\nFor"
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 1.9,
+     "answer": "The error `TypeError: Cannot read properties of undefined (reading 'map')` means you're trying to call `.map()` on a variable that is `undefined`.\n\nThis commonly happens when:\n- You expect an array (like from props, state, or an API response), but it hasn’t been initialized yet.\n- For example: `item"
+    }
+   ]
+  }
+ },
+ {
+  "model": "nvidia/ising-calibration-1.5-31b",
+  "success": 1.0,
+  "correct": 0.6666666666666666,
+  "median_s": 6.1,
+  "results": {
+   "math": [
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 23.9,
+     "answer": "The division by 2 in the final step is necessary because the original function being plotted is y = x^2/2, not y = x^2. When we calculate the derivative of the entire function, we must account for the constant factor (1/2) that multiplies the x^2 term.\n\nSpecifically:\n- The derivative of x^2 is 2x.\n-"
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 6.8,
+     "answer": "The division by 2 in the expression (2x)/2 = x is necessary because the original function being analyzed is y = x^2/2, not y = x^2. When calculating the slope (derivative) of a function, you must account for any constant factors outside the derivative operator. Since the function is scaled by 1/2, t"
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 2.3,
+     "answer": "The derivative of y = x^2/2 is found by applying the chain rule to the composition of functions. Since y = (1/2) * x^2, the derivative is (1/2) * (d/dx)(x^2). The derivative of x^2 is 2x, so the final result is (1/2) * 2x = x. The division by 2 accounts for the constant factor in the original functi"
+    }
+   ],
+   "cited": [
+    {
+     "ok": true,
+     "correct": false,
+     "seconds": 1.0,
+     "answer": "Adam optimizer was invented by Diederik Kingma and Jimmy Ba in 2014."
+    },
+    {
+     "ok": true,
+     "correct": false,
+     "seconds": 1.1,
+     "answer": "Diederik Kingma and Jimmy Ba invented the Adam optimizer in 2014."
+    },
+    {
+     "ok": true,
+     "correct": false,
+     "seconds": 1.1,
+     "answer": "Adam was invented by Diederik Kingma and Jimmy Ba in 2014."
+    }
+   ],
+   "debug": [
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 9.8,
+     "answer": "Based on the provided error message and the context of the image, here is my analysis:\n\n**Analysis of the Error**\nThe error message \"TypeError: Cannot read properties of undefined (reading 'map')\" indicates a fundamental issue with data handling in the JavaScript code. In this specific context, the "
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 6.1,
+     "answer": "Based on the provided error message and the context of the image, here is my analysis:\n\n**Analysis of the Error**\nThe error message \"TypeError: Cannot read properties of undefined (reading 'map')\" indicates a fundamental issue with data handling in the JavaScript code. In this specific context, the "
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 10.4,
+     "answer": "Based on the provided image and the extracted text, here is an analysis of the marked region:\n\n**Analysis of the Marked Region**\nThe user has circled a specific line of code within a JavaScript file (likely a React component) that is causing a runtime error. The error message is:\n```\nTypeError: Cann"
+    }
+   ]
+  }
+ },
+ {
+  "model": "nvidia/nemotron-3-ultra-550b-a55b",
+  "success": 0.5555555555555556,
+  "correct": 0.5555555555555556,
+  "median_s": 4.6,
+  "results": {
+   "math": [
+    {
+     "ok": false,
+     "correct": false,
+     "seconds": 0.9,
+     "answer": ""
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 5.5,
+     "answer": "The marked step is finding the derivative of **y = x²/2**.\n\nSince the derivative of **x²** is **2x**, and the function has a **1/2** factor, the constant multiple rule gives:\n\\[\n\\frac{d}{dx}\\left(\\frac{1}{2}x^2\\right) = \\frac{1}{2} \\cdot \\frac{d}{dx}(x^2) = \\frac{1}{2} \\cdot 2x = x\n\\]\n\n**Dividing by"
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 4.6,
+     "answer": "The marked step is finding the derivative of **y = x²/2**.\n\n**Why divide by 2?**\nBecause the **1/2 is a constant coefficient**. The rule is: *constants \"tag along\"* when differentiating.\n\n**Step-by-step:**\n1.  **Function:** y = (1/2) · x²\n2.  **Derivative of x²:** 2x\n3.  **Keep the constant:** (1/2)"
+    }
+   ],
+   "cited": [
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 1.4,
+     "answer": "Adam was introduced in 2014 by Diederik Kingma and Jimmy Ba [1]."
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 2.5,
+     "answer": "Adam was introduced in 2014 by Diederik Kingma and Jimmy Ba [1]."
+    },
+    {
+     "ok": false,
+     "correct": false,
+     "seconds": 0.7,
+     "answer": ""
+    }
+   ],
+   "debug": [
+    {
+     "ok": false,
+     "correct": false,
+     "seconds": 0.7,
+     "answer": ""
+    },
+    {
+     "ok": false,
+     "correct": false,
+     "seconds": 0.6,
+     "answer": ""
+    },
+    {
+     "ok": true,
+     "correct": true,
+     "seconds": 36.8,
+     "answer": "This error means you are calling `.map()` on a variable that is **`undefined`**.\n\n### The Fix\nAdd a fallback (default to an empty array) before mapping:\n\n```jsx\n// Before (crashes if data.items is missing)\n{data.items.map(item => <div key={item.id}>{item.name}</div>)}\n\n// After (safe)\n{(data.items |"
+    }
+   ]
+  }
+ }
+]

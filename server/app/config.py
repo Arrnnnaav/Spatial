@@ -129,7 +129,7 @@ class Settings:
                 _env("NVIDIA_MODEL", "nvidia/nemotron-3-super-120b-a12b"),
                 _env("NVIDIA_VISION_MODEL", "meta/llama-3.2-11b-vision-instruct"),
                 "openai",
-                _models(_env("NVIDIA_FALLBACK_MODELS", "nvidia/nemotron-3-ultra-550b-a55b")),
+                _models(_env("NVIDIA_FALLBACK_MODELS", "z-ai/glm-5.3,meta/muse-glimmer-30b")),
             ),
             "openai": ProviderConfig(
                 "openai",

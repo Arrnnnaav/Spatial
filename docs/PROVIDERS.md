@@ -34,7 +34,15 @@ account` or `410 Gone` (retired). Probed on 2026-09-16, these answered:
 | `openai/gpt-oss-20b` | text | clean answers, ~10 s — **default** |
 | `nvidia/nemotron-3-super-120b-a12b` | text | strong, slower |
 | `nvidia/nemotron-3-super-120b-a12b` | text | **default (2026-09-24)**: reasons then answers correctly in ~2–4 s; free tier returns occasional 503s (retried once) |
-| `nvidia/nemotron-3.5-lightning-30b-a3b` | text | times out for this account (2026-09-24) — do not use |
+| `z-ai/glm-5.3` | text | **fallback 1**: 9/9 correct in survey, ~4.6 s median |
+| `meta/muse-glimmer-30b` | text | **fallback 2**: 9/9 correct, ~5.4 s median |
+| `nvidia/nemotron-3-ultra-550b-a55b` | text | 5/9 (4 empty answers) — not used |
+| `nvidia/ising-calibration-1.5-31b` | text | answers right but drops `[n]` citations — not used |
+| `nvidia/nemotron-3.5-lightning-30b-a3b` | text | unreliable/slow for this account — do not use |
+
+Survey: `python scripts/survey_nvidia_models.py [--runs 3 --models a,b]` (math, cited-research and debug tasks through the
+real provider code). Retry policy: busy (429/5xx/connection/empty answer) → up to `SPATIAL_PROVIDER_ATTEMPTS` (3)
+tries with 0.5 s / 1 s backoff; timeout or missing model → next model in `NVIDIA_FALLBACK_MODELS`; 401/403/400 → stop.
 | `z-ai/glm-5.3` | text | |
 | `meta/llama-3.2-11b-vision-instruct` | vision | sees the crop, ~8–15 s — **default vision** |
 | `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` | vision + reasoning | |
