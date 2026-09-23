@@ -1,4 +1,4 @@
-"""Golden resolver cases (synced from StudyOS packages/spatial-core/cases by scripts/sync_spatial.py).
+"""Golden resolver cases (tests/cases/*.json).
 Runs each case through app.resolver.resolve_marks and, when node is available, through
 extension/geometry.js to prove client and server rank anchors identically."""
 
@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT))
 from app.resolver import resolve_marks  # noqa: E402
 
 CASES = sorted((Path(__file__).parent / "cases").glob("*.json"))
+EVAL_CASES = sorted((Path(__file__).parent / "eval_cases").glob("*.json"))
 GEOMETRY = ROOT.parent / "extension" / "geometry.js"
 NODE = shutil.which("node")
 
@@ -66,7 +67,7 @@ def test_python_matches_expectation(case_path: Path):
     NODE is None or not GEOMETRY.exists(),
     reason="node or extension/geometry.js missing",
 )
-@pytest.mark.parametrize("case_path", CASES, ids=[p.stem for p in CASES])
+@pytest.mark.parametrize("case_path", CASES + EVAL_CASES, ids=[p.stem for p in CASES + EVAL_CASES])
 def test_js_matches_python(case_path: Path):
     case = json.loads(case_path.read_text(encoding="utf-8"))
     js = json.loads(

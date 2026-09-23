@@ -71,7 +71,7 @@ def test_ask_with_research_returns_sources(monkeypatch):
                 "research": True,
                 "marks": [
                     {
-                        "type": "rect",
+                        "type": "rectangle",
                         "role": "reference",
                         "x": 10,
                         "y": 10,

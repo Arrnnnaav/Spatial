@@ -30,7 +30,7 @@ code or git log. Newest first within each section. Remove entries that become wr
   saturates) and #208 (calibration numbers don't reproduce).
 - User linked "layacheck" — that repo 404s; assumed `laya`.
 - Server reads `server/.env` via python-dotenv (`server/app/config.py`).
-- Baseline tests (2026-09-23): server pytest 33 passed; extension geometry tests pass.
+- Tests (2026-09-23, after sub-project 1): server pytest 117 passed; extension geometry tests pass.
 - TypeSafe plugin installed at user scope (`typesafe@typesafe-ai` v0.5.7); its skill appears after a
   Claude Code restart (skill file: `~/.claude/plugins/cache/typesafe-ai/typesafe/*/skills/typesafe-ai/SKILL.md`).
 
@@ -38,11 +38,21 @@ code or git log. Newest first within each section. Remove entries that become wr
   tokens for 2 candidates. Thin criteria ("candidate A") → Jev chose `none` (confidence 0.17): criteria must
   describe each candidate concretely.
 
+- **2026-09-23** — Resolver eval baseline (50 cases: 7 golden + 43 generated): top-1 92%, top-3 100%, abstain 0%.
+  Misses: all 3 point-on-toolbar-button cases (container and button tie at 0.95, longer text wins → container),
+  1 PDF underline. Ambiguous cases are never flagged (confidence is hand-tuned) — the main target for Jev.
+- **2026-09-23** — OCR (RapidOCR) verified locally: returns per-word/phrase boxes, e.g. "Revenue" + "by quarter".
+- **2026-09-23** — With OCR candidates, the "diagram" note is only added when OCR also found no text.
+- **2026-09-23** — A request without `protocol_version` is v2; v3 = version >= 3 or a `context` field.
+
 ## Gotchas
 
+- JS `slice()` can cut an emoji in half; Python/pydantic reject lone surrogates. v2 text goes through `contracts._text` to repair them.
+- CORS allows only extension origins; a future desktop (Tauri) client origin must be added explicitly.
+
+- A PostToolUse formatter hook reformats Python files after every Write/Edit: re-read before exact-string edits, and don't rely on trailing blank lines in generated blocks.
 - Resolver confidence is hand-tuned, not measured — don't trust it for decisions until calibrated.
 - JS `geometry.js::rankAnchors` and Python `resolver.py` must stay identical (golden parity test).
-- `extension/detect.js` is dead (dashboard-only, not in manifest).
 - UIA can't read elevated windows from a non-elevated process; Electron apps expose UIA only after
   accessibility is enabled; canvas/game/video apps expose nothing → OCR/vision.
 

@@ -1,0 +1,90 @@
+{
+ "description": "point mark on a toolbar button (container also contains the point)",
+ "category": "web",
+ "question": "what does this do?",
+ "surface": "web",
+ "canvas": {
+  "width": 1280,
+  "height": 720
+ },
+ "marks": [
+  {
+   "type": "point",
+   "role": "reference",
+   "x": 420.0,
+   "y": 24.0
+  }
+ ],
+ "anchors": [
+  {
+   "id": "toolbar",
+   "type": "div",
+   "text": "File Edit View Run Help",
+   "bbox": {
+    "x": 0,
+    "y": 0,
+    "width": 1280,
+    "height": 48
+   }
+  },
+  {
+   "id": "b0",
+   "type": "button",
+   "text": "File",
+   "bbox": {
+    "x": 20,
+    "y": 8,
+    "width": 80,
+    "height": 32
+   }
+  },
+  {
+   "id": "b1",
+   "type": "button",
+   "text": "Edit",
+   "bbox": {
+    "x": 110,
+    "y": 8,
+    "width": 80,
+    "height": 32
+   }
+  },
+  {
+   "id": "b2",
+   "type": "button",
+   "text": "View",
+   "bbox": {
+    "x": 200,
+    "y": 8,
+    "width": 80,
+    "height": 32
+   }
+  },
+  {
+   "id": "b3",
+   "type": "button",
+   "text": "Run",
+   "bbox": {
+    "x": 290,
+    "y": 8,
+    "width": 80,
+    "height": 32
+   }
+  },
+  {
+   "id": "b4",
+   "type": "button",
+   "text": "Help",
+   "bbox": {
+    "x": 380,
+    "y": 8,
+    "width": 80,
+    "height": 32
+   }
+  }
+ ],
+ "intended": [
+  "b4"
+ ],
+ "ambiguous": false
+}

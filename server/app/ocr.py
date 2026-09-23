@@ -16,21 +16,34 @@ def _engine():
         return None
 
 
-def ocr_image(image_data: str | None) -> str:
+def ocr_blocks(image_data: str | None) -> list[dict]:
+    """Text blocks with boxes in crop px: [{text, bbox: {x, y, width, height}, confidence}], reading order as given."""
     if not image_data:
-        return ""
+        return []
     engine = _engine()
     if engine is None:
-        return ""
+        return []
     try:
         from PIL import Image
+        import numpy as np
         raw = base64.b64decode(image_data.split(",", 1)[-1])
         image = Image.open(io.BytesIO(raw)).convert("RGB")
-        import numpy as np
         result, _ = engine(np.array(image))
-        if not result:
-            return ""
-        # RapidOCR returns [box, text, score]; keep reading order as given and join lines.
-        return "\n".join(str(item[1]).strip() for item in result if len(item) > 1 and float(item[2]) >= 0.4).strip()
+        blocks = []
+        # RapidOCR returns [box (4 corner points), text, score].
+        for item in result or []:
+            if len(item) < 3:
+                continue
+            text, score = str(item[1]).strip(), float(item[2])
+            if not text or score < 0.4:
+                continue
+            xs, ys = [float(p[0]) for p in item[0]], [float(p[1]) for p in item[0]]
+            blocks.append({"text": text, "confidence": round(score, 3),
+                           "bbox": {"x": min(xs), "y": min(ys), "width": max(xs) - min(xs), "height": max(ys) - min(ys)}})
+        return blocks
     except Exception:
-        return ""
+        return []
+
+
+def ocr_image(image_data: str | None) -> str:
+    return "\n".join(block["text"] for block in ocr_blocks(image_data)).strip()

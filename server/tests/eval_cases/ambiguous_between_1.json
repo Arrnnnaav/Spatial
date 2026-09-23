@@ -1,0 +1,71 @@
+{
+ "description": "box straddling two paragraphs equally",
+ "category": "ambiguous",
+ "question": "explain this",
+ "surface": "web",
+ "canvas": {
+  "width": 1280,
+  "height": 720
+ },
+ "marks": [
+  {
+   "type": "rectangle",
+   "role": "reference",
+   "x": 160,
+   "y": 99,
+   "width": 400,
+   "height": 80
+  }
+ ],
+ "anchors": [
+  {
+   "id": "p0",
+   "type": "p",
+   "text": "Gradient descent updates each weight in the direction that lowers the loss.",
+   "bbox": {
+    "x": 120,
+    "y": 80,
+    "width": 640,
+    "height": 52
+   }
+  },
+  {
+   "id": "p1",
+   "type": "p",
+   "text": "The learning rate controls how far each update moves the parameters.",
+   "bbox": {
+    "x": 120,
+    "y": 146,
+    "width": 640,
+    "height": 52
+   }
+  },
+  {
+   "id": "p2",
+   "type": "p",
+   "text": "Momentum keeps a running average of past gradients to smooth the path.",
+   "bbox": {
+    "x": 120,
+    "y": 212,
+    "width": 640,
+    "height": 52
+   }
+  },
+  {
+   "id": "p3",
+   "type": "p",
+   "text": "Batch normalization rescales activations so training stays stable.",
+   "bbox": {
+    "x": 120,
+    "y": 278,
+    "width": 640,
+    "height": 52
+   }
+  }
+ ],
+ "intended": [
+  "p0",
+  "p1"
+ ],
+ "ambiguous": true
+}

@@ -1,0 +1,145 @@
+{
+ "description": "open stroke drawn under one line of text",
+ "category": "pdf",
+ "question": "what does this mean?",
+ "surface": "pdf",
+ "canvas": {
+  "width": 1280,
+  "height": 720
+ },
+ "marks": [
+  {
+   "type": "polygon",
+   "role": "reference",
+   "closed": false,
+   "points": [
+    [
+     140,
+     314
+    ],
+    [
+     202,
+     315
+    ],
+    [
+     264,
+     314
+    ],
+    [
+     326,
+     315
+    ],
+    [
+     388,
+     314
+    ],
+    [
+     450,
+     315
+    ],
+    [
+     512,
+     314
+    ],
+    [
+     574,
+     315
+    ],
+    [
+     636,
+     314
+    ],
+    [
+     698,
+     315
+    ],
+    [
+     760,
+     314
+    ]
+   ],
+   "x": 100,
+   "y": 274,
+   "width": 700,
+   "height": 81
+  }
+ ],
+ "anchors": [
+  {
+   "id": "l0",
+   "type": "pdf-text",
+   "text": "Momentum keeps a running average of past gradients to smooth the path.",
+   "bbox": {
+    "x": 140,
+    "y": 150,
+    "width": 620,
+    "height": 24
+   },
+   "page": 2
+  },
+  {
+   "id": "l1",
+   "type": "pdf-text",
+   "text": "Batch normalization rescales activations so training stays stable.",
+   "bbox": {
+    "x": 140,
+    "y": 184,
+    "width": 620,
+    "height": 24
+   },
+   "page": 2
+  },
+  {
+   "id": "l2",
+   "type": "pdf-text",
+   "text": "Dropout randomly disables units so the network cannot co-adapt.",
+   "bbox": {
+    "x": 140,
+    "y": 218,
+    "width": 620,
+    "height": 24
+   },
+   "page": 2
+  },
+  {
+   "id": "l3",
+   "type": "pdf-text",
+   "text": "The validation loss rises when the model starts to overfit.",
+   "bbox": {
+    "x": 140,
+    "y": 252,
+    "width": 620,
+    "height": 24
+   },
+   "page": 2
+  },
+  {
+   "id": "l4",
+   "type": "pdf-text",
+   "text": "Gradient descent updates each weight in the direction that lowers the loss.",
+   "bbox": {
+    "x": 140,
+    "y": 286,
+    "width": 620,
+    "height": 24
+   },
+   "page": 2
+  },
+  {
+   "id": "l5",
+   "type": "pdf-text",
+   "text": "The learning rate controls how far each update moves the parameters.",
+   "bbox": {
+    "x": 140,
+    "y": 320,
+    "width": 620,
+    "height": 24
+   },
+   "page": 2
+  }
+ ],
+ "intended": [
+  "l4"
+ ],
+ "ambiguous": false
+}

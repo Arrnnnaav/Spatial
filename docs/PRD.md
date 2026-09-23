@@ -39,7 +39,7 @@ meant, shows it (highlight), and answers about exactly that — optionally with 
 
 - **Accuracy + OS-level reach over local/privacy.** Cloud APIs are acceptable. Existing privacy tiers stay
   but get no new investment for now.
-- Spatial is an **independent product** (StudyOS coupling is being removed).
+- Spatial is an **independent, standalone product**.
 - **Jev (TypeSafe)** is used for System-One judgments (which object, ambiguous?, routing). **Laya** is evaluated
   on the same protocol and is the path to our own fine-tuned, free resolver later.
 

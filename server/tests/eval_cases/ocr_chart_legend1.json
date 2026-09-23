@@ -1,0 +1,125 @@
+{
+ "description": "canvas chart: only OCR blocks carry text; box around one label",
+ "category": "ocr",
+ "question": "what does this mean?",
+ "surface": "web",
+ "canvas": {
+  "width": 1280,
+  "height": 720
+ },
+ "marks": [
+  {
+   "type": "rectangle",
+   "role": "reference",
+   "x": 895,
+   "y": 185,
+   "width": 70,
+   "height": 30
+  }
+ ],
+ "anchors": [
+  {
+   "id": "chart",
+   "type": "canvas",
+   "text": "",
+   "bbox": {
+    "x": 140,
+    "y": 100,
+    "width": 900,
+    "height": 580
+   }
+  },
+  {
+   "id": "ocr-0",
+   "type": "ocr",
+   "text": "Revenue by quarter",
+   "bbox": {
+    "x": 420,
+    "y": 110,
+    "width": 300,
+    "height": 30
+   }
+  },
+  {
+   "id": "ocr-1",
+   "type": "ocr",
+   "text": "2025",
+   "bbox": {
+    "x": 900,
+    "y": 160,
+    "width": 60,
+    "height": 20
+   }
+  },
+  {
+   "id": "ocr-2",
+   "type": "ocr",
+   "text": "2026",
+   "bbox": {
+    "x": 900,
+    "y": 190,
+    "width": 60,
+    "height": 20
+   }
+  },
+  {
+   "id": "ocr-3",
+   "type": "ocr",
+   "text": "Quarter",
+   "bbox": {
+    "x": 560,
+    "y": 640,
+    "width": 100,
+    "height": 22
+   }
+  },
+  {
+   "id": "ocr-4",
+   "type": "ocr",
+   "text": "USD (millions)",
+   "bbox": {
+    "x": 150,
+    "y": 360,
+    "width": 130,
+    "height": 22
+   }
+  },
+  {
+   "id": "ocr-5",
+   "type": "ocr",
+   "text": "2.1",
+   "bbox": {
+    "x": 760,
+    "y": 230,
+    "width": 40,
+    "height": 20
+   }
+  },
+  {
+   "id": "ocr-6",
+   "type": "ocr",
+   "text": "Source: internal finance report",
+   "bbox": {
+    "x": 400,
+    "y": 675,
+    "width": 320,
+    "height": 18
+   }
+  },
+  {
+   "id": "ocr-7",
+   "type": "ocr",
+   "text": "Q3",
+   "bbox": {
+    "x": 640,
+    "y": 610,
+    "width": 30,
+    "height": 20
+   }
+  }
+ ],
+ "intended": [
+  "ocr-2"
+ ],
+ "ambiguous": false
+}

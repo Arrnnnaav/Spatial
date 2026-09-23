@@ -1,0 +1,277 @@
+{
+ "description": "sloppy circle around one merged PDF block; glyph spans inside it",
+ "category": "pdf",
+ "question": "explain this paragraph",
+ "surface": "pdf",
+ "canvas": {
+  "width": 1280,
+  "height": 720
+ },
+ "marks": [
+  {
+   "type": "polygon",
+   "role": "reference",
+   "closed": true,
+   "points": [
+    [
+     782,
+     385
+    ],
+    [
+     778,
+     395
+    ],
+    [
+     766,
+     406
+    ],
+    [
+     746,
+     415
+    ],
+    [
+     719,
+     424
+    ],
+    [
+     685,
+     432
+    ],
+    [
+     645,
+     439
+    ],
+    [
+     601,
+     445
+    ],
+    [
+     553,
+     449
+    ],
+    [
+     502,
+     451
+    ],
+    [
+     450,
+     452
+    ],
+    [
+     398,
+     451
+    ],
+    [
+     347,
+     449
+    ],
+    [
+     299,
+     445
+    ],
+    [
+     255,
+     439
+    ],
+    [
+     215,
+     432
+    ],
+    [
+     181,
+     424
+    ],
+    [
+     154,
+     415
+    ],
+    [
+     134,
+     406
+    ],
+    [
+     122,
+     395
+    ],
+    [
+     118,
+     385
+    ],
+    [
+     122,
+     375
+    ],
+    [
+     134,
+     364
+    ],
+    [
+     154,
+     355
+    ],
+    [
+     181,
+     346
+    ],
+    [
+     215,
+     338
+    ],
+    [
+     255,
+     331
+    ],
+    [
+     299,
+     325
+    ],
+    [
+     347,
+     321
+    ],
+    [
+     398,
+     319
+    ],
+    [
+     450,
+     318
+    ],
+    [
+     502,
+     319
+    ],
+    [
+     553,
+     321
+    ],
+    [
+     601,
+     325
+    ],
+    [
+     645,
+     331
+    ],
+    [
+     685,
+     338
+    ],
+    [
+     719,
+     346
+    ],
+    [
+     746,
+     355
+    ],
+    [
+     766,
+     364
+    ],
+    [
+     778,
+     375
+    ],
+    [
+     782,
+     385
+    ]
+   ],
+   "x": 118,
+   "y": 318,
+   "width": 664,
+   "height": 134
+  }
+ ],
+ "anchors": [
+  {
+   "id": "pdf-0-0",
+   "type": "pdf-text",
+   "text": "Gradient descent updates each weight in the direction that lowers the loss.",
+   "bbox": {
+    "x": 140,
+    "y": 120,
+    "width": 620,
+    "height": 90
+   },
+   "page": 1
+  },
+  {
+   "id": "pdf-0-1",
+   "type": "pdf-text",
+   "text": "The learning rate controls how far each update moves the parameters.",
+   "bbox": {
+    "x": 140,
+    "y": 230,
+    "width": 620,
+    "height": 90
+   },
+   "page": 1
+  },
+  {
+   "id": "pdf-0-2",
+   "type": "pdf-text",
+   "text": "Momentum keeps a running average of past gradients to smooth the path.",
+   "bbox": {
+    "x": 140,
+    "y": 340,
+    "width": 620,
+    "height": 90
+   },
+   "page": 1
+  },
+  {
+   "id": "pdf-0-3",
+   "type": "pdf-text",
+   "text": "Batch normalization rescales activations so training stays stable.",
+   "bbox": {
+    "x": 140,
+    "y": 450,
+    "width": 620,
+    "height": 90
+   },
+   "page": 1
+  },
+  {
+   "id": "frag-0",
+   "type": "span",
+   "text": "Momentum",
+   "bbox": {
+    "x": 150,
+    "y": 348,
+    "width": 60,
+    "height": 18
+   },
+   "page": 1
+  },
+  {
+   "id": "frag-1",
+   "type": "span",
+   "text": "keeps",
+   "bbox": {
+    "x": 220,
+    "y": 348,
+    "width": 60,
+    "height": 18
+   },
+   "page": 1
+  },
+  {
+   "id": "frag-2",
+   "type": "span",
+   "text": "a",
+   "bbox": {
+    "x": 290,
+    "y": 348,
+    "width": 60,
+    "height": 18
+   },
+   "page": 1
+  }
+ ],
+ "intended": [
+  "pdf-0-2"
+ ],
+ "ambiguous": false
+}

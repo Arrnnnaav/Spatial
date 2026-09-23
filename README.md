@@ -83,14 +83,17 @@ cd extension && node --test tests/geometry.test.mjs
 python scripts/try_providers.py           # live check of configured providers, OCR, STT, TTS
 ```
 
-## Origin and sync
+## Tracing (opt-in)
 
-Extracted from the StudyOS learning platform so the primitive can be used on its own or dropped into another
-product. The two repos now share code both ways via `D:/unified/learning-platform/scripts/sync_spatial.py`:
+Toggle **Keep a local trace log** in the extension popup, or set `SPATIAL_TRACE=on` in `server/.env`. Each ask
+appends one JSON line (question, answer, marks, candidates, what was resolved, timings — never images) to
+`%APPDATA%\Spatial\logs\YYYY-MM-DD.jsonl` (override with `SPATIAL_LOG_DIR`). Kept 14 days / 50 MB.
+`GET /api/traces/export` downloads everything; `DELETE /api/traces` wipes it.
 
-- `extension/*` (everything except `config.js` and `manifest.json`) is copied **from** StudyOS
-  `apps/extension`; edit it there. `config.js` is the build flavour (mode, API base, paths, feature flags).
-- `server/app/{providers,ocr,audio}.py` are the source of truth and are copied **to** StudyOS
-  `services/api/app/core/spatial/`; `server/app/resolver.py` and `server/tests/cases/*.json` come from StudyOS.
+## Eval
 
-`python scripts/sync_spatial.py --check` (run from the StudyOS repo) fails when either side drifts.
+```bash
+python scripts/eval.py cases                              # top-1/top-3 over golden + eval cases
+python scripts/eval.py traces "%APPDATA%\Spatial\logs"    # replay your own traces
+python scripts/export_schema.py                           # regenerate schema/spatial-context.v3.json
+```

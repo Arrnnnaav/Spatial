@@ -1,0 +1,81 @@
+{
+ "description": "tight box around an inline link inside a paragraph inside a section",
+ "category": "web",
+ "question": "what is this?",
+ "surface": "web",
+ "canvas": {
+  "width": 1280,
+  "height": 720
+ },
+ "marks": [
+  {
+   "type": "rectangle",
+   "role": "reference",
+   "x": 558,
+   "y": 188,
+   "width": 56,
+   "height": 24
+  }
+ ],
+ "anchors": [
+  {
+   "id": "section",
+   "type": "section",
+   "text": "Optimisers Gradient descent updates each weight in the direction that lowers the loss. See Adam for details. Momentum keeps a running average of past gradients to smooth the path.",
+   "bbox": {
+    "x": 100,
+    "y": 100,
+    "width": 700,
+    "height": 320
+   }
+  },
+  {
+   "id": "h",
+   "type": "h2",
+   "text": "Optimisers",
+   "bbox": {
+    "x": 120,
+    "y": 115,
+    "width": 300,
+    "height": 36
+   }
+  },
+  {
+   "id": "p1",
+   "type": "p",
+   "text": "Gradient descent updates each weight in the direction that lowers the loss. See Adam for details.",
+   "bbox": {
+    "x": 120,
+    "y": 165,
+    "width": 660,
+    "height": 70
+   }
+  },
+  {
+   "id": "link",
+   "type": "a",
+   "text": "Adam",
+   "bbox": {
+    "x": 560,
+    "y": 190,
+    "width": 52,
+    "height": 20
+   }
+  },
+  {
+   "id": "p2",
+   "type": "p",
+   "text": "Momentum keeps a running average of past gradients to smooth the path.",
+   "bbox": {
+    "x": 120,
+    "y": 250,
+    "width": 660,
+    "height": 70
+   }
+  }
+ ],
+ "intended": [
+  "link"
+ ],
+ "ambiguous": false
+}

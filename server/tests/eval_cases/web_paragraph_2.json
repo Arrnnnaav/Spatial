@@ -1,0 +1,81 @@
+{
+ "description": "rectangle around one paragraph, padding 2-14 px, may touch neighbours",
+ "category": "web",
+ "question": "explain this",
+ "surface": "web",
+ "canvas": {
+  "width": 1280,
+  "height": 720
+ },
+ "marks": [
+  {
+   "type": "rectangle",
+   "role": "reference",
+   "x": 118,
+   "y": 144,
+   "width": 644,
+   "height": 56
+  }
+ ],
+ "anchors": [
+  {
+   "id": "p0",
+   "type": "p",
+   "text": "Gradient descent updates each weight in the direction that lowers the loss.",
+   "bbox": {
+    "x": 120,
+    "y": 80,
+    "width": 640,
+    "height": 52
+   }
+  },
+  {
+   "id": "p1",
+   "type": "p",
+   "text": "The learning rate controls how far each update moves the parameters.",
+   "bbox": {
+    "x": 120,
+    "y": 146,
+    "width": 640,
+    "height": 52
+   }
+  },
+  {
+   "id": "p2",
+   "type": "p",
+   "text": "Momentum keeps a running average of past gradients to smooth the path.",
+   "bbox": {
+    "x": 120,
+    "y": 212,
+    "width": 640,
+    "height": 52
+   }
+  },
+  {
+   "id": "p3",
+   "type": "p",
+   "text": "Batch normalization rescales activations so training stays stable.",
+   "bbox": {
+    "x": 120,
+    "y": 278,
+    "width": 640,
+    "height": 52
+   }
+  },
+  {
+   "id": "p4",
+   "type": "p",
+   "text": "Dropout randomly disables units so the network cannot co-adapt.",
+   "bbox": {
+    "x": 120,
+    "y": 344,
+    "width": 640,
+    "height": 52
+   }
+  }
+ ],
+ "intended": [
+  "p1"
+ ],
+ "ambiguous": false
+}

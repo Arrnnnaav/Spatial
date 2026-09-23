@@ -1,0 +1,277 @@
+{
+ "description": "sloppy circle around one merged PDF block; glyph spans inside it",
+ "category": "pdf",
+ "question": "explain this paragraph",
+ "surface": "pdf",
+ "canvas": {
+  "width": 1280,
+  "height": 720
+ },
+ "marks": [
+  {
+   "type": "polygon",
+   "role": "reference",
+   "closed": true,
+   "points": [
+    [
+     780,
+     385
+    ],
+    [
+     776,
+     395
+    ],
+    [
+     764,
+     405
+    ],
+    [
+     744,
+     415
+    ],
+    [
+     717,
+     423
+    ],
+    [
+     683,
+     431
+    ],
+    [
+     644,
+     438
+    ],
+    [
+     600,
+     443
+    ],
+    [
+     552,
+     447
+    ],
+    [
+     502,
+     449
+    ],
+    [
+     450,
+     450
+    ],
+    [
+     398,
+     449
+    ],
+    [
+     348,
+     447
+    ],
+    [
+     300,
+     443
+    ],
+    [
+     256,
+     438
+    ],
+    [
+     217,
+     431
+    ],
+    [
+     183,
+     423
+    ],
+    [
+     156,
+     415
+    ],
+    [
+     136,
+     405
+    ],
+    [
+     124,
+     395
+    ],
+    [
+     120,
+     385
+    ],
+    [
+     124,
+     375
+    ],
+    [
+     136,
+     365
+    ],
+    [
+     156,
+     355
+    ],
+    [
+     183,
+     347
+    ],
+    [
+     217,
+     339
+    ],
+    [
+     256,
+     332
+    ],
+    [
+     300,
+     327
+    ],
+    [
+     348,
+     323
+    ],
+    [
+     398,
+     321
+    ],
+    [
+     450,
+     320
+    ],
+    [
+     502,
+     321
+    ],
+    [
+     552,
+     323
+    ],
+    [
+     600,
+     327
+    ],
+    [
+     644,
+     332
+    ],
+    [
+     683,
+     339
+    ],
+    [
+     717,
+     347
+    ],
+    [
+     744,
+     355
+    ],
+    [
+     764,
+     365
+    ],
+    [
+     776,
+     375
+    ],
+    [
+     780,
+     385
+    ]
+   ],
+   "x": 120,
+   "y": 320,
+   "width": 660,
+   "height": 130
+  }
+ ],
+ "anchors": [
+  {
+   "id": "pdf-4-0",
+   "type": "pdf-text",
+   "text": "Dropout randomly disables units so the network cannot co-adapt.",
+   "bbox": {
+    "x": 140,
+    "y": 120,
+    "width": 620,
+    "height": 90
+   },
+   "page": 5
+  },
+  {
+   "id": "pdf-4-1",
+   "type": "pdf-text",
+   "text": "The validation loss rises when the model starts to overfit.",
+   "bbox": {
+    "x": 140,
+    "y": 230,
+    "width": 620,
+    "height": 90
+   },
+   "page": 5
+  },
+  {
+   "id": "pdf-4-2",
+   "type": "pdf-text",
+   "text": "Gradient descent updates each weight in the direction that lowers the loss.",
+   "bbox": {
+    "x": 140,
+    "y": 340,
+    "width": 620,
+    "height": 90
+   },
+   "page": 5
+  },
+  {
+   "id": "pdf-4-3",
+   "type": "pdf-text",
+   "text": "The learning rate controls how far each update moves the parameters.",
+   "bbox": {
+    "x": 140,
+    "y": 450,
+    "width": 620,
+    "height": 90
+   },
+   "page": 5
+  },
+  {
+   "id": "frag-0",
+   "type": "span",
+   "text": "Gradient",
+   "bbox": {
+    "x": 150,
+    "y": 348,
+    "width": 60,
+    "height": 18
+   },
+   "page": 5
+  },
+  {
+   "id": "frag-1",
+   "type": "span",
+   "text": "descent",
+   "bbox": {
+    "x": 220,
+    "y": 348,
+    "width": 60,
+    "height": 18
+   },
+   "page": 5
+  },
+  {
+   "id": "frag-2",
+   "type": "span",
+   "text": "updates",
+   "bbox": {
+    "x": 290,
+    "y": 348,
+    "width": 60,
+    "height": 18
+   },
+   "page": 5
+  }
+ ],
+ "intended": [
+  "pdf-4-2"
+ ],
+ "ambiguous": false
+}

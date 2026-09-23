@@ -7,7 +7,7 @@ const VERSION = chrome.runtime.getManifest().version;
 const CONSENT_VERSION = 1;
 const DEFAULTS = {
   apiBase: CFG.apiBase, token: '', deviceId: '', consentVersion: 0, privacy: 'crop_only', provider: '', voice: '',
-  readAloud: false, powerMode: false, pdfViewer: false, blocklistExtra: '', email: '', research: true, level: 'student',
+  readAloud: false, powerMode: false, pdfViewer: false, blocklistExtra: '', research: true, level: 'student',
 };
 /* Sites where the overlay never runs: money, health portals, government, browser internals. */
 const BLOCKLIST = [/(^|\.)(paypal|stripe|coinbase|binance|robinhood|chase|wellsfargo|bankofamerica|citi|hdfcbank|icicibank|sbi)\.(com|co\.in|in)$/i,
@@ -89,18 +89,20 @@ chrome.webNavigation.onBeforeNavigate.addListener(async details => {
    image on purpose: the model sees exactly what the student circled. */
 async function captureCrop(windowId, box, dpr, mode) {
   const dataUrl = await chrome.tabs.captureVisibleTab(windowId, { format: 'png' });
-  if (mode === 'full_frame') return dataUrl;
   const blob = await (await fetch(dataUrl)).blob();
   const bitmap = await createImageBitmap(blob);
+  if (mode === 'full_frame') return { image: dataUrl, crop: { bbox: { x: 0, y: 0, width: bitmap.width / dpr, height: bitmap.height / dpr }, scale: dpr } };
   const pad = 28 * dpr;
   const sx = Math.max(0, Math.floor(box.x * dpr - pad)), sy = Math.max(0, Math.floor(box.y * dpr - pad));
   const sw = Math.min(bitmap.width - sx, Math.ceil(box.width * dpr + pad * 2)), sh = Math.min(bitmap.height - sy, Math.ceil(box.height * dpr + pad * 2));
-  if (sw <= 0 || sh <= 0) return null;
+  if (sw <= 0 || sh <= 0) return { image: null, crop: null };
   const scale = Math.min(1, 1600 / Math.max(sw, sh));
   const canvas = new OffscreenCanvas(Math.round(sw * scale), Math.round(sh * scale));
   canvas.getContext('2d').drawImage(bitmap, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
   const out = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.86 });
-  return new Promise(resolve => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsDataURL(out); });
+  const image = await new Promise(resolve => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsDataURL(out); });
+  // Crop geometry in CSS px of the viewport; scale = image px per CSS px (lets the server place OCR boxes).
+  return { image, crop: { bbox: { x: sx / dpr, y: sy / dpr, width: sw / dpr, height: sh / dpr }, scale: scale * dpr } };
 }
 
 /* HTTP ------------------------------------------------------------------ */
@@ -200,9 +202,9 @@ async function recordViaOffscreen(action) {
   return response || { ok: false, error: 'recorder did not answer' };
 }
 
-async function quizLater(contextId) {
+async function setTrace(enabled) {
   const config = await settings();
-  const response = await fetch(apiUrl(config, 'quiz', { id: contextId }), { method: 'POST', headers: await headers(config), body: '{}' });
+  const response = await fetch(apiUrl(config, 'traceConfig'), { method: 'PUT', headers: await headers(config), body: JSON.stringify({ enabled }) });
   if (!response.ok) throw await failure(response);
   return response.json();
 }
@@ -214,8 +216,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const config = await settings();
       switch (message.type) {
         case 'spatial:capture': {
-          if (config.privacy === 'anchors_only') return sendResponse({ ok: true, image: null });
-          return sendResponse({ ok: true, image: await captureCrop(sender.tab.windowId, message.box, message.dpr || 1, config.privacy) });
+          if (config.privacy === 'anchors_only') return sendResponse({ ok: true, image: null, crop: null });
+          const { image, crop } = await captureCrop(sender.tab.windowId, message.box, message.dpr || 1, config.privacy);
+          return sendResponse({ ok: true, image, crop });
         }
         case 'spatial:ask-stream': return sendResponse({ ok: true, result: await askStream(message.payload, sender.tab.id, message.requestId) });
         case 'spatial:consent': {
@@ -223,12 +226,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           return sendResponse({ ok: true });
         }
         case 'spatial:set': { const { type, ...patch } = message; await chrome.storage.local.set(patch); return sendResponse({ ok: true }); }
-        case 'spatial:settings': return sendResponse({ ok: true, settings: { ...config, token: undefined, signedIn: Boolean(config.token) }, config: CFG, version: VERSION });
+        case 'spatial:settings': return sendResponse({ ok: true, settings: { ...config, token: undefined, hasToken: Boolean(config.token) }, config: CFG, version: VERSION });
         case 'spatial:health': return sendResponse({ ok: true, health: await health(message.force) });
         case 'spatial:speak': return sendResponse({ ok: true, audio: await speak(message.text) });
         case 'spatial:transcribe': return sendResponse({ ok: true, text: await transcribe(message.audio, message.mimeType || 'audio/webm') });
         case 'spatial:record': return sendResponse(await recordViaOffscreen(message.action));
-        case 'spatial:quiz': return sendResponse({ ok: true, result: await quizLater(message.contextId) });
+        case 'spatial:trace': return sendResponse({ ok: true, trace: await setTrace(Boolean(message.enabled)) });
         case 'spatial:start-active': {
           const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
           return sendResponse(await toggleOverlay(tab));

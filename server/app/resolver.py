@@ -1,6 +1,6 @@
 """Deterministic mark resolver: normalizes marks, derives bounding boxes for freehand strokes,
 and ranks the DOM/PDF anchors under each mark. Runs before any model call and explains its confidence.
-SYNCED from StudyOS services/api/app/core/providers.py::resolve_spatial_marks by scripts/sync_spatial.py."""
+Ranking must stay identical to extension/geometry.js::rankAnchors (see tests/test_resolver_cases.py)."""
 from __future__ import annotations
 
 from time import perf_counter
@@ -78,7 +78,7 @@ def resolve_marks(marks: list[dict], canvas: dict | None = None, anchors: list[d
                     match_type = "contains_anchor" if contains_anchor else ("contains_center" if contains_center and not mark_area else "overlap_ranked")
                     scored.append((score, anchor, match_type))
             if scored:
-                # Ranking rule shared with apps/extension/geometry.js (see packages/spatial-core): score desc,
+                # Ranking rule shared with extension/geometry.js (golden cases in tests/cases): score desc,
                 # then more text (more specific), then smaller area.
                 ranked = sorted(scored, key=lambda item: (-round(item[0], 6), -len(item[1]["text"]), item[1]["width"] * item[1]["height"]))
                 score, anchor, match = ranked[0]

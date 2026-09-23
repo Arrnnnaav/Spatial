@@ -1,0 +1,265 @@
+{
+ "description": "tight circle around an equation line",
+ "category": "pdf",
+ "question": "why this step?",
+ "surface": "pdf",
+ "canvas": {
+  "width": 1280,
+  "height": 720
+ },
+ "marks": [
+  {
+   "type": "polygon",
+   "role": "reference",
+   "closed": true,
+   "points": [
+    [
+     567,
+     365
+    ],
+    [
+     565,
+     368
+    ],
+    [
+     560,
+     372
+    ],
+    [
+     552,
+     375
+    ],
+    [
+     541,
+     378
+    ],
+    [
+     527,
+     381
+    ],
+    [
+     511,
+     383
+    ],
+    [
+     492,
+     385
+    ],
+    [
+     472,
+     386
+    ],
+    [
+     451,
+     387
+    ],
+    [
+     430,
+     387
+    ],
+    [
+     409,
+     387
+    ],
+    [
+     388,
+     386
+    ],
+    [
+     368,
+     385
+    ],
+    [
+     349,
+     383
+    ],
+    [
+     333,
+     381
+    ],
+    [
+     319,
+     378
+    ],
+    [
+     308,
+     375
+    ],
+    [
+     300,
+     372
+    ],
+    [
+     295,
+     368
+    ],
+    [
+     293,
+     365
+    ],
+    [
+     295,
+     362
+    ],
+    [
+     300,
+     358
+    ],
+    [
+     308,
+     355
+    ],
+    [
+     319,
+     352
+    ],
+    [
+     333,
+     349
+    ],
+    [
+     349,
+     347
+    ],
+    [
+     368,
+     345
+    ],
+    [
+     388,
+     344
+    ],
+    [
+     409,
+     343
+    ],
+    [
+     430,
+     343
+    ],
+    [
+     451,
+     343
+    ],
+    [
+     472,
+     344
+    ],
+    [
+     492,
+     345
+    ],
+    [
+     511,
+     347
+    ],
+    [
+     527,
+     349
+    ],
+    [
+     541,
+     352
+    ],
+    [
+     552,
+     355
+    ],
+    [
+     560,
+     358
+    ],
+    [
+     565,
+     362
+    ],
+    [
+     567,
+     365
+    ]
+   ],
+   "x": 293,
+   "y": 343,
+   "width": 274,
+   "height": 44
+  }
+ ],
+ "anchors": [
+  {
+   "id": "l0",
+   "type": "pdf-text",
+   "text": "Gradient descent updates each weight in the direction that lowers the loss.",
+   "bbox": {
+    "x": 140,
+    "y": 150,
+    "width": 620,
+    "height": 28
+   },
+   "page": 3
+  },
+  {
+   "id": "l1",
+   "type": "pdf-text",
+   "text": "The learning rate controls how far each update moves the parameters.",
+   "bbox": {
+    "x": 140,
+    "y": 190,
+    "width": 620,
+    "height": 28
+   },
+   "page": 3
+  },
+  {
+   "id": "l2",
+   "type": "pdf-text",
+   "text": "Momentum keeps a running average of past gradients to smooth the path.",
+   "bbox": {
+    "x": 140,
+    "y": 230,
+    "width": 620,
+    "height": 28
+   },
+   "page": 3
+  },
+  {
+   "id": "l3",
+   "type": "pdf-text",
+   "text": "Batch normalization rescales activations so training stays stable.",
+   "bbox": {
+    "x": 140,
+    "y": 270,
+    "width": 620,
+    "height": 28
+   },
+   "page": 3
+  },
+  {
+   "id": "l4",
+   "type": "pdf-text",
+   "text": "Dropout randomly disables units so the network cannot co-adapt.",
+   "bbox": {
+    "x": 140,
+    "y": 310,
+    "width": 620,
+    "height": 28
+   },
+   "page": 3
+  },
+  {
+   "id": "eq",
+   "type": "pdf-text",
+   "text": "L = -Σ y log ŷ",
+   "bbox": {
+    "x": 300,
+    "y": 350,
+    "width": 260,
+    "height": 30
+   },
+   "page": 3
+  }
+ ],
+ "intended": [
+  "eq"
+ ],
+ "ambiguous": false
+}

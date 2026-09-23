@@ -8,7 +8,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 
 | # | Sub-project | Status | Spec / plan |
 |---|---|---|---|
-| 1 | Core foundation: independence, contract v3, OCR candidates, trace log, eval harness | Plan written; executing | `docs/superpowers/specs/2026-09-23-spatial-core-foundation-design.md` |
+| 1 | Core foundation: independence, contract v3, OCR candidates, trace log, eval harness | Done on branch `feat/core-foundation` (review + merge pending) | `docs/superpowers/specs/2026-09-23-spatial-core-foundation-design.md` |
 | 2 | System-One resolver (`/v1/systemone`: Jev first, Laya second, geometry fallback) + clarification UI | Not started (key ready) | `docs/TYPESAFE_OPPORTUNITIES.md` |
 | 3 | Windows UIA spike (throwaway) | Not started; can run in parallel | — |
 | 4 | Desktop app (Tauri, Windows → macOS) | Blocked on 1, 3 | — |
@@ -22,22 +22,26 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 - [x] Install TypeSafe plugin; brainstorm TypeSafe opportunities (`docs/TYPESAFE_OPPORTUNITIES.md`)
 - [x] Write implementation plan for sub-project 1 (`docs/superpowers/plans/2026-09-23-spatial-core-foundation.md`)
 - [x] Verify `TYPESAFE_API_KEY` in `server/.env` (live Jev call OK)
-- [ ] Execute sub-project 1 plan (8 tasks)
+- [x] Execute sub-project 1 plan (8 tasks + review fixes; 117 tests pass)
+- [x] Final whole-branch review (3 Important fixed)
+- [ ] Merge `feat/core-foundation` into `main`
+- [ ] Sub-project 2: experiments E1–E4 with Jev
 
-## Sub-project 1 — Core foundation (from spec; refine in plan)
+## Sub-project 1 — Core foundation (done)
 
-- [ ] A. Remove StudyOS coupling (config, background, content, popup, detect.js, geometry alias, docstrings, README)
-- [ ] B. `server/app/contracts.py` + v2→v3 conversion + protocol v3 (v2 still accepted)
-- [ ] B. `scripts/export_schema.py` + `schema/spatial-context.v3.json` + drift test
-- [ ] C. `ocr_blocks()` + `server/app/candidates.py` (OCR candidates, merge/dedupe); extension sends `crop`
-- [ ] D. `server/app/trace.py` + `/api/traces*` endpoints + popup toggle + health field
-- [ ] E. Grow golden cases 7 → ~50; `scripts/eval.py`; commit `eval_baseline.json`
-- [ ] Docs: README (tracing, eval), ARCHITECTURE contract section, checklist
+- [x] A. Remove StudyOS coupling (config, background, content, popup, detect.js, geometry alias, docstrings, README)
+- [x] B. `server/app/contracts.py` + v2→v3 conversion + protocol v3 (v2 still accepted)
+- [x] B. `scripts/export_schema.py` + `schema/spatial-context.v3.json` + drift test
+- [x] C. `ocr_blocks()` + `server/app/candidates.py` (OCR candidates, merge/dedupe); extension sends `crop`
+- [x] D. `server/app/trace.py` + `/api/traces*` endpoints + popup toggle + health field
+- [x] E. 7 golden + 43 generated eval cases; `scripts/eval.py`; `eval_baseline.json` (top-1 92%)
+- [x] Docs: README (tracing, eval), ARCHITECTURE contract section, checklist
 
 ## Sub-project 2 — System-One resolver (outline)
 
 - [x] User adds `TYPESAFE_API_KEY` to `server/.env`
-- [ ] Experiments E1–E4 (`docs/TYPESAFE_OPPORTUNITIES.md`); propose changes from results
+- [ ] Experiments E1–E4 — target the baseline misses: point-on-button (3), underline (1), and ambiguity never flagged (abstain 0% on 8 ambiguous cases).
+- [ ] Propose changes from experiment results (`docs/TYPESAFE_OPPORTUNITIES.md`)
 - [ ] `/v1/systemone` client with backend config (Jev / Laya / off)
 - [ ] Resolver integration + fallback + eval vs baseline
 - [ ] Clarification UI ("which one?") + correction capture into trace
@@ -48,6 +52,10 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 - [ ] Try on VS Code, Chrome, Word, Figma, File Explorer, a PDF reader; record what UIA returns in `MEMORY.md`
 
 ## Backlog / ideas
+
+- [ ] Trace log hardening (review minors): `status()` stat race on `/api/health`; `export()` reads outside lock;
+      OCR candidate ids can collide with client ids; 64-cap only when OCR ran; OCR runs even without crop geometry;
+      `run_trace` aborts on one malformed record; provider error text lands in traces
 
 - [ ] Split `extension/content.js` (560 lines: overlay + panel + anchors) when touching it
 - [ ] Clean `SPATIAL_PRODUCTION_CHECKLIST.md` of items no longer relevant
