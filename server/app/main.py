@@ -283,8 +283,13 @@ def prepare_ask(payload: Ask) -> dict:
     timings["system_one"] = round((perf_counter() - judge_started) * 1000)
     target_id = semantic.final_target(judgment, semantic.deterministic_top(resolution), pinned,
                                       previous_answer.get("target_id"), known_ids)
-    used = promote_target(used, target_id, anchors)
     judged = judgment.status == "ok"
+    reused = bool(judged and judgment.same_target is not None and judgment.same_target >= semantic.SAME_TARGET_MIN
+                  and previous_answer.get("target_id") in known_ids)
+    # Tag a target only when System One (or the user) actually chose it, and only for one mark: without a judgment
+    # the prompt stays exactly as before, and source/target asks keep both marks' anchors on equal footing.
+    if len(ctx.marks) == 1 and (pinned or (judged and (judgment.asked_target or reused))):
+        used = promote_target(used, target_id, anchors)
     allow_research = payload.research
     if allow_research and judged and judgment.needs_outside_facts is not None:
         allow_research = judgment.needs_outside_facts >= semantic.FACTS_MIN

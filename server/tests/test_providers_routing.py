@@ -63,3 +63,14 @@ def test_mode_adds_hint_to_system_prompt(monkeypatch):
         not any(h in calls[0][1] for h in providers.MODE_HINTS.values() if h)
         and meta["mode"] is None
     )
+
+
+def test_diagram_keeps_vision_even_if_routing_says_not_visual(monkeypatch):
+    global ANCHORS
+    saved = ANCHORS
+    ANCHORS = [{"id": "img", "type": "img", "text": ""}]
+    try:
+        calls, _ = run(monkeypatch, prefer_vision=False, precomputed_ocr="")
+    finally:
+        ANCHORS = saved
+    assert calls[0][0] is True

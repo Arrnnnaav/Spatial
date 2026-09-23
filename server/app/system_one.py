@@ -7,6 +7,8 @@ from __future__ import annotations
 import logging
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeout
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -19,6 +21,8 @@ _lock = threading.Lock()
 _client: httpx.Client | None = None
 _transport: httpx.BaseTransport | None = None
 _last = {"status": "unknown"}
+# httpx timeouts are per phase (connect/read/...) and a trickling read restarts them; the executor gives a hard cap.
+_pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="system-one")
 
 
 @dataclass
@@ -62,8 +66,21 @@ def _done(result: Result) -> Result:
 
 
 def evaluate(state: Any, questions: dict[str, Any]) -> Result:
+    """One System One call, never longer than SPATIAL_SYSTEM_ONE_TIMEOUT (+ scheduling slack), never raising."""
     if not enabled():
         return _done(Result("off"))
+    started = time.perf_counter()
+    future = _pool.submit(_evaluate, state, questions)
+    try:
+        return future.result(timeout=settings.system_one_timeout)
+    except FutureTimeout:
+        return _done(Result("timeout", latency_ms=round((time.perf_counter() - started) * 1000)))
+    except Exception as exc:  # the transport must never fail an ask
+        logger.warning("system one call failed: %s", type(exc).__name__)
+        return _done(Result("error", latency_ms=round((time.perf_counter() - started) * 1000)))
+
+
+def _evaluate(state: Any, questions: dict[str, Any]) -> Result:
     body = {"model": settings.typesafe_model, "state": state, "questions": questions}
     started = time.perf_counter()
     deadline = started + settings.system_one_timeout
@@ -97,13 +114,17 @@ def evaluate(state: Any, questions: dict[str, Any]) -> Result:
             data = response.json()
         except ValueError:
             return _done(Result("error", latency_ms=elapsed()))
+        if not isinstance(data, dict) or not isinstance(data.get("answers", {}), dict):
+            return _done(Result("error", latency_ms=elapsed()))
+        usage = data.get("usage") if isinstance(data.get("usage"), dict) else {}
+        tokens = usage.get("input_tokens")
         return _done(
             Result(
                 "ok",
                 data.get("answers") or {},
-                data.get("model"),
+                data.get("model") if isinstance(data.get("model"), str) else None,
                 elapsed(),
-                int((data.get("usage") or {}).get("input_tokens", 0)),
+                tokens if isinstance(tokens, int) else 0,
             )
         )
     return _done(Result("error", latency_ms=elapsed()))

@@ -6,11 +6,24 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
 from app import system_one
 from app.contracts import SpatialContext, mark_to_v2
+
+logger = logging.getLogger("spatial.semantic")
+# Never send pixels to a third party: data: URLs anywhere in a string, and long base64-looking runs.
+_DATA_URL = re.compile(r"data:[\w.+-]+/[\w.+-]+[;,][^\s\"']*", re.I)
+_BASE64_RUN = re.compile(r"[A-Za-z0-9+/=]{100,}")
+
+
+def _clean(value: Any, limit: int) -> str:
+    text = str(value or "")
+    text = _BASE64_RUN.sub("[binary]", _DATA_URL.sub("[image]", text))
+    return text[:limit]
 
 # Take Jev's pick when it is more likely than not. Gating on `confidence` instead lost 2/49 eval cases: with
 # several options plus `none`, confidence is diluted even when the pick is clearly preferred (p=0.55-0.62).
@@ -168,8 +181,8 @@ def build_request(
     for letter, cid in letters.items():
         box = by_id[cid]["bbox"]
         element = {
-            "kind": by_id[cid].get("type") or "element",
-            "text": (by_id[cid].get("text") or "(no text)")[:300],
+            "kind": _clean(by_id[cid].get("type"), 40) or "element",
+            "text": _clean(by_id[cid].get("text"), 300) or "(no text)",
             **relation(box, mark),
         }
         inside = [
@@ -189,19 +202,19 @@ def build_request(
         elements[letter] = element
     top = by_id.get(ranked[0]) if ranked else None
     state: dict[str, Any] = {
-        "user_question": ctx.question,
+        "user_question": _clean(ctx.question, 2000),
         "mark": mark_phrase(mark),
         "screen": {"pdf": "a PDF document", "desktop": "an application window"}.get(
             ctx.surface.kind, "a web page"
         ),
         "elements": elements,
         "marked": {
-            "kind": (top or {}).get("type") or "image region",
-            "text": ((top or {}).get("text") or "(no text)")[:300],
+            "kind": _clean((top or {}).get("type"), 40) or "image region",
+            "text": _clean((top or {}).get("text"), 300) or "(no text)",
         },
     }
     if previous_question:
-        state["previous_question_in_this_conversation"] = previous_question[:300]
+        state["previous_question_in_this_conversation"] = _clean(previous_question, 300)
     questions: dict[str, Any] = {
         "mode": {
             "type": "choice",
@@ -250,29 +263,33 @@ def request_key(state: dict, questions: dict) -> str:
 # --- decisions ----------------------------------------------------------------------------------------------
 
 
+def _obj(answers: dict, key: str) -> dict:
+    value = answers.get(key)
+    return value if isinstance(value, dict) else {}
+
+
+def _num(value: Any) -> float | None:
+    return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
+
+
 def _noul(answers: dict, key: str) -> float | None:
-    value = (answers.get(key) or {}).get("noul")
-    return float(value) if isinstance(value, (int, float)) else None
+    return _num(_obj(answers, key).get("noul"))
 
 
 def decide(
     answers: dict, letters: dict[str, str], deterministic: str | None
 ) -> Judgment:
     judgment = Judgment(status="ok", target_id=deterministic)
-    target = answers.get("target") or {}
+    answers = answers if isinstance(answers, dict) else {}
+    target = _obj(answers, "target")
     if target and letters:
         judgment.asked_target = True
-        probs = {
-            letters[letter]: float(p)
-            for letter, p in (target.get("probabilities") or {}).items()
-            if letter in letters
-        }
+        raw = target.get("probabilities") if isinstance(target.get("probabilities"), dict) else {}
+        probs = {letters[letter]: _num(p) for letter, p in raw.items() if letter in letters and _num(p) is not None}
         judgment.probabilities = probs
-        picked = letters.get(target.get("choice"))
-        confidence = target.get("confidence")
-        judgment.semantic_confidence = (
-            float(confidence) if isinstance(confidence, (int, float)) else None
-        )
+        choice = target.get("choice")
+        picked = letters.get(choice) if isinstance(choice, str) else None
+        judgment.semantic_confidence = _num(target.get("confidence"))
         if picked and probs.get(picked, 0.0) >= TARGET_MIN_PROB:
             judgment.target_id = picked
         ordered = sorted(probs.values(), reverse=True)
@@ -285,8 +302,8 @@ def decide(
         if judgment.ambiguous:
             ranked = sorted(probs, key=probs.get, reverse=True)
             judgment.clarify_ids = ranked[:4] if len(ranked) >= 2 else []
-    mode = (answers.get("mode") or {}).get("choice")
-    judgment.mode = mode if mode in MODES else None
+    mode = _obj(answers, "mode").get("choice")
+    judgment.mode = mode if isinstance(mode, str) and mode in MODES else None
     judgment.needs_outside_facts = _noul(answers, "needs_outside_facts")
     judgment.visual = _noul(answers, "visual")
     judgment.same_target = _noul(answers, "same_target")
@@ -319,12 +336,15 @@ def judge(
     previous_question: str | None = None,
     pinned: str | None = None,
 ) -> Judgment:
-    state, questions, letters = build_request(
-        ctx, resolution, anchors, previous_question, pinned=bool(pinned)
-    )
-    result = system_one.evaluate(state, questions)
-    if result.status != "ok":
-        return Judgment(status=result.status, latency_ms=result.latency_ms)
-    judgment = decide(result.answers, letters, deterministic_top(resolution))
-    judgment.model, judgment.latency_ms = result.model, result.latency_ms
-    return judgment
+    """Never raises: any failure (transport, schema drift, a bug here) means geometry-only for this ask."""
+    try:
+        state, questions, letters = build_request(ctx, resolution, anchors, previous_question, pinned=bool(pinned))
+        result = system_one.evaluate(state, questions)
+        if result.status != "ok":
+            return Judgment(status=result.status, latency_ms=result.latency_ms)
+        judgment = decide(result.answers, letters, deterministic_top(resolution))
+        judgment.model, judgment.latency_ms = result.model, result.latency_ms
+        return judgment
+    except Exception as exc:
+        logger.warning("system one judgment failed: %s", type(exc).__name__)
+        return Judgment(status="error")

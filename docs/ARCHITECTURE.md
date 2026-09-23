@@ -36,6 +36,9 @@ tie-break longer text then smaller area). Golden cases in `server/tests/cases/` 
    pick when its probability ≥ 0.5, else geometry), flags ambiguity (→ "Did you mean" chips), and routes: help mode,
    research only when outside facts are needed (≥ 0.8), vision only when visual (≥ 0.5), follow-up same-target reuse.
    Any failure/timeout (1.5 s) → geometry-only, research as requested.
+   **Data sent to TypeSafe per ask:** the question, previous question, page kind and up to 8 shortlisted element
+   texts (≤ 300 chars, `data:`/base64 scrubbed) — never pixels. Sent even when a local answer model is chosen;
+   opt out with `SPATIAL_SYSTEM_ONE=off`.
 4. Optional research: DuckDuckGo (+ Gemini) → fetch pages → term-overlap passage selection → numbered sources.
 5. Provider chain (`SPATIAL_PROVIDERS` order): vision model gets the crop; text models get OCR text. First
    provider that answers wins; if none, deterministic fallback quotes the marked text.

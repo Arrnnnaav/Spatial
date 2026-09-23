@@ -61,6 +61,10 @@ code or git log. Newest first within each section. Remove entries that become wr
 
 ## Gotchas
 
+- `providers._SYSTEM_OVERRIDE` is module-global state (prompt, level, mode): concurrent asks can cross-talk.
+  Tolerable for a single-user local server; fix before any multi-user use (backlog).
+- httpx `timeout=` is per phase, not a total: System One uses a thread-pool future for a hard budget.
+
 - 2026-09-23 live check: the configured NVIDIA model `nvidia/nemotron-3.5-lightning-30b-a3b` times out (30 s) on
   `main` and on the branch alike, and Ollama is not running → every ask falls back to quoting the marked text.
   Fix the provider (`NVIDIA_MODEL`, start Ollama, or add an OpenRouter/Anthropic key) — not a code issue.

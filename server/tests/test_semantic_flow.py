@@ -143,6 +143,9 @@ def test_jev_failure_is_todays_behaviour(jev, monkeypatch):
     assert body["resolution_v3"]["resolver"] == "structured-anchor-v1" and gathered == [
         "what does this do?"
     ]
+    assert not any(
+        a.get("is_target") for a in body["anchors_used"]
+    )  # prompt exactly as before
 
 
 def test_pinned_target_skips_target_question(jev):
@@ -218,3 +221,13 @@ def test_trace_records_judgment_without_key(jev, tmp_path, monkeypatch):
 def test_health_reports_system_one():
     with TestClient(main.app) as client:
         assert client.get("/api/health").json()["system_one"]["backend"] == "off"
+
+
+def test_multi_mark_prompt_unchanged_without_system_one(jev, monkeypatch):
+    monkeypatch.setattr(main.semantic.system_one, "evaluate", lambda s, q: system_one.Result("off"))
+    marks = [{"type": "rectangle", "role": "source", "x": 110, "y": 110, "width": 80, "height": 40},
+             {"type": "rectangle", "role": "target", "x": 0, "y": 645, "width": 110, "height": 30}]
+    with TestClient(main.app) as client:
+        body = client.post("/api/ask", json={**BASE, "marks": marks}).json()
+    assert not any(a.get("is_target") for a in body["anchors_used"])
+    assert {a["role"] for a in body["anchors_used"]} == {"source", "target"}

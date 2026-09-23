@@ -222,3 +222,31 @@ def test_request_key_is_stable():
     assert semantic.request_key({"b": 1, "a": 2}, {"q": 1}) == semantic.request_key(
         {"a": 2, "b": 1}, {"q": 1}
     )
+
+
+def test_decide_tolerates_garbage_answers():
+    j = semantic.decide({"target": "A", "visual": "yes", "mode": 5, "needs_outside_facts": {"noul": "high"}}, {"A": "a"}, "a")
+    assert j.target_id == "a" and j.visual is None and j.mode is None and j.needs_outside_facts is None
+    j = semantic.decide({"target": {"choice": "A", "confidence": "x", "probabilities": {"A": "x", "B": 0.2}}}, {"A": "a", "B": "b"}, "b")
+    assert j.target_id == "b"
+
+
+def test_judge_never_raises(monkeypatch):
+    ctx, res, ra = ctx_for([{"type": "point", "x": 150, "y": 24}], TOOLBAR)
+
+    def boom(state, questions):
+        raise RuntimeError("schema changed")
+
+    monkeypatch.setattr(semantic.system_one, "evaluate", boom)
+    assert semantic.judge(ctx, res, ra).status == "error"
+
+
+def test_request_never_carries_binary():
+    import json as _json
+    blob = "data:image/png;base64," + "iVBORw0KGgo" * 2000
+    anchors = [{"id": "img", "type": blob, "text": "QUJD" * 200, "bbox": {"x": 100, "y": 100, "width": 50, "height": 50}}]
+    ctx, res, ra = ctx_for([{"type": "rectangle", "x": 90, "y": 90, "width": 80, "height": 80}], anchors)
+    state, questions, _ = semantic.build_request(ctx, res, ra)
+    raw = _json.dumps([state, questions])
+    assert "data:image" not in raw and "QUJDQUJD" * 10 not in raw
+    assert len(state["elements"]["A"]["kind"]) <= 40

@@ -112,3 +112,24 @@ def test_status_never_contains_key(jev):
     install(lambda request: httpx.Response(200, json={"answers": {}}))
     system_one.evaluate({}, {})
     assert "test-key-123" not in repr(system_one.status())
+
+
+def test_hanging_server_hits_hard_budget(jev):
+    def hang(request):
+        time.sleep(2)
+        return httpx.Response(200, json={"answers": {}})
+
+    install(hang)
+    started = time.perf_counter()
+    assert system_one.evaluate({}, {}).status == "timeout"
+    assert time.perf_counter() - started < 1.0
+
+
+def test_malformed_bodies_are_errors_not_crashes(jev):
+    install(lambda request: httpx.Response(200, json=[1, 2]))
+    assert system_one.evaluate({}, {}).status == "error"
+    install(lambda request: httpx.Response(200, json={"answers": [1]}))
+    assert system_one.evaluate({}, {}).status == "error"
+    install(lambda request: httpx.Response(200, json={"answers": {}, "usage": {"input_tokens": "n/a"}}))
+    result = system_one.evaluate({}, {})
+    assert result.status == "ok" and result.input_tokens == 0

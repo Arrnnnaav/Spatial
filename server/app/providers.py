@@ -530,7 +530,8 @@ def answer_stream(
             errors[name] = {"code": ERR_NOT_CONFIGURED, "message": "not configured"}
             continue
         # Routing can say the mark is not visual: skip the (slower) vision attempt then.
-        has_vision = bool(config.vision_model and image_data) and prefer_vision is not False
+        # A diagram (no readable text) always needs the image, whatever routing guessed.
+        has_vision = bool(config.vision_model and image_data) and (diagram or prefer_vision is not False)
         attempts = (
             [True, False] if has_vision else [False]
         )  # vision first; a missing vision model must not block a text answer

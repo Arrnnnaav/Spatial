@@ -55,6 +55,13 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 
 ## Backlog / ideas
 
+- [ ] System One follow-ups (review minors): pass mode/level/system prompt explicitly instead of the shared
+      `_SYSTEM_OVERRIDE` (thread race under concurrent asks); popup/consent note + per-request opt-out for the
+      TypeSafe data flow (esp. when a local answer model is chosen); flag ambiguity when Jev's pick fails the gate;
+      extension: clear stale `pinTarget` on busy/errored asks; pinned re-ask should drop the wrong-target turn and not
+      show "circle tighter?"; multi-mark asks only judge the first mark; 429 retry backoff; trace `_scrub` only
+      catches a `data:` prefix at string start
+
 - [ ] Trace log hardening (review minors): `status()` stat race on `/api/health`; `export()` reads outside lock;
       OCR candidate ids can collide with client ids; 64-cap only when OCR ran; OCR runs even without crop geometry;
       `run_trace` aborts on one malformed record; provider error text lands in traces
