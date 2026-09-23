@@ -15,13 +15,13 @@ that give every later change (Jev resolver, desktop candidates) a measurable bas
 | # | Sub-project | Depends on |
 |---|---|---|
 | 1 | **Core foundation (this spec)** | — |
-| 2 | Jev semantic resolver (`SystemOneProvider`, Choice/Noul, deterministic fallback) | 1 |
+| 2 | System-One resolver over the `/v1/systemone` protocol: Jev first, Laya (hosted or self-hosted) as second backend, deterministic fallback | 1 |
 | 3 | Windows UIA spike (throwaway: hotkey → freeze-frame → box → UIA dump → `/api/ask`) | — |
 | 4 | Desktop app (Tauri, Windows first, macOS next) | 1, 3 |
 | 5 | Desktop ↔ extension bridge, macOS AX | 4 |
 
 Decisions already made: Windows first with a stack that ports to macOS (Tauri); Jev is used as a System-One
-helper, never as the answerer; trace logging captures metadata + resolution trace, never pixels.
+helper, never as the answerer (Laya speaks the same protocol and is evaluated alongside it); cloud APIs are acceptable, local/privacy-first is not a current priority; trace logging captures metadata + resolution trace, never pixels.
 
 ## Non-goals
 
