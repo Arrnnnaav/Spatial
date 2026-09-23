@@ -112,7 +112,7 @@ toy extension that injects a button and sends a message to its service worker be
 4. In-browser audio: pocket-tts / Moonshine WebAssembly builds so no server is needed for speech.
 5. Accessibility-tree anchors (`role`, `aria-label`) and Office/desktop plugins via UI Automation.
 6. Evaluation set: 50 saved marks with expected anchors; measure anchor accuracy and p95 latency.
-7. Spaced-repetition: turn each ask into a flashcard ("quiz me on this later").
+7. Flashcards: turn each ask into a review card for later.
 
 ## Suggested order and timeline
 

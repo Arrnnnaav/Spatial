@@ -76,10 +76,10 @@
     return intersectArea(elementBox, markBox) > 0;
   }
 
-  /* Rank anchors exactly like the server resolver (services/api/app/core/providers.py::resolve_spatial_marks):
+  /* Rank anchors exactly like the server resolver (server/app/resolver.py::resolve_marks):
      score = max(IoU, 0.9*markOverlap (cap .94), 0.95*anchorOverlap (cap .95), 0.95 if a point mark's centre is
      inside, 0.96 if the mark fully contains the anchor); keep >= 0.10; order by score desc, longer text, smaller
-     area. Golden cases in packages/spatial-core/cases keep both sides identical. */
+     area. Golden cases in server/tests/cases keep both sides identical. */
   function scoreAnchor(anchor, markBox) {
     const markArea = Math.max(0, markBox.width) * Math.max(0, markBox.height);
     const anchorArea = anchor.bbox.width * anchor.bbox.height;
@@ -104,5 +104,5 @@
 
   const api = { bboxOfPoints, simplify, strokeToMark, shapeToMark, intersectArea, samplePoints, anchorFilter, scoreAnchor, rankAnchors };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  root.SpatialGeometry = api; root.StudyOSGeometry = api;
+  root.SpatialGeometry = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

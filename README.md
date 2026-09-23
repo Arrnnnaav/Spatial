@@ -82,15 +82,3 @@ cd server && python -m pytest -q
 cd extension && node --test tests/geometry.test.mjs
 python scripts/try_providers.py           # live check of configured providers, OCR, STT, TTS
 ```
-
-## Origin and sync
-
-Extracted from the StudyOS learning platform so the primitive can be used on its own or dropped into another
-product. The two repos now share code both ways via `D:/unified/learning-platform/scripts/sync_spatial.py`:
-
-- `extension/*` (everything except `config.js` and `manifest.json`) is copied **from** StudyOS
-  `apps/extension`; edit it there. `config.js` is the build flavour (mode, API base, paths, feature flags).
-- `server/app/{providers,ocr,audio}.py` are the source of truth and are copied **to** StudyOS
-  `services/api/app/core/spatial/`; `server/app/resolver.py` and `server/tests/cases/*.json` come from StudyOS.
-
-`python scripts/sync_spatial.py --check` (run from the StudyOS repo) fails when either side drifts.

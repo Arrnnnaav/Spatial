@@ -182,7 +182,7 @@
       option('crop_only', 'Crop of the marked region + text', ' (default, best answers for diagrams and equations)', true),
       option('anchors_only', 'Text only, no pixels', ' (works on any page with text; diagrams get weaker answers)'),
       option('full_frame', 'Whole visible tab + text', ' (only if you want the model to see surrounding context)'),
-      el('p', {}, ['It never runs on banking, health or government sites. ' + (CFG.features.accounts ? (CFG.anonymousDailyLimit + ' asks a day without an account; sign in from the extension icon to keep history.') : 'You can change this any time from the extension icon.')]),
+      el('p', {}, ['It never runs on banking, health or government sites. You can change this any time from the extension icon.']),
       el('div', { class: 'row' }, [
         el('button', { class: 'no', onclick: () => { consentCard.remove(); consentCard = null; close(); } }, ['Not now']),
         el('button', { class: 'go', onclick: async () => { await send({ type: 'spatial:consent', privacy }); state.consent = true; consentCard.remove(); consentCard = null; } }, ['Continue']),
@@ -363,25 +363,6 @@
     return button;
   }
 
-  function attachQuiz(actions, contextId) {
-    if (!CFG.features.quizLater || !contextId) return;
-    const button = el('button', { title: 'Add to your review queue' }, ['🗓 Quiz me later']);
-    button.onclick = async () => {
-      button.disabled = true; button.textContent = '…';
-      const response = await send({ type: 'spatial:quiz', contextId });
-      if (response.ok) {
-        button.textContent = '✓ In your review queue';
-        button.classList.add('done');
-      } else if (response.code === 'AUTH_REQUIRED') {
-        button.textContent = '🔒 Sign in to save';
-        button.classList.remove('done');
-      } else {
-        button.textContent = '✗ ' + (response.error || 'failed');
-      }
-    };
-    actions.append(button);
-  }
-
   /* Context collection ------------------------------------------------------ */
   function unionBox(marks) {
     const x = Math.min(...marks.map(m => m.x)), y = Math.min(...marks.map(m => m.y));
@@ -519,15 +500,10 @@
       if (pages.size) note.push('page' + (pages.size > 1 ? 's ' : ' ') + Array.from(pages).sort((a,b)=>a-b).join(', '));
       if (result.note) note.push(result.note);
       if (result.confirmation_required) note.push('low confidence – circle tighter?');
-      if (result.quota) {
-        const q = result.quota;
-        note.push((q.signed_in ? '' : 'Free ') + q.remaining + ' of ' + q.limit + ' asks left today');
-      }
       answerNode.append(el('small', {}, [note.join(' · ')]));
       const actions = el('div', { class: 'actions' });
       answerNode.append(actions);
       const speaker = attachSpeaker(actions, result.answer);
-      attachQuiz(actions, result.id);
       if ((result.sources || []).length) {
         const cited = new Set(result.cited || []);
         const list = el('div', { class: 'sources' });

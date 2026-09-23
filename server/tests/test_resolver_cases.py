@@ -1,4 +1,4 @@
-"""Golden resolver cases (synced from StudyOS packages/spatial-core/cases by scripts/sync_spatial.py).
+"""Golden resolver cases (tests/cases/*.json).
 Runs each case through app.resolver.resolve_marks and, when node is available, through
 extension/geometry.js to prove client and server rank anchors identically."""
 

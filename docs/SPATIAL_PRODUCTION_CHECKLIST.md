@@ -75,7 +75,6 @@
 - [ ] Research toggle (default on) persists
 - [ ] Level selector: eli5 / student / expert persists
 - [ ] Speaker button: server TTS → browser fallback
-- [ ] Quiz button: appears if `contextId` + feature flag
 - [ ] Sources list: cited links bold, open in new tab
 - [ ] Meta note line: provider/model, anchors, vision/OCR, confidence, diagram, level, pages, quota
 

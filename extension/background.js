@@ -7,7 +7,7 @@ const VERSION = chrome.runtime.getManifest().version;
 const CONSENT_VERSION = 1;
 const DEFAULTS = {
   apiBase: CFG.apiBase, token: '', deviceId: '', consentVersion: 0, privacy: 'crop_only', provider: '', voice: '',
-  readAloud: false, powerMode: false, pdfViewer: false, blocklistExtra: '', email: '', research: true, level: 'student',
+  readAloud: false, powerMode: false, pdfViewer: false, blocklistExtra: '', research: true, level: 'student',
 };
 /* Sites where the overlay never runs: money, health portals, government, browser internals. */
 const BLOCKLIST = [/(^|\.)(paypal|stripe|coinbase|binance|robinhood|chase|wellsfargo|bankofamerica|citi|hdfcbank|icicibank|sbi)\.(com|co\.in|in)$/i,
@@ -200,13 +200,6 @@ async function recordViaOffscreen(action) {
   return response || { ok: false, error: 'recorder did not answer' };
 }
 
-async function quizLater(contextId) {
-  const config = await settings();
-  const response = await fetch(apiUrl(config, 'quiz', { id: contextId }), { method: 'POST', headers: await headers(config), body: '{}' });
-  if (!response.ok) throw await failure(response);
-  return response.json();
-}
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || !message.type || message.type.startsWith('offscreen:')) return false; // offscreen.js answers those
   (async () => {
@@ -223,12 +216,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           return sendResponse({ ok: true });
         }
         case 'spatial:set': { const { type, ...patch } = message; await chrome.storage.local.set(patch); return sendResponse({ ok: true }); }
-        case 'spatial:settings': return sendResponse({ ok: true, settings: { ...config, token: undefined, signedIn: Boolean(config.token) }, config: CFG, version: VERSION });
+        case 'spatial:settings': return sendResponse({ ok: true, settings: { ...config, token: undefined, hasToken: Boolean(config.token) }, config: CFG, version: VERSION });
         case 'spatial:health': return sendResponse({ ok: true, health: await health(message.force) });
         case 'spatial:speak': return sendResponse({ ok: true, audio: await speak(message.text) });
         case 'spatial:transcribe': return sendResponse({ ok: true, text: await transcribe(message.audio, message.mimeType || 'audio/webm') });
         case 'spatial:record': return sendResponse(await recordViaOffscreen(message.action));
-        case 'spatial:quiz': return sendResponse({ ok: true, result: await quizLater(message.contextId) });
         case 'spatial:start-active': {
           const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
           return sendResponse(await toggleOverlay(tab));
