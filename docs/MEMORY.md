@@ -66,6 +66,13 @@ code or git log. Newest first within each section. Remove entries that become wr
   needs `TAVILY_API_KEY`. Live research ask (DDG fallback): 6.0 s total, Jev routing 371 ms, citation check flagged
   an off-topic source correctly.
 
+- **2026-09-24** — NVIDIA survey (50 chat models, then top 5 × 3 runs, real provider code, thinking off):
+  `nemotron-3-super` 8/9 correct, 2.75 s median (1 empty answer) → main; `glm-5.3` 9/9, 4.6 s and `muse-glimmer-30b`
+  9/9, 5.4 s → fallbacks; `nemotron-3-ultra` 5/9 (empty answers); `ising-calibration` drops citations. With thinking
+  off, `glm-5.3` is 4 s (18 s with reasoning on). Empty answers now count as "busy" and are retried.
+- **2026-09-24** — Tavily live: search 1.7 s (5 hits, ranked chunks); full gather incl. Jev ranking 2.7 s; top source
+  after ranking answered the question directly.
+
 ## Gotchas
 
 - Citation-check sentence split is naive (`. ` boundaries): initials like "Diederik P. Kingma" split a sentence;

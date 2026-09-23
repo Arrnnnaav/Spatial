@@ -24,6 +24,10 @@ def _env(name: str, default: str | None = None) -> str | None:
     return value if value not in (None, "") else default
 
 
+def _models(value: str | None) -> tuple[str, ...]:
+    return tuple(part.strip() for part in (value or "").split(",") if part.strip())
+
+
 @dataclass(frozen=True)
 class ProviderConfig:
     name: str
@@ -32,6 +36,7 @@ class ProviderConfig:
     model: str
     vision_model: str | None
     kind: str  # "openai" (chat/completions), "ollama" (native /api/chat), "anthropic" (messages), "bedrock" (Converse)
+    fallback_models: tuple[str, ...] = ()  # tried in order when the main text model is busy x3, slow or gone
 
     @property
     def configured(self) -> bool:
@@ -70,6 +75,8 @@ class Settings:
     )
     # Some networks have a broken IPv6 route to Hugging Face; this makes model downloads use IPv4 only.
     force_ipv4: bool = _env("SPATIAL_FORCE_IPV4", "0") in {"1", "true", "yes"}
+    # Tries per model when a provider answers "busy" (429/5xx/connection errors) before moving on.
+    provider_attempts: int = max(1, int(_env("SPATIAL_PROVIDER_ATTEMPTS", "3")))
     # Opt-in local trace log (app/trace.py): metadata + resolution trace per ask, never pixels.
     trace_enabled: bool = (_env("SPATIAL_TRACE") or "off").lower() in {
         "on",
@@ -122,6 +129,7 @@ class Settings:
                 _env("NVIDIA_MODEL", "nvidia/nemotron-3-super-120b-a12b"),
                 _env("NVIDIA_VISION_MODEL", "meta/llama-3.2-11b-vision-instruct"),
                 "openai",
+                _models(_env("NVIDIA_FALLBACK_MODELS", "z-ai/glm-5.3,meta/muse-glimmer-30b")),
             ),
             "openai": ProviderConfig(
                 "openai",
