@@ -82,3 +82,18 @@ cd server && python -m pytest -q
 cd extension && node --test tests/geometry.test.mjs
 python scripts/try_providers.py           # live check of configured providers, OCR, STT, TTS
 ```
+
+## Tracing (opt-in)
+
+Toggle **Keep a local trace log** in the extension popup, or set `SPATIAL_TRACE=on` in `server/.env`. Each ask
+appends one JSON line (question, answer, marks, candidates, what was resolved, timings — never images) to
+`%APPDATA%\Spatial\logs\YYYY-MM-DD.jsonl` (override with `SPATIAL_LOG_DIR`). Kept 14 days / 50 MB.
+`GET /api/traces/export` downloads everything; `DELETE /api/traces` wipes it.
+
+## Eval
+
+```bash
+python scripts/eval.py cases                              # top-1/top-3 over golden + eval cases
+python scripts/eval.py traces "%APPDATA%\Spatial\logs"    # replay your own traces
+python scripts/export_schema.py                           # regenerate schema/spatial-context.v3.json
+```

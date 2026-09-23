@@ -4,7 +4,7 @@
 as any change that makes it wrong.*
 **Last updated:** 2026-09-23
 
-## 1. Current system (v0.2, browser)
+## 1. Current system (v0.3, browser)
 
 ```
 Browser tab / pdf.js viewer                 Service worker                     server (FastAPI :8787)
@@ -28,13 +28,21 @@ ranked by `geometry.js::rankAnchors` and identically by `resolver.py::resolve_ma
 tie-break longer text then smaller area). Golden cases in `server/tests/cases/` keep JS and Python in parity.
 
 **Ask flow** (`main.py::prepare_ask` → `providers.py::answer_stream` → `finish_ask`):
-1. Validate protocol (v2), drop `image_data` unless privacy tier allows.
+1. Convert the request to a `SpatialContext` (v3 as-is; v2 via `contracts.from_v2`), drop `image_data` unless the
+   privacy tier allows; OCR blocks become placed candidates when the crop's geometry is attached (`candidates.py`).
 2. `resolve_marks` → ranked anchors + hand-tuned confidence (`0.78 + 0.18·matched/marks`; `< 0.6` →
    `confirmation_required`).
 3. Optional research: DuckDuckGo (+ Gemini) → fetch pages → term-overlap passage selection → numbered sources.
 4. Provider chain (`SPATIAL_PROVIDERS` order): vision model gets the crop; text models get OCR text. First
    provider that answers wins; if none, deterministic fallback quotes the marked text.
 5. Persist context + turn history in SQLite; follow-ups pass `context_id`.
+
+**Contract** — `server/app/contracts.py` (protocol v3, v2 still accepted); JSON Schema in `schema/spatial-context.v3.json`.
+
+**Trace log** — `server/app/trace.py`: opt-in JSONL per ask (no pixels), `/api/traces/*`.
+
+**Eval** — `server/app/evaluation.py` + `scripts/eval.py` over `server/tests/cases` + `server/tests/eval_cases`;
+baseline in `server/tests/eval_baseline.json` (2026-09-23: top-1 92%, top-3 100%, abstain 0%).
 
 **Privacy tiers** — `anchors_only` (no pixels), `crop_only` (default; marked region + 28 px, ≤1600 px JPEG),
 `full_frame`. Enforced in service worker and again on server. *Not a current investment priority.*

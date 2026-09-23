@@ -60,11 +60,15 @@ docs/          guides + superpowers/specs + superpowers/plans
 cd server && python -m venv .venv && .venv/Scripts/activate && pip install -r requirements.txt
 cp .env.example .env            # then fill keys
 uvicorn app.main:app --port 8787
-python -m pytest -q             # server tests (33 passing as of 2026-09-23)
+python -m pytest -q             # server tests (114 passing as of 2026-09-23)
 
 # extension
 cd extension && node --test tests/geometry.test.mjs
 # load unpacked: chrome://extensions → Developer mode → Load unpacked → extension/ ; hotkey Alt+Shift+A
+
+# resolver eval + schema (repo root)
+python scripts/eval.py cases
+python scripts/export_schema.py
 
 # providers live check
 python scripts/try_providers.py
