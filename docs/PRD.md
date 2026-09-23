@@ -30,7 +30,7 @@ meant, shows it (highlight), and answers about exactly that — optionally with 
 | # | Goal | Measure |
 |---|---|---|
 | G1 | Resolve the right object | Top-1 target accuracy on golden set (baseline set by eval harness; target ≥ 90% web/PDF) |
-| G2 | Be fast | Mark → first answer token p50 < 2.5 s (cloud), resolution step p95 < 400 ms |
+| G2 | Be fast | Mark → first answer token p50 < 2.5 s (cloud); resolution incl. System One ≤ 1.5 s (≈0.4–0.5 s warm); research only when needed |
 | G3 | Show what it understood | Every answer shows the resolved target highlighted; ambiguity is surfaced, not hidden |
 | G4 | Work everywhere on screen | Desktop app answers over browser, IDE, Office, PDF readers, images (OCR/vision) |
 | G5 | Ask when unsure | Ambiguous marks trigger a "which one?" choice instead of a confident wrong answer |

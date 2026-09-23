@@ -1,7 +1,7 @@
 # System-One Resolver (Jev) — Design
 
 **Date:** 2026-09-23
-**Status:** Draft for review
+**Status:** Implemented (2026-09-23, branch `feat/system-one-resolver`)
 **Sub-project:** 2 of 5 (roadmap in `docs/TASKS.md`)
 **Evidence:** spike results in `docs/TYPESAFE_OPPORTUNITIES.md` → "Results"; script `scripts/experiments/typesafe_experiments.py`
 
@@ -153,3 +153,8 @@ Startup warm-up failure only logs; the first ask retries the connection.
 ## 8. Budget
 
 ≈ 630 input tokens/ask ≈ $0.000026/ask. Latency +≈0.5 s (kept-alive); most asks save ≈5 s by skipping research.
+
+## Implementation notes
+
+- Target gate uses the **pick's probability** (`TARGET_MIN_PROB = 0.5`), not Jev's `confidence`: the recorded eval showed confidence diluted by extra options (47/49 → 49/49). In-sample; revisit with real traces.
+- `server/tests/conftest.py` pins the whole test environment (providers off, System One off) so no test can reach real APIs.

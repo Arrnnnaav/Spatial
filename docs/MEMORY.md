@@ -52,7 +52,18 @@ code or git log. Newest first within each section. Remove entries that become wr
 - **2026-09-23** — Jev latency from India: ≈ 1 s TLS setup per new connection; ≈ 470 ms per call on a kept-alive
   connection. Use one persistent client and warm it at server start.
 
+- **2026-09-23** — System One integrated. Recorded eval (cassette, jev-1.13.0): hybrid **50/50** vs geometry 46/50;
+  7/50 asks flagged ambiguous (3 of 8 ambiguous-labelled; the rest are close calls where chips are still reasonable).
+  Warm keep-alive latency p50 ≈ 385 ms, p95 ≈ 494 ms per Jev call from India.
+- **2026-09-23** — Hybrid gate must use the pick's **probability**, not `confidence` (diluted by extra options).
+- **2026-09-23** — Running one test file alone used to hit real providers from server/.env; `tests/conftest.py`
+  now pins providers/System One off for every test.
+
 ## Gotchas
+
+- 2026-09-23 live check: the configured NVIDIA model `nvidia/nemotron-3.5-lightning-30b-a3b` times out (30 s) on
+  `main` and on the branch alike, and Ollama is not running → every ask falls back to quoting the marked text.
+  Fix the provider (`NVIDIA_MODEL`, start Ollama, or add an OpenRouter/Anthropic key) — not a code issue.
 
 - JS `slice()` can cut an emoji in half; Python/pydantic reject lone surrogates. v2 text goes through `contracts._text` to repair them.
 - CORS allows only extension origins; a future desktop (Tauri) client origin must be added explicitly.

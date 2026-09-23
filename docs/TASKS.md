@@ -9,7 +9,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 | # | Sub-project | Status | Spec / plan |
 |---|---|---|---|
 | 1 | Core foundation: independence, contract v3, OCR candidates, trace log, eval harness | Done on branch `feat/core-foundation` (review + merge pending) | `docs/superpowers/specs/2026-09-23-spatial-core-foundation-design.md` |
-| 2 | System-One resolver (Jev now, Laya later; geometry fallback) + clarification UI | Spec written, awaiting review | `docs/superpowers/specs/2026-09-23-system-one-resolver-design.md` |
+| 2 | System-One resolver (Jev now, Laya later; geometry fallback) + clarification UI | Done on branch `feat/system-one-resolver` (review + merge pending) | `docs/superpowers/specs/2026-09-23-system-one-resolver-design.md` |
 | 3 | Windows UIA spike (throwaway) | Not started; can run in parallel | — |
 | 4 | Desktop app (Tauri, Windows → macOS) | Blocked on 1, 3 | — |
 | 5 | Desktop ↔ extension bridge, macOS AX | Blocked on 4 | — |
@@ -43,10 +43,10 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 - [x] User adds `TYPESAFE_API_KEY` to `server/.env`
 - [x] Experiments E1 + E2 (results in `docs/TYPESAFE_OPPORTUNITIES.md`): hybrid 48/49; routing strong
 - [ ] E3 passage rerank (during integration) · E4 Laya (needs impossibl key)
-- [~] Propose changes from experiment results → spec for System-One integration
-- [ ] `/v1/systemone` client with backend config (Jev / Laya / off)
-- [ ] Resolver integration + fallback + eval vs baseline
-- [ ] Clarification UI ("which one?") + correction capture into trace
+- [x] Spec + plan for System-One integration
+- [x] `/v1/systemone` client with backend config (Jev / Laya / off)
+- [x] Resolver integration + fallback + eval vs baseline (hybrid 50/50 vs geometry 46/50 on recorded cassette)
+- [x] Clarification UI ("which one?") + correction capture into trace
 
 ## Sub-project 3 — Windows UIA spike (outline)
 

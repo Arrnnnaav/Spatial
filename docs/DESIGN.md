@@ -23,7 +23,7 @@ hotkey ─▶ overlay (dim + tools) ─▶ draw mark(s) ─▶ ask panel opens n
 | Band | Behaviour |
 |---|---|
 | Confident | Highlight target, answer directly |
-| Ambiguous | Numbered overlays on the top 2–4 candidates: "Did you mean 1, 2 or 3?" — click or say the number; the choice is logged as a correction |
+| Ambiguous | **Built (2026-09-23):** numbered dashed outlines on the top 2–4 candidates + "Did you mean:" chips; clicking re-asks with `target_id`; the pick is logged as a correction (`label`) in the trace |
 | Unresolved | "Circle a bit tighter" hint; still answers from crop/OCR if the user insists |
 
 ## 3. Desktop (planned)
@@ -55,3 +55,5 @@ hotkey ─▶ overlay (dim + tools) ─▶ draw mark(s) ─▶ ask panel opens n
 | 2026-09-23 | Jev as System-One helper, never the answerer; Laya evaluated on same protocol | Jev: cheap/fast typed judgments; Laya: open weights, needs fine-tuning for element selection |
 | 2026-09-23 | Cloud APIs acceptable; local/privacy-first deprioritised | User priority: accuracy + reach |
 | 2026-09-23 | Trace log = metadata + resolution trace, no pixels, opt-in | Enough for replay/eval/training without storing screenshots |
+| 2026-09-23 | Jev on every ask; clarify chips instead of "circle tighter" | Routing saves ~5 s research on most asks; chips turn ambiguity into a one-click correction |
+| 2026-09-23 | Hybrid target gate = Jev pick probability ≥ 0.5 (not confidence) | Confidence is diluted by extra options; eval 47/49 → 49/49 |

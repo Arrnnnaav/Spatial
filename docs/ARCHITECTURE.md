@@ -32,10 +32,14 @@ tie-break longer text then smaller area). Golden cases in `server/tests/cases/` 
    privacy tier allows; OCR blocks become placed candidates when the crop's geometry is attached (`candidates.py`).
 2. `resolve_marks` → ranked anchors + hand-tuned confidence (`0.78 + 0.18·matched/marks`; `< 0.6` →
    `confirmation_required`).
-3. Optional research: DuckDuckGo (+ Gemini) → fetch pages → term-overlap passage selection → numbered sources.
-4. Provider chain (`SPATIAL_PROVIDERS` order): vision model gets the crop; text models get OCR text. First
+3. **System One judgment (Jev, `semantic.py` + `system_one.py`)**: one request picks the target (hybrid: Jev's
+   pick when its probability ≥ 0.5, else geometry), flags ambiguity (→ "Did you mean" chips), and routes: help mode,
+   research only when outside facts are needed (≥ 0.8), vision only when visual (≥ 0.5), follow-up same-target reuse.
+   Any failure/timeout (1.5 s) → geometry-only, research as requested.
+4. Optional research: DuckDuckGo (+ Gemini) → fetch pages → term-overlap passage selection → numbered sources.
+5. Provider chain (`SPATIAL_PROVIDERS` order): vision model gets the crop; text models get OCR text. First
    provider that answers wins; if none, deterministic fallback quotes the marked text.
-5. Persist context + turn history in SQLite; follow-ups pass `context_id`.
+6. Persist context + turn history in SQLite; follow-ups pass `context_id`.
 
 **Contract** — `server/app/contracts.py` (protocol v3, v2 still accepted); JSON Schema in `schema/spatial-context.v3.json`.
 
