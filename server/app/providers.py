@@ -31,6 +31,16 @@ LEVELS = {
     "expert": "Explain for an expert: assume the background, be exact, name the formal concept.",
 }
 DIAGRAM_NOTE = "No readable text was found under the mark: describe what is in the image region and answer from that."
+# One extra system-prompt line per help mode (chosen by the System One judgment in app/semantic.py).
+MODE_HINTS = {
+    "explain": "Explain how or why, briefly.",
+    "define": "Give the meaning in 1-2 sentences, then one short example.",
+    "summarize": "Summarize in at most 3 short bullet points.",
+    "compare": "Compare point by point: what is the same, then what differs.",
+    "translate": "Translate faithfully, keep the formatting, add nothing else.",
+    "debug_error": "Name the most likely cause first, then the fix.",
+    "other": "",
+}
 
 PRICES: dict[str, tuple[float, float]] = {
     "amazon.nova-lite-v1:0": (0.06, 0.24),
@@ -58,7 +68,9 @@ _SYSTEM_OVERRIDE: dict[str, str] = {}
 def _system() -> str:
     base = _SYSTEM_OVERRIDE.get("prompt", SYSTEM_PROMPT)
     level = _SYSTEM_OVERRIDE.get("level")
-    return f"{base} {LEVELS[level]}" if level in LEVELS else base
+    mode_hint = MODE_HINTS.get(_SYSTEM_OVERRIDE.get("mode") or "", "")
+    parts = [base, LEVELS[level] if level in LEVELS else "", mode_hint]
+    return " ".join(part for part in parts if part)
 
 
 def clean_answer(text: str) -> str:
@@ -117,18 +129,26 @@ def build_prompt(
         lines.append(
             "The user marked two things: SOURCE (what to move/copy/compare) and TARGET (where, or what to compare against)."
         )
-    if anchors:
+
+    def anchor_line(item: dict[str, Any]) -> str:
+        role = item.get("role")
+        label = (
+            f"{role} · {item.get('type')}"
+            if role and role != "reference"
+            else str(item.get("type"))
+        )
+        return f"- [{label}] {str(item.get('text', ''))[:500]}"
+
+    if anchors and anchors[0].get("is_target"):
+        lines.append("The user is asking about:")
+        lines.append(anchor_line(anchors[0]))
+        nearby = [item for item in anchors[1:8] if item.get("text")]
+        if nearby:
+            lines.append("Nearby, probably not the target:")
+            lines += [anchor_line(item) for item in nearby]
+    elif anchors:
         lines.append("Text under the mark (ranked, most relevant first):")
-        for item in anchors[:8]:
-            if not item.get("text"):
-                continue
-            role = item.get("role")
-            label = (
-                f"{role} · {item.get('type')}"
-                if role and role != "reference"
-                else str(item.get("type"))
-            )
-            lines.append(f"- [{label}] {str(item.get('text', ''))[:500]}")
+        lines += [anchor_line(item) for item in anchors[:8] if item.get("text")]
     if ocr_text:
         lines.append(f"OCR of the marked crop:\n{ocr_text[:1500]}")
     if history:
@@ -376,8 +396,24 @@ def _stream_bedrock(
     content: list[dict[str, Any]] = [{"text": prompt}]
     if vision:
         fmt = media_type.split("/")[-1].replace("jpg", "jpeg")
-        content.insert(0, {"image": {"format": fmt if fmt in {"png", "jpeg", "gif", "webp"} else "png", "source": {"bytes": base64.b64decode(encoded)}}})
-    client = boto3.client("bedrock-runtime", region_name=config.base_url, config=__import__("botocore.config", fromlist=["Config"]).Config(read_timeout=settings.timeout_seconds, connect_timeout=10, retries={"max_attempts": 1}))
+        content.insert(
+            0,
+            {
+                "image": {
+                    "format": fmt if fmt in {"png", "jpeg", "gif", "webp"} else "png",
+                    "source": {"bytes": base64.b64decode(encoded)},
+                }
+            },
+        )
+    client = boto3.client(
+        "bedrock-runtime",
+        region_name=config.base_url,
+        config=__import__("botocore.config", fromlist=["Config"]).Config(
+            read_timeout=settings.timeout_seconds,
+            connect_timeout=10,
+            retries={"max_attempts": 1},
+        ),
+    )
     response = client.converse_stream(
         modelId=model,
         system=[{"text": _system()}],
@@ -392,7 +428,10 @@ def _stream_bedrock(
                 yield delta
         elif "metadata" in event and "usage" in event["metadata"]:
             u = event["metadata"]["usage"]
-            usage = {"prompt_tokens": u.get("inputTokens", 0), "completion_tokens": u.get("outputTokens", 0)}
+            usage = {
+                "prompt_tokens": u.get("inputTokens", 0),
+                "completion_tokens": u.get("outputTokens", 0),
+            }
     yield {"provider": config.name, "model": model, "vision": vision, "usage": usage}
 
 
@@ -456,6 +495,8 @@ def answer_stream(
     sources: list[dict[str, Any]] | None = None,
     level: str | None = None,
     precomputed_ocr: str | None = None,
+    mode: str | None = None,
+    prefer_vision: bool | None = None,
 ) -> Iterator[str | dict[str, Any]]:
     """Try providers in order, streaming text deltas; the last item is a meta dict:
     {provider, model, vision, ocr, status, usage, cost_usd, note?, errors: {name: {code, message}}}.
@@ -464,14 +505,19 @@ def answer_stream(
     sources = sources or []
     _SYSTEM_OVERRIDE["prompt"] = RESEARCH_SYSTEM if sources else SYSTEM_PROMPT
     _SYSTEM_OVERRIDE["level"] = level if level in LEVELS else None
+    _SYSTEM_OVERRIDE["mode"] = mode if mode in MODE_HINTS else None
     # Diagram mode: nothing readable under the mark but we have pixels -> vision first, then OCR, and say so.
-    diagram = bool(image_data) and not any(str(a.get("text", "")).strip() for a in anchors)
+    diagram = bool(image_data) and not any(
+        str(a.get("text", "")).strip() for a in anchors
+    )
     if diagram:
         page = {**page, "note": DIAGRAM_NOTE}
     order = [provider_name] if provider_name else list(settings.provider_order)
     errors: dict[str, dict[str, str]] = {}
     ocr_text = precomputed_ocr or ""
-    ocr_tried = precomputed_ocr is not None  # the server already ran OCR to build candidates
+    ocr_tried = (
+        precomputed_ocr is not None
+    )  # the server already ran OCR to build candidates
 
     def ensure_ocr() -> None:
         nonlocal ocr_text, ocr_tried
@@ -483,7 +529,8 @@ def answer_stream(
         if not config or not config.configured:
             errors[name] = {"code": ERR_NOT_CONFIGURED, "message": "not configured"}
             continue
-        has_vision = bool(config.vision_model and image_data)
+        # Routing can say the mark is not visual: skip the (slower) vision attempt then.
+        has_vision = bool(config.vision_model and image_data) and prefer_vision is not False
         attempts = (
             [True, False] if has_vision else [False]
         )  # vision first; a missing vision model must not block a text answer
@@ -491,7 +538,12 @@ def answer_stream(
             if not use_vision:
                 ensure_ocr()
             prompt = build_prompt(
-                question, page, anchors, "" if use_vision else ocr_text, history, sources
+                question,
+                page,
+                anchors,
+                "" if use_vision else ocr_text,
+                history,
+                sources,
             )
             produced = False
             try:
@@ -505,6 +557,7 @@ def answer_stream(
                                 "sources": sources,
                                 "diagram": diagram,
                                 "level": _SYSTEM_OVERRIDE.get("level"),
+        "mode": _SYSTEM_OVERRIDE.get("mode"),
                                 "ocr": bool(ocr_text and not use_vision),
                                 "errors": errors,
                                 "cost_usd": estimate_cost(
@@ -543,7 +596,9 @@ def answer_stream(
     ensure_ocr()
     text = fallback_answer(question, anchors, ocr_text)
     if sources:
-        text += " Sources found: " + "; ".join(f"[{s['id']}] {s['title']}" for s in sources)
+        text += " Sources found: " + "; ".join(
+            f"[{s['id']}] {s['title']}" for s in sources
+        )
     yield text
     yield {
         "provider": "none",
@@ -552,6 +607,7 @@ def answer_stream(
         "sources": sources,
         "diagram": diagram,
         "level": _SYSTEM_OVERRIDE.get("level"),
+        "mode": _SYSTEM_OVERRIDE.get("mode"),
         "vision": False,
         "ocr": bool(ocr_text),
         "errors": errors,
