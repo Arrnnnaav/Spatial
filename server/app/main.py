@@ -6,20 +6,25 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from time import perf_counter
+from uuid import uuid4
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 from app import store
 from app.audio import audio_status, synthesize, transcribe
 from app.config import settings
+from app.contracts import (CropInfo, SpatialContext, from_v2, mark_to_v2, page_dict, resolver_inputs,
+                           to_semantic_resolution)
 from app import research
 from app.providers import answer_stream, clean_answer, provider_status
 from app.resolver import resolve_marks
 
-PROTOCOL_VERSION = 2  # bump when the ask payload/response shape changes incompatibly
+PROTOCOL_VERSION = 3  # v3: SpatialContext payload; bump when the ask payload/response shape changes incompatibly
+MIN_PROTOCOL_VERSION = 2  # the v2 browser extension payload is still accepted and converted
 
 app = FastAPI(title="Spatial — Point & Ask", version="0.2.0")
 app.add_middleware(
@@ -31,6 +36,17 @@ app.add_middleware(
 )
 
 
+
+@app.exception_handler(RequestValidationError)
+async def validation_error(_: Request, exc: RequestValidationError):
+    """Keep the {code, message} error shape clients already handle."""
+    errors = exc.errors()
+    first = errors[0] if errors else {}
+    code = "BAD_CONTEXT" if any("context" in map(str, e.get("loc", ())) for e in errors) else "BAD_REQUEST"
+    where = ".".join(str(part) for part in first.get("loc", ()) if part != "body")
+    return JSONResponse(status_code=422, content={"detail": {"code": code, "message": f"{where}: {first.get('msg', 'invalid request')}"}})
+
+
 class Page(BaseModel):
     url: str = Field(default="", max_length=2000)
     title: str = Field(default="", max_length=500)
@@ -38,16 +54,21 @@ class Page(BaseModel):
 
 
 class Ask(BaseModel):
-    question: str = Field(min_length=1, max_length=2000)
-    marks: list[dict]
+    # v2 fields (browser extension today)
+    question: str | None = Field(default=None, min_length=1, max_length=2000)
+    marks: list[dict] = Field(default_factory=list)
     canvas: dict[str, float] | None = None
     anchors: list[dict] = Field(default_factory=list)
     page: Page = Field(default_factory=Page)
+    crop: CropInfo | None = None  # where the attached crop sits on the page (enables OCR candidates)
+    # v3: the whole ask as one SpatialContext
+    context: SpatialContext | None = None
+    # shared
     context_id: str | None = None
     provider: str | None = None
     privacy_policy: str = Field(default="crop_only", max_length=30)
     image_data: str | None = Field(default=None, max_length=8_000_000)
-    protocol_version: int = PROTOCOL_VERSION
+    protocol_version: int = MIN_PROTOCOL_VERSION  # omitted version = v2 payload; v3 is also detected from `context`
     client_version: str | None = Field(default=None, max_length=40)
     research: bool = False  # ground the answer in web sources (app/research.py) and cite them
     level: str | None = Field(default=None, max_length=10)  # eli5 | student | expert
@@ -101,14 +122,46 @@ def anchors_used(resolution: dict, anchors: list[dict]) -> list[dict]:
 
 
 def check_protocol(payload: Ask) -> None:
-    if payload.protocol_version < PROTOCOL_VERSION:
+    if payload.protocol_version < MIN_PROTOCOL_VERSION:
         raise HTTPException(
             426,
             {
                 "code": "CLIENT_OUTDATED",
-                "message": f"extension speaks protocol {payload.protocol_version}, server needs {PROTOCOL_VERSION}; update the extension",
+                "message": f"client speaks protocol {payload.protocol_version}, server needs >= {MIN_PROTOCOL_VERSION}; update the client",
             },
         )
+
+
+def to_context(payload: Ask) -> SpatialContext:
+    """Every ask becomes one SpatialContext, whichever client sent it."""
+    if payload.protocol_version >= 3 or payload.context is not None:
+        if payload.context is None:
+            raise HTTPException(
+                422, {"code": "BAD_CONTEXT", "message": "protocol 3 requires `context`"}
+            )
+        return payload.context
+    if not payload.marks:
+        raise HTTPException(
+            400, {"code": "NO_MARKS", "message": "at least one mark is required"}
+        )
+    if not payload.question:
+        raise HTTPException(
+            422, {"code": "BAD_CONTEXT", "message": "question is required"}
+        )
+    try:
+        return from_v2(
+            question=payload.question,
+            marks=payload.marks,
+            anchors=payload.anchors,
+            canvas=payload.canvas,
+            page=payload.page.model_dump(),
+            privacy_policy=payload.privacy_policy,
+            crop=payload.crop,
+        )
+    except ValueError:
+        raise HTTPException(
+            400, {"code": "NO_MARKS", "message": "no usable marks"}
+        ) from None
 
 
 @app.get("/api/health")
@@ -125,12 +178,10 @@ def health():
 
 
 def prepare_ask(payload: Ask) -> dict:
-    """Shared front half of ask/ask-stream: validation, resolver, anchors, history."""
+    """Shared front half of ask/ask-stream: validation, contract, resolver, anchors, history, research."""
+    started = perf_counter()
     check_protocol(payload)
-    if not payload.marks:
-        raise HTTPException(
-            400, {"code": "NO_MARKS", "message": "at least one mark is required"}
-        )
+    ctx = to_context(payload)
     previous = store.get(payload.context_id) if payload.context_id else None
     if payload.context_id and not previous:
         raise HTTPException(
@@ -138,37 +189,49 @@ def prepare_ask(payload: Ask) -> dict:
         )
     image_data = (
         payload.image_data
-        if payload.privacy_policy in {"crop_only", "full_frame"}
+        if ctx.privacy_policy in {"crop_only", "full_frame"}
         else None
     )
-    resolution = resolve_marks(payload.marks, payload.canvas, payload.anchors)
+    timings: dict[str, int] = {}
+    marks, canvas, anchors = resolver_inputs(ctx)
+    resolution = resolve_marks(marks, canvas, anchors)
+    timings["resolve"] = resolution["latency_ms"]
     resolution.update(
         {
-            "surface": payload.page.surface,
-            "privacy_policy": payload.privacy_policy,
+            "surface": ctx.surface.kind,
+            "privacy_policy": ctx.privacy_policy,
             "image_attached": bool(image_data),
         }
     )
-    used = anchors_used(resolution, payload.anchors)
+    used = anchors_used(resolution, anchors)
     history = (previous or {}).get("answer", {}).get("history", [])
-    sources = research.gather(payload.question, used) if payload.research else []
+    research_started = perf_counter()
+    sources = research.gather(ctx.question, used) if payload.research else []
+    timings["research"] = round((perf_counter() - research_started) * 1000)
     return {
+        "context": ctx,
+        "anchors": anchors,
         "previous": previous,
         "image_data": image_data,
         "resolution": resolution,
         "used": used,
         "history": history,
         "sources": sources,
-        "started": perf_counter(),
+        "started": started,
+        "timings": timings,
+        "request_id": str(uuid4()),
+        "ocr_text": None,
     }
 
 
 def finish_ask(payload: Ask, prep: dict, text: str, meta: dict) -> dict:
     """Shared back half: persist the turn and build the response document."""
+    ctx: SpatialContext = prep["context"]
+    page = page_dict(ctx)
     text = clean_answer(text)
     history = prep["history"] + [
         {
-            "question": payload.question,
+            "question": ctx.question,
             "answer": text,
             "provider": meta.get("provider"),
             "model": meta.get("model"),
@@ -187,9 +250,9 @@ def finish_ask(payload: Ask, prep: dict, text: str, meta: dict) -> dict:
         context_id = prep["previous"]["id"]
     else:
         context_id = store.create(
-            payload.page.model_dump(),
-            payload.question,
-            payload.marks,
+            page,
+            ctx.question,
+            [mark_to_v2(m) for m in ctx.marks],
             prep["resolution"],
             record,
         )
@@ -213,13 +276,12 @@ def finish_ask(payload: Ask, prep: dict, text: str, meta: dict) -> dict:
         "confidence": resolution["confidence"],
         "confirmation_required": resolution["confidence"] < 0.6,
         "turns": len(history),
-        "page": payload.page.model_dump(),
+        "page": page,
         "resolution": resolution,
+        "resolution_v3": to_semantic_resolution(resolution).model_dump(),
         "latency_ms": round((perf_counter() - prep["started"]) * 1000),
         "protocol_version": PROTOCOL_VERSION,
     }
-
-
 @app.post("/api/ask", dependencies=[Depends(require_token)])
 def ask(payload: Ask):
     """The mark is a reference, never authority: this endpoint only explains."""
@@ -227,8 +289,8 @@ def ask(payload: Ask):
     parts: list[str] = []
     meta: dict = {}
     for item in answer_stream(
-        payload.question,
-        payload.page.model_dump(),
+        prep["context"].question,
+        page_dict(prep["context"]),
         prep["used"],
         prep["image_data"],
         prep["history"],
@@ -273,8 +335,8 @@ def ask_stream(payload: Ask):
         meta: dict = {}
         try:
             for item in answer_stream(
-                payload.question,
-                payload.page.model_dump(),
+                prep["context"].question,
+                page_dict(prep["context"]),
                 prep["used"],
                 prep["image_data"],
                 prep["history"],

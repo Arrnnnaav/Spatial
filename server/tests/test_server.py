@@ -113,7 +113,7 @@ def test_stream_emits_status_and_complete():
         with client.stream("POST", "/api/ask/stream", json=PAYLOAD) as response:
             text = "".join(response.iter_text())
         assert "event: status" in text and "event: complete" in text
-        assert '"protocol_version": 2' in text
+        assert '"protocol_version": 3' in text
 
 
 def test_outdated_client_rejected():
