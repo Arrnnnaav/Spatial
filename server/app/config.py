@@ -119,7 +119,7 @@ class Settings:
                 "nvidia",
                 _env("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1"),
                 _env("NVIDIA_API_KEY"),
-                _env("NVIDIA_MODEL", "nvidia/nemotron-3.5-lightning-30b-a3b"),
+                _env("NVIDIA_MODEL", "nvidia/nemotron-3-super-120b-a12b"),
                 _env("NVIDIA_VISION_MODEL", "meta/llama-3.2-11b-vision-instruct"),
                 "openai",
             ),

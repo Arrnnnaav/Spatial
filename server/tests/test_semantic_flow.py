@@ -78,7 +78,7 @@ def jev(monkeypatch):
 
     gathered = []
     monkeypatch.setattr(
-        research, "gather", lambda q, anchors, max_sources=4: gathered.append(q) or []
+        research, "gather", lambda q, anchors, max_sources=4, mode=None: gathered.append(q) or []
     )
     return install, sent, gathered
 
@@ -231,3 +231,35 @@ def test_multi_mark_prompt_unchanged_without_system_one(jev, monkeypatch):
         body = client.post("/api/ask", json={**BASE, "marks": marks}).json()
     assert not any(a.get("is_target") for a in body["anchors_used"])
     assert {a["role"] for a in body["anchors_used"]} == {"source", "target"}
+
+
+def test_research_gets_mode_and_answer_gets_citation_checks(jev, monkeypatch):
+    install, _, _ = jev
+    install(target_text="Export", mode="compare", facts=0.95)
+    seen = {}
+    source = {"id": 1, "url": "https://a.example", "title": "A", "passages": ["Export writes a CSV."], "credibility": 0.6}
+
+    def fake_gather(q, anchors, max_sources=4, mode=None):
+        seen["mode"] = mode
+        return [source]
+
+    monkeypatch.setattr(research, "gather", fake_gather)
+    monkeypatch.setattr(main.semantic, "check_citations",
+                        lambda answer, sources: ([{"sentence_index": 0, "source_id": 1, "verdict": "unrelated", "probability": 0.8}], [1]))
+    with TestClient(main.app) as client:
+        body = client.post("/api/ask", json=BASE).json()
+    assert seen["mode"] == "compare"
+    assert body["unsupported_citations"] == [1] and body["citation_checks"][0]["verdict"] == "unrelated"
+    assert body["sources"][0]["credibility"] == 0.6
+
+
+def test_citation_check_can_be_turned_off(jev, monkeypatch):
+    install, _, _ = jev
+    install(target_text="Export", facts=0.95)
+    monkeypatch.setattr(research, "gather", lambda q, anchors, max_sources=4, mode=None: [
+        {"id": 1, "url": "https://a.example", "title": "A", "passages": ["p"], "credibility": 0.6}])
+    monkeypatch.setattr(main.settings, "research_verify", False)
+    monkeypatch.setattr(main.semantic, "check_citations", lambda a, s: pytest.fail("verification is off"))
+    with TestClient(main.app) as client:
+        body = client.post("/api/ask", json=BASE).json()
+    assert body["citation_checks"] == [] and body["unsupported_citations"] == []

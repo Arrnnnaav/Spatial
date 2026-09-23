@@ -298,7 +298,7 @@ def prepare_ask(payload: Ask) -> dict:
     clarify = ([{"id": cid, "text": str(by_id[cid].get("text") or "")[:200], "bbox": by_id[cid].get("bbox")}
                 for cid in judgment.clarify_ids if cid in by_id] if judgment.ambiguous and not pinned else [])
     research_started = perf_counter()
-    sources = research.gather(ctx.question, used) if allow_research else []
+    sources = research.gather(ctx.question, used, mode=judgment.mode) if allow_research else []
     timings["research"] = round((perf_counter() - research_started) * 1000)
     return {
         "context": ctx,
@@ -326,6 +326,9 @@ def finish_ask(payload: Ask, prep: dict, text: str, meta: dict) -> dict:
     ctx: SpatialContext = prep["context"]
     page = page_dict(ctx)
     text = clean_answer(text)
+    # Live citation judge (JudgeAgent of the Cited Multi-Agent Researcher): does each cited source support its sentence?
+    citation_checks, unsupported = (semantic.check_citations(text, prep["sources"])
+                                    if settings.research_verify and prep["sources"] else ([], []))
     history = prep["history"] + [
         {
             "question": ctx.question,
@@ -375,6 +378,8 @@ def finish_ask(payload: Ask, prep: dict, text: str, meta: dict) -> dict:
         "anchors_used": prep["used"],
         "sources": prep["sources"],
         "cited": research.cited_ids(text, prep["sources"]),
+        "citation_checks": citation_checks,
+        "unsupported_citations": unsupported,
         "provider": meta.get("provider"),
         "model": meta.get("model"),
         "status": meta.get("status"),

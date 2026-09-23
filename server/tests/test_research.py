@@ -61,7 +61,7 @@ def test_ask_with_research_returns_sources(monkeypatch):
         }
     ]
     monkeypatch.setattr(
-        research, "gather", lambda question, anchors, max_sources=4: fake
+        research, "gather", lambda question, anchors, max_sources=4, mode=None: fake
     )
     with TestClient(app) as client:
         body = client.post(

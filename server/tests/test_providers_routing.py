@@ -74,3 +74,35 @@ def test_diagram_keeps_vision_even_if_routing_says_not_visual(monkeypatch):
     finally:
         ANCHORS = saved
     assert calls[0][0] is True
+
+
+def run_flaky(monkeypatch, failures):
+    import httpx
+    fake = {"p": ProviderConfig("p", "https://example", "key", "text-model", None, "openai")}
+    monkeypatch.setattr(providers.settings, "providers", fake, raising=False)
+    monkeypatch.setattr(providers.settings, "provider_order", ("p",), raising=False)
+    monkeypatch.setattr(providers, "RETRY_DELAY", 0.0)
+    calls = []
+
+    def fake_stream(config, prompt, image_data, use_vision=True):
+        calls.append(1)
+        if len(calls) <= failures:
+            request = httpx.Request("POST", "https://example/chat/completions")
+            raise httpx.HTTPStatusError("busy", request=request, response=httpx.Response(503, request=request))
+        yield "answer"
+        yield {"provider": "p", "model": "m", "vision": False}
+
+    monkeypatch.setattr(providers, "stream_provider", fake_stream)
+    items = list(providers.answer_stream("q", {"title": "t"}, [{"id": "a", "type": "p", "text": "x"}], None))
+    return calls, items[-1]
+
+
+def test_transient_503_is_retried_once(monkeypatch):
+    calls, meta = run_flaky(monkeypatch, failures=1)
+    assert len(calls) == 2 and meta["status"] == "generated"
+
+
+def test_second_503_falls_through(monkeypatch):
+    calls, meta = run_flaky(monkeypatch, failures=2)
+    assert len(calls) == 2 and meta["status"] == "fallback"
+
