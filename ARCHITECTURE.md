@@ -1,0 +1,96 @@
+# Architecture
+
+*Living document: describes the system **as it is**, then **where it is going**. Update it in the same commit
+as any change that makes it wrong.*
+**Last updated:** 2026-09-23
+
+## 1. Current system (v0.2, browser)
+
+```
+Browser tab / pdf.js viewer                 Service worker                     server (FastAPI :8787)
+┌──────────────────────────┐   messages   ┌────────────────────┐   HTTP    ┌────────────────────────┐
+│ content.js overlay       │ ───────────▶ │ background.js      │ ────────▶ │ /api/ask, /ask/stream  │
+│  pen / circle / box      │  capture     │  captureVisibleTab │           │  resolver.py  (rank)   │
+│  ask panel, mic, speaker │  ask         │  crop (Offscreen)  │           │  ocr.py       (crop)   │
+│  anchors: DOM / PDF text │  speak       │  token, privacy    │           │  research.py  (cite)   │
+│ geometry.js (shared)     │  transcribe  │  PDF → viewer.html │           │  providers.py (LLMs)   │
+└──────────────────────────┘              └────────────────────┘           │  store.py     (SQLite) │
+                                                                            │ /api/stt  faster-whisper│
+                                                                            │ /api/tts  pocket-tts    │
+                                                                            └────────────────────────┘
+```
+
+**Mark** — `{type: polygon|circle|rectangle|point, points?, x, y, width, height, role}` in viewport CSS px.
+
+**Anchor** — `{id, type, text, bbox, page?, href?, src?}`: a DOM element or merged PDF text block under the
+mark. Collected client-side (`elementsFromPoint` 6×6 grid; page-sized containers filtered by `anchorFilter`);
+ranked by `geometry.js::rankAnchors` and identically by `resolver.py::resolve_marks` (IoU / containment,
+tie-break longer text then smaller area). Golden cases in `server/tests/cases/` keep JS and Python in parity.
+
+**Ask flow** (`main.py::prepare_ask` → `providers.py::answer_stream` → `finish_ask`):
+1. Validate protocol (v2), drop `image_data` unless privacy tier allows.
+2. `resolve_marks` → ranked anchors + hand-tuned confidence (`0.78 + 0.18·matched/marks`; `< 0.6` →
+   `confirmation_required`).
+3. Optional research: DuckDuckGo (+ Gemini) → fetch pages → term-overlap passage selection → numbered sources.
+4. Provider chain (`SPATIAL_PROVIDERS` order): vision model gets the crop; text models get OCR text. First
+   provider that answers wins; if none, deterministic fallback quotes the marked text.
+5. Persist context + turn history in SQLite; follow-ups pass `context_id`.
+
+**Privacy tiers** — `anchors_only` (no pixels), `crop_only` (default; marked region + 28 px, ≤1600 px JPEG),
+`full_frame`. Enforced in service worker and again on server. *Not a current investment priority.*
+
+**Safety** — an ask never triggers actions. Output is text (optionally spoken) + highlight.
+
+## 2. Target architecture
+
+```
+ INPUT        hotkey · mark (freehand/circle/box/point) · question (text/voice)
+   │
+ CLIENT       browser extension  |  desktop app (Tauri: freeze-frame overlay, global hotkey)
+   │          candidate providers: DOM · PDF text · UIA (Windows) · AX (macOS) · OCR blocks · vision
+   ▼
+ CONTRACT     SpatialContext { surface, marks[], candidates[], question, crop? }   (protocol v3, JSON Schema)
+   ▼
+ SERVER       1. merge/dedupe candidates  2. deterministic geometry prefilter (top ~12)
+              3. System-One resolver (Jev / Laya via /v1/systemone): which object? ambiguous? mode?
+                 needs research? needs vision? same object as last turn?   → fallback: geometry only
+              4. context assembler → answer/research layer (LLM/VLM)  5. store + opt-in trace log
+   ▼
+ OUTPUT       answer · highlight resolved target · alternatives / "which one?" · citations · voice
+```
+
+Principles:
+- **Geometry answers "where", System One answers "which", the LLM answers "what does it mean".**
+  Numbers and geometry stay in code (Jev is weak at arithmetic); System One sees qualitative relations
+  ("fully inside the mark", "partial overlap") and text.
+- **One candidate shape for every source** (`CandidateObject.source = dom | pdf_text | ocr | uia | vision`).
+  The server never branches on client type.
+- **Coordinates:** everything in the contract is CSS/logical px of the surface the mark was drawn on
+  (browser viewport, or the frozen monitor frame on desktop). Clients convert device px / DPI before sending.
+- **Resolver backends are swappable** behind one `/v1/systemone` client: Jev (TypeSafe, paid API),
+  Laya (open weights; hosted by impossibl or self-hosted `laya-serve`), deterministic fallback.
+- **Traces are data:** opt-in JSONL trace log (no pixels) feeds the eval harness and, later, Laya fine-tuning.
+
+### Desktop app (planned, sub-project 4)
+
+| Browser piece | Desktop equivalent (Windows first) |
+|---|---|
+| `chrome.commands` hotkey | `RegisterHotKey` global hotkey |
+| `captureVisibleTab` | Windows.Graphics.Capture / DXGI of monitor under cursor |
+| content-script overlay | Freeze-frame: capture first, show it full-screen, draw on the still image |
+| DOM anchors | UI Automation elements (name, control type, value, bounding rect) |
+| PDF text layer | UIA TextPattern, else OCR blocks |
+| site blocklist | process/app blocklist + windows excluded from capture |
+
+Known limits: canvas/game/video/remote-desktop apps expose no UIA → OCR/vision candidates; elevated (admin)
+windows are unreadable from a non-elevated process; Electron apps expose UIA only once accessibility is on.
+Optional bridge: when the window is Chrome with the extension installed, fetch DOM candidates from it.
+
+## 3. Module reuse
+
+`server/app/resolver.py`, `providers.py`, `ocr.py`, `audio.py` have no FastAPI dependency.
+`extension/geometry.js` is a plain script usable in any page and under `node:test`.
+
+## 4. Sub-project status
+
+See `TASKS.md`. Specs: `docs/superpowers/specs/`.

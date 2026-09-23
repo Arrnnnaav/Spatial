@@ -11,7 +11,8 @@ pointing is fast. Instead of "the second equation under the grey box", circle it
 extension/   Chrome MV3 extension: overlay (pen/circle/box), ask panel, mic, read-aloud, pdf.js viewer
 server/      FastAPI: /api/ask (providers + OCR + SQLite history), /api/stt, /api/tts, /api/health
 scripts/     try_providers.py (live smoke test), fetch_models.sh (curl the speech models if HF stalls)
-docs/        HOW_TO_RUN_AND_USE.md, LEARNING_PATH.md, PROVIDERS.md, AUDIO.md, ARCHITECTURE.md
+docs/        HOW_TO_RUN_AND_USE.md, LEARNING_PATH.md, PROVIDERS.md, AUDIO.md, TYPESAFE_OPPORTUNITIES.md
+AGENTS.md    start here (agents + contributors); PRD / ARCHITECTURE / DESIGN / RULES / TASKS / MEMORY.md alongside
 ```
 
 ## Quick start
