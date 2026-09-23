@@ -8,8 +8,8 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 
 | # | Sub-project | Status | Spec / plan |
 |---|---|---|---|
-| 1 | Core foundation: independence, contract v3, OCR candidates, trace log, eval harness | Spec approved; plan next | `docs/superpowers/specs/2026-09-23-spatial-core-foundation-design.md` |
-| 2 | System-One resolver (`/v1/systemone`: Jev first, Laya second, geometry fallback) + clarification UI | Not started (needs `TYPESAFE_API_KEY`) | `docs/TYPESAFE_OPPORTUNITIES.md` |
+| 1 | Core foundation: independence, contract v3, OCR candidates, trace log, eval harness | Plan written; executing | `docs/superpowers/specs/2026-09-23-spatial-core-foundation-design.md` |
+| 2 | System-One resolver (`/v1/systemone`: Jev first, Laya second, geometry fallback) + clarification UI | Not started (key ready) | `docs/TYPESAFE_OPPORTUNITIES.md` |
 | 3 | Windows UIA spike (throwaway) | Not started; can run in parallel | — |
 | 4 | Desktop app (Tauri, Windows → macOS) | Blocked on 1, 3 | — |
 | 5 | Desktop ↔ extension bridge, macOS AX | Blocked on 4 | — |
@@ -20,7 +20,9 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 - [x] Spec for sub-project 1 (commits `d9f92de`, `1b11bd9`)
 - [x] Project docs: AGENTS / PRD / ARCHITECTURE / RULES / DESIGN / TASKS / MEMORY
 - [x] Install TypeSafe plugin; brainstorm TypeSafe opportunities (`docs/TYPESAFE_OPPORTUNITIES.md`)
-- [ ] Write implementation plan for sub-project 1 (`docs/superpowers/plans/`)
+- [x] Write implementation plan for sub-project 1 (`docs/superpowers/plans/2026-09-23-spatial-core-foundation.md`)
+- [x] Verify `TYPESAFE_API_KEY` in `server/.env` (live Jev call OK)
+- [ ] Execute sub-project 1 plan (8 tasks)
 
 ## Sub-project 1 — Core foundation (from spec; refine in plan)
 
@@ -34,7 +36,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 
 ## Sub-project 2 — System-One resolver (outline)
 
-- [ ] User adds `TYPESAFE_API_KEY` to `server/.env` + shell
+- [x] User adds `TYPESAFE_API_KEY` to `server/.env`
 - [ ] Experiments E1–E4 (`docs/TYPESAFE_OPPORTUNITIES.md`); propose changes from results
 - [ ] `/v1/systemone` client with backend config (Jev / Laya / off)
 - [ ] Resolver integration + fallback + eval vs baseline

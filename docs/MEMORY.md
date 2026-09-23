@@ -34,6 +34,10 @@ code or git log. Newest first within each section. Remove entries that become wr
 - TypeSafe plugin installed at user scope (`typesafe@typesafe-ai` v0.5.7); its skill appears after a
   Claude Code restart (skill file: `~/.claude/plugins/cache/typesafe-ai/typesafe/*/skills/typesafe-ai/SKILL.md`).
 
+- **2026-09-23** — First live Jev call with the `server/.env` key: 200 OK, ~1.2 s round trip (India), 401 input
+  tokens for 2 candidates. Thin criteria ("candidate A") → Jev chose `none` (confidence 0.17): criteria must
+  describe each candidate concretely.
+
 ## Gotchas
 
 - Resolver confidence is hand-tuned, not measured — don't trust it for decisions until calibrated.
