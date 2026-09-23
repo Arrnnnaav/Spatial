@@ -481,6 +481,7 @@
         canvas: { width: window.innerWidth, height: window.innerHeight },
         page: { url: viewer ? viewer.fileUrl : location.href, title: (viewer ? viewer.title : document.title || location.hostname).slice(0, 500), surface: viewer ? 'pdf' : 'web' },
         image_data: capture.ok ? capture.image : null,
+        crop: capture.ok ? capture.crop : null,
       };
       const response = await send({ type: 'spatial:ask-stream', payload, requestId });
       if (!response.ok) throw response;

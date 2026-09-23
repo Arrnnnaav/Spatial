@@ -455,6 +455,7 @@ def answer_stream(
     provider_name: str | None = None,
     sources: list[dict[str, Any]] | None = None,
     level: str | None = None,
+    precomputed_ocr: str | None = None,
 ) -> Iterator[str | dict[str, Any]]:
     """Try providers in order, streaming text deltas; the last item is a meta dict:
     {provider, model, vision, ocr, status, usage, cost_usd, note?, errors: {name: {code, message}}}.
@@ -469,8 +470,8 @@ def answer_stream(
         page = {**page, "note": DIAGRAM_NOTE}
     order = [provider_name] if provider_name else list(settings.provider_order)
     errors: dict[str, dict[str, str]] = {}
-    ocr_text = ""
-    ocr_tried = False
+    ocr_text = precomputed_ocr or ""
+    ocr_tried = precomputed_ocr is not None  # the server already ran OCR to build candidates
 
     def ensure_ocr() -> None:
         nonlocal ocr_text, ocr_tried

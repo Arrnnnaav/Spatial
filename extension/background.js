@@ -89,18 +89,20 @@ chrome.webNavigation.onBeforeNavigate.addListener(async details => {
    image on purpose: the model sees exactly what the student circled. */
 async function captureCrop(windowId, box, dpr, mode) {
   const dataUrl = await chrome.tabs.captureVisibleTab(windowId, { format: 'png' });
-  if (mode === 'full_frame') return dataUrl;
   const blob = await (await fetch(dataUrl)).blob();
   const bitmap = await createImageBitmap(blob);
+  if (mode === 'full_frame') return { image: dataUrl, crop: { bbox: { x: 0, y: 0, width: bitmap.width / dpr, height: bitmap.height / dpr }, scale: dpr } };
   const pad = 28 * dpr;
   const sx = Math.max(0, Math.floor(box.x * dpr - pad)), sy = Math.max(0, Math.floor(box.y * dpr - pad));
   const sw = Math.min(bitmap.width - sx, Math.ceil(box.width * dpr + pad * 2)), sh = Math.min(bitmap.height - sy, Math.ceil(box.height * dpr + pad * 2));
-  if (sw <= 0 || sh <= 0) return null;
+  if (sw <= 0 || sh <= 0) return { image: null, crop: null };
   const scale = Math.min(1, 1600 / Math.max(sw, sh));
   const canvas = new OffscreenCanvas(Math.round(sw * scale), Math.round(sh * scale));
   canvas.getContext('2d').drawImage(bitmap, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
   const out = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.86 });
-  return new Promise(resolve => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsDataURL(out); });
+  const image = await new Promise(resolve => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsDataURL(out); });
+  // Crop geometry in CSS px of the viewport; scale = image px per CSS px (lets the server place OCR boxes).
+  return { image, crop: { bbox: { x: sx / dpr, y: sy / dpr, width: sw / dpr, height: sh / dpr }, scale: scale * dpr } };
 }
 
 /* HTTP ------------------------------------------------------------------ */
@@ -207,8 +209,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const config = await settings();
       switch (message.type) {
         case 'spatial:capture': {
-          if (config.privacy === 'anchors_only') return sendResponse({ ok: true, image: null });
-          return sendResponse({ ok: true, image: await captureCrop(sender.tab.windowId, message.box, message.dpr || 1, config.privacy) });
+          if (config.privacy === 'anchors_only') return sendResponse({ ok: true, image: null, crop: null });
+          const { image, crop } = await captureCrop(sender.tab.windowId, message.box, message.dpr || 1, config.privacy);
+          return sendResponse({ ok: true, image, crop });
         }
         case 'spatial:ask-stream': return sendResponse({ ok: true, result: await askStream(message.payload, sender.tab.id, message.requestId) });
         case 'spatial:consent': {

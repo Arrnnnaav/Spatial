@@ -16,10 +16,12 @@ from pydantic import BaseModel, Field
 
 from app import store
 from app.audio import audio_status, synthesize, transcribe
+from app.candidates import merge, ocr_candidates
 from app.config import settings
 from app.contracts import (CropInfo, SpatialContext, from_v2, mark_to_v2, page_dict, resolver_inputs,
                            to_semantic_resolution)
 from app import research
+from app.ocr import ocr_blocks
 from app.providers import answer_stream, clean_answer, provider_status
 from app.resolver import resolve_marks
 
@@ -192,7 +194,16 @@ def prepare_ask(payload: Ask) -> dict:
         if ctx.privacy_policy in {"crop_only", "full_frame"}
         else None
     )
+    ocr_text = None
     timings: dict[str, int] = {}
+    if image_data and settings.ocr_enabled:
+        ocr_started = perf_counter()
+        blocks = ocr_blocks(image_data)
+        timings["ocr"] = round((perf_counter() - ocr_started) * 1000)
+        ocr_text = "\n".join(block["text"] for block in blocks)
+        extra = ocr_candidates(blocks, ctx.crop)
+        if extra:
+            ctx = ctx.model_copy(update={"candidates": merge([*ctx.candidates, *extra])})
     marks, canvas, anchors = resolver_inputs(ctx)
     resolution = resolve_marks(marks, canvas, anchors)
     timings["resolve"] = resolution["latency_ms"]
@@ -220,7 +231,7 @@ def prepare_ask(payload: Ask) -> dict:
         "started": started,
         "timings": timings,
         "request_id": str(uuid4()),
-        "ocr_text": None,
+        "ocr_text": ocr_text,
     }
 
 
@@ -297,6 +308,7 @@ def ask(payload: Ask):
         payload.provider,
         prep["sources"],
         payload.level,
+        precomputed_ocr=prep["ocr_text"],
     ):
         if isinstance(item, dict):
             meta = item
@@ -343,6 +355,7 @@ def ask_stream(payload: Ask):
                 payload.provider,
                 prep["sources"],
                 payload.level,
+                precomputed_ocr=prep["ocr_text"],
             ):
                 if isinstance(item, dict):
                     meta = item
