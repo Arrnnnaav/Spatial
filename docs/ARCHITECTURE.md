@@ -89,7 +89,7 @@ Principles:
   Laya (open weights; hosted by impossibl or self-hosted `laya-serve`), deterministic fallback.
 - **Traces are data:** opt-in JSONL trace log (no pixels) feeds the eval harness and, later, Laya fine-tuning.
 
-### Desktop app (sub-project 4; 4a server built, 4b Tauri app next)
+### Desktop app (sub-project 4; built on Windows — `desktop/`, `server/app/desktop.py`)
 
 Server owns pixels and OS access (`server/app/desktop.py`): `POST /api/desktop/capture` freezes the monitor under the
 cursor (in memory, last 3, 5 min TTL); `POST /api/desktop/candidates` reads UIA elements under a point grid in the mark

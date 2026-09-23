@@ -26,11 +26,12 @@ hotkey ─▶ overlay (dim + tools) ─▶ draw mark(s) ─▶ ask panel opens n
 | Ambiguous | **Built (2026-09-23):** numbered dashed outlines on the top 2–4 candidates + "Did you mean:" chips; clicking re-asks with `target_id`; the pick is logged as a correction (`label`) in the trace |
 | Unresolved | "Circle a bit tighter" hint; still answers from crop/OCR if the user insists |
 
-## 3. Desktop (planned)
+## 3. Desktop (built 2026-09-24, Windows)
 
 - **Freeze-frame overlay:** hotkey captures the monitor under the cursor, shows that still image full-screen
   (dimmed), user draws on it. Nothing moves mid-mark; the overlay can't appear in its own capture.
-- **Ask panel:** small floating always-on-top window anchored near the mark; dismiss restores the live screen.
+- **Ask panel:** small floating always-on-top window placed beside the mark (right, else left, else below), shown
+  only after candidates are read so it never covers the marked region; Esc/✕ hides it.
 - **Tray icon:** status (server up, provider), settings, trace-log toggle, quit.
 
 ## 4. Visual language
@@ -57,3 +58,5 @@ hotkey ─▶ overlay (dim + tools) ─▶ draw mark(s) ─▶ ask panel opens n
 | 2026-09-23 | Trace log = metadata + resolution trace, no pixels, opt-in | Enough for replay/eval/training without storing screenshots |
 | 2026-09-23 | Jev on every ask; clarify chips instead of "circle tighter" | Routing saves ~5 s research on most asks; chips turn ambiguity into a one-click correction |
 | 2026-09-23 | Hybrid target gate = Jev pick probability ≥ 0.5 (not confidence) | Confidence is diluted by extra options; eval 47/49 → 49/49 |
+| 2026-09-24 | Desktop: server owns capture + UIA; Tauri app only draws/asks; per-launch token file | One place for pixels/OS access; screen routes unreachable from web pages |
+| 2026-09-24 | Overlay hides itself before candidates are read | UIA point probes hit the topmost window — it must be the user's app, not us |

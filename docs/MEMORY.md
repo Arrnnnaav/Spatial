@@ -92,6 +92,11 @@ code or git log. Newest first within each section. Remove entries that become wr
   windows, OCR could read a password manager under a small window, unknown process names failed open — all now fail
   closed (see the desktop spec, Security).
 
+- **2026-09-24** — Desktop 4b built with plain `cargo build` (no tauri-cli/npm needed: static `ui/` as `frontendDist`,
+  `withGlobalTauri`). Cold compile 2.5 min, incremental ~6 s. UI assets are embedded at compile time → rebuild after
+  editing `ui/`. The panel preview must filter huge containers (`anchorFilter`) or the Notepad window itself ranks
+  first. Git Bash heredocs containing JS/regex break unpredictably here: write files with the Write tool.
+
 ## Gotchas
 
 - Citation-check sentence split is naive (`. ` boundaries): initials like "Diederik P. Kingma" split a sentence;
