@@ -16,6 +16,11 @@ def _engine():
         return None
 
 
+def warm() -> None:
+    """Load the model off the request path (first load ~4 s)."""
+    _engine()
+
+
 def ocr_blocks(image_data: str | None) -> list[dict]:
     """Text blocks with boxes in crop px: [{text, bbox: {x, y, width, height}, confidence}], reading order as given."""
     if not image_data:

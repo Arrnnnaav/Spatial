@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, get_args
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic.json_schema import models_json_schema
 
 MarkKind = Literal["point", "rectangle", "circle", "polygon", "arrow", "line"]
@@ -23,6 +23,8 @@ _SURFACES = set(get_args(SurfaceKind))
 
 class BBox(BaseModel):
     """CSS/logical px of the surface the mark was drawn on. x/y may be negative (element partly off-screen)."""
+
+    model_config = ConfigDict(allow_inf_nan=False)
 
     x: float
     y: float

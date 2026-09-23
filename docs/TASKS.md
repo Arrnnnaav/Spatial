@@ -11,7 +11,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 | 1 | Core foundation: independence, contract v3, OCR candidates, trace log, eval harness | Done on branch `feat/core-foundation` (review + merge pending) | `docs/superpowers/specs/2026-09-23-spatial-core-foundation-design.md` |
 | 2 | System-One resolver (Jev now, Laya later; geometry fallback) + clarification UI | Done on branch `feat/system-one-resolver` (review + merge pending) | `docs/superpowers/specs/2026-09-23-system-one-resolver-design.md` |
 | 3 | Windows UIA spike (throwaway) | Done 2026-09-24 | `scripts/spikes/uia_region_probe.py` |
-| 4 | Desktop app (Tauri, Windows → macOS) | Blocked on 1, 3 | — |
+| 4 | Desktop app (Tauri, Windows → macOS) | 4a server done 2026-09-24; 4b Tauri app in progress | `docs/superpowers/specs/2026-09-24-desktop-app-design.md` |
 | 5 | Desktop ↔ extension bridge, macOS AX | Blocked on 4 | — |
 
 ## Now
@@ -60,6 +60,15 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 
 - [x] UIA region → v3 candidates → POST `/api/ask` (spike: `scripts/spikes/uia_region_probe.py`; no hotkey/overlay — that is sub-project 4)
 - [x] Tried Notepad, Calculator, File Explorer (VS Code/Chrome skipped: they showed secrets at the time); findings in `MEMORY.md`
+
+## Sub-project 4 — Desktop app
+
+- [x] 4a server: `/api/desktop/capture` (freeze monitor under cursor), `/api/desktop/candidates` (UIA point grid +
+      TextPattern of the topmost non-excluded window; password managers never read; OCR fallback), `Ask.capture_id`
+      (server-side crop), Tauri CORS origins. Live: capture 0.2 s, candidates 0.2–1.2 s, Notepad ask 5.2 s correct line.
+- [ ] 4b Tauri app `desktop/`: Alt+Shift+S hotkey, frozen-frame overlay (geometry.js), hide overlay → candidates →
+      `/api/ask/stream` with `capture_id`, ask panel (sources ⚠, clarify chips), tray
+- [ ] Reuse one COM/UIA object per worker thread (cold first call ~1 s)
 
 ## Backlog / ideas
 

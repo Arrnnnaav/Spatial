@@ -80,6 +80,18 @@ code or git log. Newest first within each section. Remove entries that become wr
   per-line text + exact rects → correct target and answer in 2.9 s. Needs per-monitor DPI awareness
   (`SetProcessDpiAwareness(2)`); `SetForegroundWindow` is refused for background processes (UIA works without it).
 
+- **2026-09-24** — Desktop 4a live on Windows 11: walking a big window's UIA tree (`FindAll` Descendants) took 5.6 s
+  on Explorer; probing a 7×7 grid of `ElementFromPoint` in the marked box (+3 ancestors, filtered by the window's pid)
+  takes 0.2–0.3 s and follows real z-order — but the overlay must be hidden first or it is what gets hit.
+  Hidden-but-"visible" windows exist: filter `DwmGetWindowAttribute(DWMWA_CLOAKED=14)`. RapidOCR first load ≈ 4 s →
+  warmed at startup; OCR in `candidates` only when UIA found nothing.
+
+- **2026-09-24** — Privacy review of desktop 4a (before merge): with `SPATIAL_API_TOKEN` unset any web page could POST
+  `/api/desktop/capture` (simple request, no preflight) and a DNS-rebinding page could read the frame. Fixed with a
+  per-launch desktop token file + custom header and a Host allow-list. Also: the ask-path crop ignored sensitive
+  windows, OCR could read a password manager under a small window, unknown process names failed open — all now fail
+  closed (see the desktop spec, Security).
+
 ## Gotchas
 
 - Citation-check sentence split is naive (`. ` boundaries): initials like "Diederik P. Kingma" split a sentence;
@@ -94,7 +106,7 @@ code or git log. Newest first within each section. Remove entries that become wr
   Fix the provider (`NVIDIA_MODEL`, start Ollama, or add an OpenRouter/Anthropic key) — not a code issue.
 
 - JS `slice()` can cut an emoji in half; Python/pydantic reject lone surrogates. v2 text goes through `contracts._text` to repair them.
-- CORS allows only extension origins; a future desktop (Tauri) client origin must be added explicitly.
+- CORS allows extension origins plus the Tauri origins (`tauri://localhost`, `http(s)://tauri.localhost`) — nothing else.
 
 - A PostToolUse formatter hook reformats Python files after every Write/Edit: re-read before exact-string edits, and don't rely on trailing blank lines in generated blocks.
 - Resolver confidence is hand-tuned, not measured — don't trust it for decisions until calibrated.
