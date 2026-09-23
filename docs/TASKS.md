@@ -10,7 +10,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 |---|---|---|---|
 | 1 | Core foundation: independence, contract v3, OCR candidates, trace log, eval harness | Done on branch `feat/core-foundation` (review + merge pending) | `docs/superpowers/specs/2026-09-23-spatial-core-foundation-design.md` |
 | 2 | System-One resolver (Jev now, Laya later; geometry fallback) + clarification UI | Done on branch `feat/system-one-resolver` (review + merge pending) | `docs/superpowers/specs/2026-09-23-system-one-resolver-design.md` |
-| 3 | Windows UIA spike (throwaway) | Not started; can run in parallel | — |
+| 3 | Windows UIA spike (throwaway) | Done 2026-09-24 | `scripts/spikes/uia_region_probe.py` |
 | 4 | Desktop app (Tauri, Windows → macOS) | Blocked on 1, 3 | — |
 | 5 | Desktop ↔ extension bridge, macOS AX | Blocked on 4 | — |
 
@@ -53,13 +53,13 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 - [x] NVIDIA model probe → default `nemotron-3-super-120b-a12b`; one retry on transient errors
 - [x] Tavily search layer (+ DDG fallback), credibility dedupe, per-role compare queries; Gemini removed
 - [x] Jev passage ranking (E3) + live citation check; ⚠ marker in extension
-- [ ] User: add `TAVILY_API_KEY` to `server/.env`, then live-verify Tavily path
+- [x] Tavily key added; live-verified (search 1.7 s, gather 2.7 s)
 - [ ] Offline research eval (10 questions, like the Cited Researcher's judge set)
 
 ## Sub-project 3 — Windows UIA spike (outline)
 
-- [ ] Hotkey → freeze-frame → box → dump UIA elements under box → POST v3 to `/api/ask`
-- [ ] Try on VS Code, Chrome, Word, Figma, File Explorer, a PDF reader; record what UIA returns in `MEMORY.md`
+- [x] UIA region → v3 candidates → POST `/api/ask` (spike: `scripts/spikes/uia_region_probe.py`; no hotkey/overlay — that is sub-project 4)
+- [x] Tried Notepad, Calculator, File Explorer (VS Code/Chrome skipped: they showed secrets at the time); findings in `MEMORY.md`
 
 ## Backlog / ideas
 

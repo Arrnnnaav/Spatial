@@ -73,6 +73,13 @@ code or git log. Newest first within each section. Remove entries that become wr
 - **2026-09-24** — Tavily live: search 1.7 s (5 hits, ranked chunks); full gather incl. Jev ranking 2.7 s; top source
   after ranking answered the question directly.
 
+- **2026-09-24** — UIA spike (`scripts/spikes/uia_region_probe.py`, v3 asks to a live server):
+  Calculator (UWP) 16 named elements in 43–64 ms → Jev picked "Memory subtract", correct answer, 2.4–3.4 s end to end;
+  Explorer 48 elements in 190 ms → ambiguous box correctly produced 4 clarify chips; Notepad (Win 11, RichEditD2DPT)
+  exposes text only via **TextPattern** (Name = "Text editor") → sample points, `RangeFromPoint` + expand to Line gives
+  per-line text + exact rects → correct target and answer in 2.9 s. Needs per-monitor DPI awareness
+  (`SetProcessDpiAwareness(2)`); `SetForegroundWindow` is refused for background processes (UIA works without it).
+
 ## Gotchas
 
 - Citation-check sentence split is naive (`. ` boundaries): initials like "Diederik P. Kingma" split a sentence;
