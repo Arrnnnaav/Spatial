@@ -250,3 +250,61 @@ def test_request_never_carries_binary():
     raw = _json.dumps([state, questions])
     assert "data:image" not in raw and "QUJDQUJD" * 10 not in raw
     assert len(state["elements"]["A"]["kind"]) <= 40
+
+
+SOURCES = [
+    {"url": "https://a.example", "title": "A", "passages": ["The gradient points uphill.", "Cookie banner text."], "credibility": 0.85},
+    {"url": "https://b.example", "title": "B", "passages": ["Subtract the gradient to lower the loss."], "credibility": 0.6},
+]
+
+
+def test_rank_passages_keeps_relevant_and_orders_sources(monkeypatch):
+    sent = {}
+
+    def fake(state, questions):
+        sent["state"], sent["questions"] = state, questions
+        # P1 = A/uphill (2.0), P2 = A/cookie (0.2), P3 = B/subtract (2.9)
+        scores = {"P1": 2.0, "P2": 0.2, "P3": 2.9}
+        return system_one.Result("ok", {k: {"type": "score", "score": v} for k, v in scores.items()})
+
+    monkeypatch.setattr(semantic.system_one, "evaluate", fake)
+    ranked = semantic.rank_passages("why subtract?", "theta - eta grad", SOURCES)
+    assert [s["title"] for s in ranked] == ["B", "A"]
+    assert ranked[1]["passages"] == ["The gradient points uphill."]
+    assert set(sent["questions"]) == {"P1", "P2", "P3"} and sent["questions"]["P1"]["type"] == "score"
+    assert len(sent["questions"]["P1"]["criteria"]) == 4
+
+
+def test_rank_passages_none_when_unavailable_or_empty(monkeypatch):
+    monkeypatch.setattr(semantic.system_one, "evaluate", lambda s, q: system_one.Result("timeout"))
+    assert semantic.rank_passages("q", "m", SOURCES) is None
+    assert semantic.rank_passages("q", "m", []) is None
+
+
+def test_rank_passages_drops_everything_irrelevant_but_never_crashes(monkeypatch):
+    monkeypatch.setattr(semantic.system_one, "evaluate",
+                        lambda s, q: system_one.Result("ok", {k: {"score": "bad"} for k in q}))
+    assert semantic.rank_passages("q", "m", SOURCES) is None  # unusable answers -> keep search order
+
+
+def test_check_citations_flags_unsupported(monkeypatch):
+    sources = [dict(s, id=i + 1) for i, s in enumerate(SOURCES)]
+    answer = "You subtract the gradient because it points uphill [1]. This lowers the loss [2]. No citation here."
+    sent = {}
+
+    def fake(state, questions):
+        sent["questions"] = questions
+        verdicts = {"C1": ("supports", 0.9), "C2": ("unrelated", 0.7)}
+        return system_one.Result("ok", {k: {"choice": v[0], "probabilities": {v[0]: v[1]}} for k, v in verdicts.items()})
+
+    monkeypatch.setattr(semantic.system_one, "evaluate", fake)
+    checks, unsupported = semantic.check_citations(answer, sources)
+    assert len(sent["questions"]) == 2 and sent["questions"]["C1"]["type"] == "choice"
+    assert [(c["sentence_index"], c["source_id"], c["verdict"]) for c in checks] == [(0, 1, "supports"), (1, 2, "unrelated")]
+    assert unsupported == [2]
+
+
+def test_check_citations_skips_without_citations_or_jev(monkeypatch):
+    assert semantic.check_citations("No refs at all.", [dict(SOURCES[0], id=1)]) == ([], [])
+    monkeypatch.setattr(semantic.system_one, "evaluate", lambda s, q: system_one.Result("error"))
+    assert semantic.check_citations("Claim [1].", [dict(SOURCES[0], id=1)]) == ([], [])
