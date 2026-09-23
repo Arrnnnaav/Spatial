@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spatial overlay</title>
+<style>
+  :root { --accent: #2f6feb; --ink: #fff; --shade: rgba(10, 12, 20, 0.72); }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; cursor: crosshair; user-select: none; }
+  #frame { position: fixed; inset: 0; width: 100vw; height: 100vh; object-fit: fill; pointer-events: none; }
+  svg { position: fixed; inset: 0; width: 100vw; height: 100vh; }
+  svg path, svg rect { fill: rgba(47, 111, 235, 0.10); stroke: var(--accent); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+  svg circle { fill: var(--accent); stroke: #fff; stroke-width: 2; }
+  #hint { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); padding: 7px 14px; border-radius: 999px;
+          background: var(--shade); color: var(--ink); font: 13px/1.3 system-ui, sans-serif; white-space: nowrap; pointer-events: none; }
+  #hint b { color: #9dbcff; font-weight: 600; }
+</style>
+</head>
+<body>
+<img id="frame" alt="">
+<svg id="ink"></svg>
+<div id="hint"><b id="verb">Circle</b> it · <b>B</b> box · <b>P</b> point · <b>C</b> circle · <b>Esc</b> cancel</div>
+<script src="geometry.js"></script>
+<script src="shared.js"></script>
+<script src="overlay.js"></script>
+</body>
+</html>

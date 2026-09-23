@@ -48,6 +48,7 @@ extension/     Chrome MV3: content.js (overlay, ask panel, anchor collection), b
 server/app/    FastAPI: main.py (routes), resolver.py (deterministic geometry ranking), providers.py (LLM chain,
                prompt), ocr.py (RapidOCR), research.py (search + cited answers), audio.py (STT/TTS), store.py
                (SQLite history), config.py (.env settings)
+desktop/       Tauri v2 app (Windows): src-tauri/ (Rust: hotkey, tray, token), ui/ (overlay + ask panel)
 server/tests/  pytest + golden resolver cases (tests/cases/*.json, shared with extension geometry tests)
 scripts/       try_providers.py (live smoke test), fetch_models.sh, probe_nvidia.py
 docs/          guides + superpowers/specs + superpowers/plans
@@ -65,6 +66,9 @@ python -m pytest -q             # server tests (196 passing as of 2026-09-24)
 # extension
 cd extension && node --test tests/geometry.test.mjs
 # load unpacked: chrome://extensions → Developer mode → Load unpacked → extension/ ; hotkey Alt+Shift+A
+
+# desktop app (Rust in %USERPROFILE%\.cargo\bin; start the server first)
+cd desktop/src-tauri && cargo build && target/debug/spatial-desktop.exe   # Alt+Shift+S anywhere
 
 # resolver eval + schema (repo root)
 python scripts/eval.py cases [--resolver hybrid] [--record]   # hybrid replays server/tests/system_one_cassette.json
