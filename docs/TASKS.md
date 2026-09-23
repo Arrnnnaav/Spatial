@@ -9,7 +9,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 | # | Sub-project | Status | Spec / plan |
 |---|---|---|---|
 | 1 | Core foundation: independence, contract v3, OCR candidates, trace log, eval harness | Done on branch `feat/core-foundation` (review + merge pending) | `docs/superpowers/specs/2026-09-23-spatial-core-foundation-design.md` |
-| 2 | System-One resolver (`/v1/systemone`: Jev first, Laya second, geometry fallback) + clarification UI | Spike done; spec next | `docs/TYPESAFE_OPPORTUNITIES.md` |
+| 2 | System-One resolver (Jev now, Laya later; geometry fallback) + clarification UI | Spec written, awaiting review | `docs/superpowers/specs/2026-09-23-system-one-resolver-design.md` |
 | 3 | Windows UIA spike (throwaway) | Not started; can run in parallel | — |
 | 4 | Desktop app (Tauri, Windows → macOS) | Blocked on 1, 3 | — |
 | 5 | Desktop ↔ extension bridge, macOS AX | Blocked on 4 | — |
