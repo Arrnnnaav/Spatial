@@ -75,6 +75,7 @@
     .a .sources { margin-top: 6px; font-size: 11px; color: #6b6b7b; display: flex; flex-direction: column; gap: 2px; }
     .a .sources a { color: #2f7cf6; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .a .sources a.cited { font-weight: 600; }
+    .a .sources a.unsupported::after { content: ' ⚠ not supported'; color: #b3261e; font-weight: 400; }
     .consent { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center; background: rgba(10,10,14,.55); cursor: default; }
     .consent .card { width: 420px; max-width: calc(100vw - 32px); background: #fff; color: #17171c; border-radius: 16px; padding: 22px; font: 14px/1.5 system-ui, sans-serif; box-shadow: 0 24px 60px rgba(0,0,0,.35); }
     .consent h2 { margin: 0 0 6px; font-size: 18px; }
@@ -533,8 +534,9 @@
       const speaker = attachSpeaker(actions, result.answer);
       if ((result.sources || []).length) {
         const cited = new Set(result.cited || []);
+        const unsupported = new Set(result.unsupported_citations || []);
         const list = el('div', { class: 'sources' });
-        for (const source of result.sources) list.append(el('a', { href: source.url, target: '_blank', rel: 'noopener', class: cited.has(source.id) ? 'cited' : '', title: source.url }, ['[' + source.id + '] ' + source.title]));
+        for (const source of result.sources) list.append(el('a', { href: source.url, target: '_blank', rel: 'noopener', class: (cited.has(source.id) ? 'cited' : '') + (unsupported.has(source.id) ? ' unsupported' : ''), title: source.url + (unsupported.has(source.id) ? ' — the cited passage does not support the sentence' : '') }, ['[' + source.id + '] ' + source.title]));
         answerNode.insertBefore(list, answerNode.querySelector('small'));
       }
       highlightAnchors(result.anchors_used);

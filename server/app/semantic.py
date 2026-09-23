@@ -25,6 +25,7 @@ def _clean(value: Any, limit: int) -> str:
     text = _BASE64_RUN.sub("[binary]", _DATA_URL.sub("[image]", text))
     return text[:limit]
 
+
 # Take Jev's pick when it is more likely than not. Gating on `confidence` instead lost 2/49 eval cases: with
 # several options plus `none`, confidence is diluted even when the pick is clearly preferred (p=0.55-0.62).
 TARGET_MIN_PROB = 0.5
@@ -269,7 +270,11 @@ def _obj(answers: dict, key: str) -> dict:
 
 
 def _num(value: Any) -> float | None:
-    return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
+    return (
+        float(value)
+        if isinstance(value, (int, float)) and not isinstance(value, bool)
+        else None
+    )
 
 
 def _noul(answers: dict, key: str) -> float | None:
@@ -284,8 +289,16 @@ def decide(
     target = _obj(answers, "target")
     if target and letters:
         judgment.asked_target = True
-        raw = target.get("probabilities") if isinstance(target.get("probabilities"), dict) else {}
-        probs = {letters[letter]: _num(p) for letter, p in raw.items() if letter in letters and _num(p) is not None}
+        raw = (
+            target.get("probabilities")
+            if isinstance(target.get("probabilities"), dict)
+            else {}
+        )
+        probs = {
+            letters[letter]: _num(p)
+            for letter, p in raw.items()
+            if letter in letters and _num(p) is not None
+        }
         judgment.probabilities = probs
         choice = target.get("choice")
         picked = letters.get(choice) if isinstance(choice, str) else None
@@ -338,7 +351,9 @@ def judge(
 ) -> Judgment:
     """Never raises: any failure (transport, schema drift, a bug here) means geometry-only for this ask."""
     try:
-        state, questions, letters = build_request(ctx, resolution, anchors, previous_question, pinned=bool(pinned))
+        state, questions, letters = build_request(
+            ctx, resolution, anchors, previous_question, pinned=bool(pinned)
+        )
         result = system_one.evaluate(state, questions)
         if result.status != "ok":
             return Judgment(status=result.status, latency_ms=result.latency_ms)
@@ -348,3 +363,147 @@ def judge(
     except Exception as exc:
         logger.warning("system one judgment failed: %s", type(exc).__name__)
         return Judgment(status="error")
+
+
+# --- research: passage ranking (E3) and citation check (live judge) -----------------------------------------
+
+PASSAGE_MIN = 1.5  # expected level on the 0-3 relevance scale below
+MAX_PASSAGES = 12
+PASSAGE_LEVELS = [
+    "irrelevant to the question",
+    "same topic but does not help answer the question",
+    "partly answers the question",
+    "directly answers the question",
+]
+VERDICTS = {
+    "supports": "the source text states or directly implies the claim",
+    "partly": "the source supports part of the claim but not all of it",
+    "unrelated": "the source does not address the claim",
+    "contradicts": "the source says something that conflicts with the claim",
+}
+_CITE = re.compile(r"\[(\d{1,2})\]")
+
+
+def rank_passages(question: str, marked: str, sources: list[dict]) -> list[dict] | None:
+    """Score every passage with Jev; keep relevant ones (max 2 per source), best source first.
+    None when there is nothing to rank or System One gave nothing usable (caller keeps search order)."""
+    try:
+        flat = [
+            (si, passage)
+            for si, source in enumerate(sources)
+            for passage in source.get("passages", [])
+        ]
+        flat = flat[:MAX_PASSAGES]
+        if not flat:
+            return None
+        state = {
+            "question": _clean(question, 2000),
+            "marked": _clean(marked, 600),
+            "passages": {f"P{k + 1}": _clean(p, 600) for k, (_, p) in enumerate(flat)},
+        }
+        questions = {
+            f"P{k + 1}": {
+                "type": "score",
+                "criteria": PASSAGE_LEVELS,
+                "instructions": f"How well does `passages.P{k + 1}` help answer `question` "
+                f"about the marked text `marked`?",
+            }
+            for k in range(len(flat))
+        }
+        result = system_one.evaluate(state, questions)
+        if result.status != "ok":
+            return None
+        scores = {
+            k: _num(_obj(result.answers, f"P{k + 1}").get("score"))
+            for k in range(len(flat))
+        }
+        if all(v is None for v in scores.values()):
+            return None
+        kept: dict[int, list[tuple[float, str]]] = {}
+        for k, (si, passage) in enumerate(flat):
+            score = scores[k]
+            if score is not None and score >= PASSAGE_MIN:
+                kept.setdefault(si, []).append((score, passage))
+        ranked = sorted(
+            kept.items(),
+            key=lambda item: (
+                -max(s for s, _ in item[1]),
+                -sources[item[0]].get("credibility", 0.0),
+            ),
+        )
+        return [
+            {
+                **sources[si],
+                "passages": [p for _, p in sorted(items, key=lambda x: -x[0])[:2]],
+            }
+            for si, items in ranked
+        ]
+    except Exception as exc:
+        logger.warning("passage ranking failed: %s", type(exc).__name__)
+        return None
+
+
+def check_citations(answer: str, sources: list[dict]) -> tuple[list[dict], list[int]]:
+    """For each (sentence, cited source) pair ask Jev whether the source supports it.
+    Returns (checks, unsupported source ids); ([], []) when there is nothing to check or System One is down."""
+    try:
+        by_id = {s["id"]: s for s in sources}
+        sentences = [s for s in re.split(r"(?<=[.!?])\s+", (answer or "").strip()) if s]
+        pairs = []
+        for index, sentence in enumerate(sentences):
+            for ref in dict.fromkeys(int(n) for n in _CITE.findall(sentence)):
+                if ref in by_id:
+                    pairs.append((index, ref))
+        pairs = pairs[:MAX_PASSAGES]
+        if not pairs:
+            return [], []
+        used = sorted({ref for _, ref in pairs})
+        state = {
+            "sentences": {
+                f"S{i + 1}": _clean(_CITE.sub("", sentences[i]), 400)
+                for i in {i for i, _ in pairs}
+            },
+            "sources": {
+                f"src{ref}": _clean(" ".join(by_id[ref].get("passages", [])), 1200)
+                for ref in used
+            },
+        }
+        questions = {
+            f"C{k + 1}": {
+                "type": "choice",
+                "criteria": VERDICTS,
+                "instructions": f"Does `sources.src{ref}` support the claim in `sentences.S{i + 1}`?",
+            }
+            for k, (i, ref) in enumerate(pairs)
+        }
+        result = system_one.evaluate(state, questions)
+        if result.status != "ok":
+            return [], []
+        checks, unsupported = [], set()
+        for k, (i, ref) in enumerate(pairs):
+            answer_k = _obj(result.answers, f"C{k + 1}")
+            verdict = (
+                answer_k.get("choice") if answer_k.get("choice") in VERDICTS else None
+            )
+            if verdict is None:
+                continue
+            probs = (
+                answer_k.get("probabilities")
+                if isinstance(answer_k.get("probabilities"), dict)
+                else {}
+            )
+            probability = _num(probs.get(verdict))
+            checks.append(
+                {
+                    "sentence_index": i,
+                    "source_id": ref,
+                    "verdict": verdict,
+                    "probability": probability,
+                }
+            )
+            if verdict in {"unrelated", "contradicts"} and (probability or 0.0) >= 0.5:
+                unsupported.add(ref)
+        return checks, sorted(unsupported)
+    except Exception as exc:
+        logger.warning("citation check failed: %s", type(exc).__name__)
+        return [], []

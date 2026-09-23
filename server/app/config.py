@@ -89,6 +89,14 @@ class Settings:
         "SPATIAL_SYSTEM_ONE", ""
     ).strip().lower() or ("jev" if _env("TYPESAFE_API_KEY") else "off")
     system_one_timeout: float = float(_env("SPATIAL_SYSTEM_ONE_TIMEOUT", "1.5"))
+    # Research search layer (app/research.py): Tavily when a key is set, DuckDuckGo scraping otherwise.
+    tavily_api_key: str | None = _env("TAVILY_API_KEY")
+    research_search: str = (
+        os.environ.get("SPATIAL_RESEARCH_SEARCH", "").strip().lower() or "auto"
+    )
+    research_verify: bool = os.environ.get(
+        "SPATIAL_RESEARCH_VERIFY", "on"
+    ).strip().lower() not in {"0", "off", "false", "no"}
     providers: dict[str, ProviderConfig] = field(
         default_factory=lambda: {
             "ollama": ProviderConfig(
@@ -111,7 +119,7 @@ class Settings:
                 "nvidia",
                 _env("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1"),
                 _env("NVIDIA_API_KEY"),
-                _env("NVIDIA_MODEL", "nvidia/nemotron-3.5-lightning-30b-a3b"),
+                _env("NVIDIA_MODEL", "nvidia/nemotron-3-super-120b-a12b"),
                 _env("NVIDIA_VISION_MODEL", "meta/llama-3.2-11b-vision-instruct"),
                 "openai",
             ),

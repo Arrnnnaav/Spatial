@@ -33,7 +33,8 @@ account` or `410 Gone` (retired). Probed on 2026-09-16, these answered:
 |---|---|---|
 | `openai/gpt-oss-20b` | text | clean answers, ~10 s — **default** |
 | `nvidia/nemotron-3-super-120b-a12b` | text | strong, slower |
-| `nvidia/nemotron-3.5-lightning-30b-a3b` | text | fast but leaks its reasoning into the answer |
+| `nvidia/nemotron-3-super-120b-a12b` | text | **default (2026-09-24)**: reasons then answers correctly in ~2–4 s; free tier returns occasional 503s (retried once) |
+| `nvidia/nemotron-3.5-lightning-30b-a3b` | text | times out for this account (2026-09-24) — do not use |
 | `z-ai/glm-5.3` | text | |
 | `meta/llama-3.2-11b-vision-instruct` | vision | sees the crop, ~8–15 s — **default vision** |
 | `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` | vision + reasoning | |

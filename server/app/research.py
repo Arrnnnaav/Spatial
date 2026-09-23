@@ -1,16 +1,16 @@
 """Research mode: ground the answer in a handful of web sources so it is precise and cited.
 
-Pipeline (no API key needed): question + marked text -> DuckDuckGo HTML search -> fetch top pages ->
-pick the few passages that overlap the question -> hand them to the provider chain as numbered sources.
-Optional: when GOOGLE_API_KEY is set and `google-generativeai` is installed, Gemini grounding adds
-its sources too (pattern from D:/PROJECTS/Cited Multi-Agent Researcher). Every network step is
-best-effort and time-boxed; with zero sources the normal (uncited) answer path still runs.
+Pipeline (after D:/PROJECTS/Cited Multi-Agent Researcher: search agents -> citation agent -> synthesis -> judge):
+question + marked text -> one query (or one per mark for a source/target comparison) -> Tavily search
+(`search_depth="fast"`, ranked chunks per source; needs TAVILY_API_KEY) or, without a key, DuckDuckGo HTML search +
+page fetch + passage selection -> dedupe + credibility score -> Jev passage ranking (app/semantic.py) -> numbered
+sources for the provider chain. Every network step is best-effort and time-boxed; with zero sources the normal
+(uncited) answer path still runs.
 """
 
 from __future__ import annotations
 
 import html
-import os
 import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
@@ -18,11 +18,16 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 import httpx
 
+from app import semantic
+from app.config import settings
+
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) PointAndAsk/0.2 (+research mode)"
 STOP = set(
     "the a an of to in on for and or is are was were be this that it its as by with from at what why how does do which who when where into than then so if not can".split()
 )
 SEARCH_TIMEOUT = 6.0
+TAVILY_URL = "https://api.tavily.com/search"
+_tavily_transport: httpx.BaseTransport | None = None  # tests inject httpx.MockTransport
 FETCH_TIMEOUT = 6.0
 MAX_PAGE_CHARS = 40_000
 BLOCKED_HOSTS = (
@@ -98,43 +103,6 @@ def _ddg_search(query: str, k: int) -> list[dict[str, str]]:
     return results
 
 
-def _gemini_search(query: str, k: int) -> list[dict[str, str]]:
-    """Gemini grounding (optional). Returns the grounding chunks as sources, like the Cited Researcher's SearchAgent."""
-    key = os.getenv("GOOGLE_API_KEY", "")
-    if not key:
-        return []
-    try:
-        import google.generativeai as genai  # type: ignore
-    except Exception:
-        return []
-    try:
-        genai.configure(api_key=key)
-        tool = genai.protos.Tool(google_search=genai.protos.Tool.GoogleSearch())
-        model = genai.GenerativeModel(
-            model_name=os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite"), tools=[tool]
-        )
-        response = model.generate_content(
-            f"Find the most authoritative sources for: {query}",
-            request_options={"timeout": SEARCH_TIMEOUT * 2},
-        )
-        chunks = response.candidates[0].grounding_metadata.grounding_chunks or []
-        out = []
-        for chunk in chunks:
-            if getattr(chunk, "web", None) and chunk.web.uri:
-                out.append(
-                    {
-                        "url": chunk.web.uri,
-                        "title": chunk.web.title or chunk.web.uri,
-                        "snippet": (response.text or "")[:300],
-                    }
-                )
-            if len(out) >= k:
-                break
-        return out
-    except Exception:
-        return []
-
-
 def _clean(fragment: str) -> str:
     text = re.sub(
         r"<script.*?</script>|<style.*?</style>|<noscript.*?</noscript>",
@@ -199,43 +167,120 @@ def select_passages(
     return passages
 
 
-def gather(
-    question: str, anchors: list[dict[str, Any]], max_sources: int = 4
-) -> list[dict[str, Any]]:
-    """Search + fetch + select, in parallel; returns [{id, url, title, passages}] with 1-based ids."""
-    query = build_query(question, anchors)
-    hits = _gemini_search(query, max_sources) + _ddg_search(query, max_sources * 2)
-    seen, unique = set(), []
+def build_queries(question: str, anchors: list[dict[str, Any]], mode: str | None = None) -> list[str]:
+    """One query per mark role for a comparison (search both sides in parallel), else one query."""
+    roles: dict[str, list[dict[str, Any]]] = {}
+    for anchor in anchors:
+        roles.setdefault(str(anchor.get("role") or "reference"), []).append(anchor)
+    if mode == "compare" and len(roles) >= 2:
+        return [build_query(question, group) for group in roles.values()][:3]
+    return [build_query(question, anchors)]
+
+
+def _tavily_search(query: str, k: int) -> list[dict[str, Any]]:
+    """Tavily search tuned for per-ask latency: `fast` depth returns ranked content chunks, so no page fetching."""
+    key = settings.tavily_api_key
+    if not key:
+        return []
+    body = {"query": query[:400], "search_depth": "fast", "chunks_per_source": 3, "max_results": k,
+            "include_answer": False}
+    try:
+        with httpx.Client(timeout=SEARCH_TIMEOUT, transport=_tavily_transport, trust_env=False) as client:
+            response = client.post(TAVILY_URL, json=body, headers={"Authorization": f"Bearer {key}"})
+            response.raise_for_status()
+            results = response.json().get("results") or []
+    except Exception:
+        return []
+    hits = []
+    for item in results:
+        if not isinstance(item, dict) or not str(item.get("url", "")).startswith("http"):
+            continue
+        host = urlparse(item["url"]).netloc.lower()
+        if any(b in host for b in BLOCKED_HOSTS):
+            continue
+        chunks = [c.strip() for c in str(item.get("content") or "").split("[...]") if c.strip()]
+        hits.append({"url": item["url"], "title": str(item.get("title") or item["url"])[:160],
+                     "passages": [c[:600] for c in chunks][:3], "score": float(item.get("score") or 0.0)})
+    return hits
+
+
+REFERENCE_HOSTS = ("wikipedia.org", "britannica.com", "reuters.com", "bbc.com", "nature.com", "arxiv.org",
+                   "nih.gov", "who.int", "docs.python.org", "developer.mozilla.org", "stackexchange.com",
+                   "stackoverflow.com")
+
+
+def credibility(url: str) -> float:
+    """Citation-agent style source prior: official > reference/news > organisations > the rest."""
+    host = urlparse(url).netloc.lower()
+    if host.endswith(".gov") or ".gov." in host or host.endswith(".edu") or ".edu." in host:
+        return 0.95
+    if any(host == h or host.endswith("." + h) for h in REFERENCE_HOSTS):
+        return 0.85
+    if host.endswith(".org"):
+        return 0.75
+    return 0.6
+
+
+def dedupe_and_score(hits: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen, out = set(), []
     for hit in hits:
-        key = urlparse(hit["url"]).netloc.lower() + urlparse(hit["url"]).path.rstrip(
-            "/"
-        )
+        parsed = urlparse(hit["url"])
+        key = parsed.netloc.lower() + parsed.path.rstrip("/")
         if key in seen:
             continue
         seen.add(key)
-        unique.append(hit)
-    marked = " ".join(str(a.get("text", "")) for a in anchors[:3])
-    sources: list[dict[str, Any]] = []
+        out.append({**hit, "credibility": credibility(hit["url"])})
+    return out
+
+
+def rank_passages(question: str, marked: str, sources: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
+    """Jev passage ranking (None when System One is unavailable: keep search order)."""
+    return semantic.rank_passages(question, marked, sources)
+
+
+def _ddg_sources(query: str, question: str, marked: str, k: int) -> list[dict[str, Any]]:
+    hits = _ddg_search(query, k * 2)
+    out = []
     with ThreadPoolExecutor(max_workers=6) as pool:
-        for hit, text in zip(
-            unique, pool.map(lambda h: fetch_text(h["url"]), unique[: max_sources * 2])
-        ):
+        for hit, text in zip(hits, pool.map(lambda h: fetch_text(h["url"]), hits)):
             passages = select_passages(text, question, marked) if text else []
             if not passages and hit.get("snippet"):
                 passages = [hit["snippet"]]
-            if not passages:
-                continue
-            sources.append(
-                {
-                    "id": len(sources) + 1,
-                    "url": hit["url"],
-                    "title": hit["title"] or hit["url"],
-                    "passages": passages,
-                }
-            )
-            if len(sources) >= max_sources:
-                break
-    return sources
+            if passages:
+                out.append({"url": hit["url"], "title": hit["title"] or hit["url"], "passages": passages, "score": 0.0})
+    return out
+
+
+def gather(question: str, anchors: list[dict[str, Any]], max_sources: int = 4,
+           mode: str | None = None) -> list[dict[str, Any]]:
+    """Search (Tavily, else DuckDuckGo) per query in parallel -> dedupe + credibility -> Jev ranking -> numbered
+    sources [{id, url, title, passages, credibility}]."""
+    marked = " ".join(str(a.get("text", "")) for a in anchors[:3])
+    queries = build_queries(question, anchors, mode)
+    use_tavily = settings.research_search in {"auto", "tavily"} and bool(settings.tavily_api_key)
+
+    def search(query: str) -> list[dict[str, Any]]:
+        hits = _tavily_search(query, max_sources + 1) if use_tavily else []
+        return hits or _ddg_sources(query, question, marked, max_sources)
+
+    with ThreadPoolExecutor(max_workers=len(queries)) as pool:
+        per_query = list(pool.map(search, queries))
+    # Interleave per-query results so a comparison keeps sources from both sides.
+    interleaved = [hit for group in zip_longest_nonnull(per_query) for hit in group]
+    sources = dedupe_and_score(interleaved)
+    ranked = rank_passages(question, marked, sources)
+    if ranked is not None:
+        sources = ranked
+    sources = sources[:max_sources]
+    return [{"id": index + 1, "url": s["url"], "title": s["title"], "passages": s["passages"],
+             "credibility": s.get("credibility", credibility(s["url"]))} for index, s in enumerate(sources)]
+
+
+def zip_longest_nonnull(groups: list[list[Any]]) -> list[list[Any]]:
+    rows = []
+    for index in range(max((len(g) for g in groups), default=0)):
+        rows.append([g[index] for g in groups if index < len(g)])
+    return rows
 
 
 def sources_block(sources: list[dict[str, Any]]) -> str:

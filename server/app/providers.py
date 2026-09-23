@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from typing import Any, Iterator
 
 import httpx
@@ -91,6 +92,17 @@ def estimate_cost(model: str, usage: dict[str, Any] | None) -> float:
     return round(
         (prompt_tokens * price[0] + completion_tokens * price[1]) / 1_000_000, 6
     )
+
+
+RETRY_DELAY = 0.5
+_TRANSIENT_STATUS = {429, 502, 503, 504}
+
+
+def _transient(exc: Exception) -> bool:
+    """Worth one quick retry on the same provider before falling through to the next one."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        return exc.response.status_code in _TRANSIENT_STATUS
+    return isinstance(exc, (httpx.ConnectError, httpx.ConnectTimeout, httpx.RemoteProtocolError))
 
 
 def classify_error(exc: Exception) -> tuple[str, str]:
@@ -546,54 +558,59 @@ def answer_stream(
                 history,
                 sources,
             )
-            produced = False
-            try:
-                for item in stream_provider(
-                    config, prompt, image_data if use_vision else None, use_vision
-                ):
-                    if isinstance(item, dict):
-                        item.update(
-                            {
-                                "status": "generated",
-                                "sources": sources,
-                                "diagram": diagram,
-                                "level": _SYSTEM_OVERRIDE.get("level"),
-        "mode": _SYSTEM_OVERRIDE.get("mode"),
-                                "ocr": bool(ocr_text and not use_vision),
-                                "errors": errors,
-                                "cost_usd": estimate_cost(
-                                    item.get("model", ""), item.get("usage")
-                                ),
-                            }
-                        )
-                        if not use_vision and has_vision:
-                            item["note"] = (
-                                "vision model unavailable, answered from text"
+            for retry in range(2):  # one retry for transient provider errors (free tiers 503 often)
+                produced = False
+                try:
+                    for item in stream_provider(
+                        config, prompt, image_data if use_vision else None, use_vision
+                    ):
+                        if isinstance(item, dict):
+                            item.update(
+                                {
+                                    "status": "generated",
+                                    "sources": sources,
+                                    "diagram": diagram,
+                                    "level": _SYSTEM_OVERRIDE.get("level"),
+            "mode": _SYSTEM_OVERRIDE.get("mode"),
+                                    "ocr": bool(ocr_text and not use_vision),
+                                    "errors": errors,
+                                    "cost_usd": estimate_cost(
+                                        item.get("model", ""), item.get("usage")
+                                    ),
+                                }
                             )
-                        yield item
-                        return
-                    if item:
-                        produced = True
-                        yield item
-            except Exception as exc:
-                code, message = classify_error(exc)
-                errors[f"{name}{'' if use_vision else ':text'}"] = {
-                    "code": code,
-                    "message": message,
-                }
-                if (
-                    produced
-                ):  # partial answer already streamed; finish with what we have
-                    yield {
-                        "provider": config.name,
-                        "model": config.model,
-                        "vision": use_vision,
-                        "ocr": False,
-                        "status": "partial",
-                        "errors": errors,
-                        "cost_usd": 0.0,
+                            if not use_vision and has_vision:
+                                item["note"] = (
+                                    "vision model unavailable, answered from text"
+                                )
+                            yield item
+                            return
+                        if item:
+                            produced = True
+                            yield item
+                except Exception as exc:
+                    code, message = classify_error(exc)
+                    errors[f"{name}{'' if use_vision else ':text'}"] = {
+                        "code": code,
+                        "message": message,
                     }
-                    return
+                    if (
+                        produced
+                    ):  # partial answer already streamed; finish with what we have
+                        yield {
+                            "provider": config.name,
+                            "model": config.model,
+                            "vision": use_vision,
+                            "ocr": False,
+                            "status": "partial",
+                            "errors": errors,
+                            "cost_usd": 0.0,
+                        }
+                        return
+                    if retry == 0 and _transient(exc):
+                        time.sleep(RETRY_DELAY)
+                        continue
+                    break
     ensure_ocr()
     text = fallback_answer(question, anchors, ocr_text)
     if sources:
