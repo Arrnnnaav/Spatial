@@ -9,6 +9,7 @@
       health: '/api/health',
       transcribe: '/api/stt',
       synthesize: '/api/tts',
+      traceConfig: '/api/traces/config',
     },
     features: {
       providerPicker: true,    // self-hosters choose the provider

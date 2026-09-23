@@ -202,6 +202,13 @@ async function recordViaOffscreen(action) {
   return response || { ok: false, error: 'recorder did not answer' };
 }
 
+async function setTrace(enabled) {
+  const config = await settings();
+  const response = await fetch(apiUrl(config, 'traceConfig'), { method: 'PUT', headers: await headers(config), body: JSON.stringify({ enabled }) });
+  if (!response.ok) throw await failure(response);
+  return response.json();
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || !message.type || message.type.startsWith('offscreen:')) return false; // offscreen.js answers those
   (async () => {
@@ -224,6 +231,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         case 'spatial:speak': return sendResponse({ ok: true, audio: await speak(message.text) });
         case 'spatial:transcribe': return sendResponse({ ok: true, text: await transcribe(message.audio, message.mimeType || 'audio/webm') });
         case 'spatial:record': return sendResponse(await recordViaOffscreen(message.action));
+        case 'spatial:trace': return sendResponse({ ok: true, trace: await setTrace(Boolean(message.enabled)) });
         case 'spatial:start-active': {
           const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
           return sendResponse(await toggleOverlay(tab));

@@ -18,15 +18,24 @@ from app import store
 from app.audio import audio_status, synthesize, transcribe
 from app.candidates import merge, ocr_candidates
 from app.config import settings
-from app.contracts import (CropInfo, SpatialContext, from_v2, mark_to_v2, page_dict, resolver_inputs,
-                           to_semantic_resolution)
-from app import research
+from app.contracts import (
+    CropInfo,
+    SpatialContext,
+    from_v2,
+    mark_to_v2,
+    page_dict,
+    resolver_inputs,
+    to_semantic_resolution,
+)
+from app import research, trace
 from app.ocr import ocr_blocks
 from app.providers import answer_stream, clean_answer, provider_status
 from app.resolver import resolve_marks
 
 PROTOCOL_VERSION = 3  # v3: SpatialContext payload; bump when the ask payload/response shape changes incompatibly
-MIN_PROTOCOL_VERSION = 2  # the v2 browser extension payload is still accepted and converted
+MIN_PROTOCOL_VERSION = (
+    2  # the v2 browser extension payload is still accepted and converted
+)
 
 app = FastAPI(title="Spatial — Point & Ask", version="0.2.0")
 app.add_middleware(
@@ -38,15 +47,26 @@ app.add_middleware(
 )
 
 
-
 @app.exception_handler(RequestValidationError)
 async def validation_error(_: Request, exc: RequestValidationError):
     """Keep the {code, message} error shape clients already handle."""
     errors = exc.errors()
     first = errors[0] if errors else {}
-    code = "BAD_CONTEXT" if any("context" in map(str, e.get("loc", ())) for e in errors) else "BAD_REQUEST"
+    code = (
+        "BAD_CONTEXT"
+        if any("context" in map(str, e.get("loc", ())) for e in errors)
+        else "BAD_REQUEST"
+    )
     where = ".".join(str(part) for part in first.get("loc", ()) if part != "body")
-    return JSONResponse(status_code=422, content={"detail": {"code": code, "message": f"{where}: {first.get('msg', 'invalid request')}"}})
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": {
+                "code": code,
+                "message": f"{where}: {first.get('msg', 'invalid request')}",
+            }
+        },
+    )
 
 
 class Page(BaseModel):
@@ -62,7 +82,9 @@ class Ask(BaseModel):
     canvas: dict[str, float] | None = None
     anchors: list[dict] = Field(default_factory=list)
     page: Page = Field(default_factory=Page)
-    crop: CropInfo | None = None  # where the attached crop sits on the page (enables OCR candidates)
+    crop: CropInfo | None = (
+        None  # where the attached crop sits on the page (enables OCR candidates)
+    )
     # v3: the whole ask as one SpatialContext
     context: SpatialContext | None = None
     # shared
@@ -72,7 +94,9 @@ class Ask(BaseModel):
     image_data: str | None = Field(default=None, max_length=8_000_000)
     protocol_version: int = MIN_PROTOCOL_VERSION  # omitted version = v2 payload; v3 is also detected from `context`
     client_version: str | None = Field(default=None, max_length=40)
-    research: bool = False  # ground the answer in web sources (app/research.py) and cite them
+    research: bool = (
+        False  # ground the answer in web sources (app/research.py) and cite them
+    )
     level: str | None = Field(default=None, max_length=10)  # eli5 | student | expert
 
 
@@ -176,6 +200,7 @@ def health():
         "ocr": settings.ocr_enabled,
         "audio": audio_status(),
         "auth_required": bool(settings.api_token),
+        "trace": trace.status(),
     }
 
 
@@ -203,7 +228,9 @@ def prepare_ask(payload: Ask) -> dict:
         ocr_text = "\n".join(block["text"] for block in blocks)
         extra = ocr_candidates(blocks, ctx.crop)
         if extra:
-            ctx = ctx.model_copy(update={"candidates": merge([*ctx.candidates, *extra])})
+            ctx = ctx.model_copy(
+                update={"candidates": merge([*ctx.candidates, *extra])}
+            )
     marks, canvas, anchors = resolver_inputs(ctx)
     resolution = resolve_marks(marks, canvas, anchors)
     timings["resolve"] = resolution["latency_ms"]
@@ -268,7 +295,8 @@ def finish_ask(payload: Ask, prep: dict, text: str, meta: dict) -> dict:
             record,
         )
     resolution = prep["resolution"]
-    return {
+    semantic = to_semantic_resolution(resolution)
+    response = {
         "id": context_id,
         "answer": text,
         "anchors_used": prep["used"],
@@ -289,10 +317,34 @@ def finish_ask(payload: Ask, prep: dict, text: str, meta: dict) -> dict:
         "turns": len(history),
         "page": page,
         "resolution": resolution,
-        "resolution_v3": to_semantic_resolution(resolution).model_dump(),
+        "resolution_v3": semantic.model_dump(),
         "latency_ms": round((perf_counter() - prep["started"]) * 1000),
         "protocol_version": PROTOCOL_VERSION,
     }
+    if trace.enabled():
+        total = round((perf_counter() - prep["started"]) * 1000)
+        timings = {**prep["timings"]}
+        timings["answer"] = max(0, total - sum(timings.values()))
+        timings["total"] = total
+        trace.write(
+            trace.build_record(
+                request_id=prep["request_id"],
+                context_id=context_id,
+                client={
+                    "protocol": payload.protocol_version,
+                    "version": payload.client_version,
+                },
+                ctx=prep["context"],
+                image_attached=bool(prep["image_data"]),
+                resolution=semantic,
+                answer=text,
+                meta=meta,
+                timings=timings,
+            )
+        )
+    return response
+
+
 @app.post("/api/ask", dependencies=[Depends(require_token)])
 def ask(payload: Ask):
     """The mark is a reference, never authority: this endpoint only explains."""
@@ -398,6 +450,44 @@ def delete_context(context_id: str):
             404, {"code": "CONTEXT_NOT_FOUND", "message": "context not found"}
         )
     return {"deleted": context_id}
+
+
+class TraceConfig(BaseModel):
+    enabled: bool
+
+
+@app.get("/api/traces/config", dependencies=[Depends(require_token)])
+def get_trace_config():
+    return trace.status()
+
+
+@app.put("/api/traces/config", dependencies=[Depends(require_token)])
+def put_trace_config(body: TraceConfig):
+    try:
+        trace.set_enabled(body.enabled)
+    except OSError as exc:
+        raise HTTPException(
+            503,
+            {
+                "code": "TRACE_UNAVAILABLE",
+                "message": f"cannot use log directory: {exc}",
+            },
+        ) from None
+    return trace.status()
+
+
+@app.get("/api/traces/export", dependencies=[Depends(require_token)])
+def export_traces():
+    return StreamingResponse(
+        trace.export(),
+        media_type="application/x-ndjson",
+        headers={"Content-Disposition": 'attachment; filename="spatial-traces.jsonl"'},
+    )
+
+
+@app.delete("/api/traces", dependencies=[Depends(require_token)])
+def delete_traces():
+    return {"deleted_files": trace.delete_all()}
 
 
 @app.post("/api/stt", dependencies=[Depends(require_token)])

@@ -64,6 +64,11 @@ class Settings:
     audio_idle_unload_seconds: int = int(_env("SPATIAL_AUDIO_IDLE_UNLOAD_SECONDS", "300"))
     # Some networks have a broken IPv6 route to Hugging Face; this makes model downloads use IPv4 only.
     force_ipv4: bool = _env("SPATIAL_FORCE_IPV4", "0") in {"1", "true", "yes"}
+    # Opt-in local trace log (app/trace.py): metadata + resolution trace per ask, never pixels.
+    trace_enabled: bool = (_env("SPATIAL_TRACE") or "off").lower() in {"on", "1", "true", "yes"}
+    trace_dir: str | None = _env("SPATIAL_LOG_DIR")
+    trace_max_mb: float = float(_env("SPATIAL_TRACE_MAX_MB", "50"))
+    trace_retention_days: int = int(_env("SPATIAL_TRACE_RETENTION_DAYS", "14"))
     providers: dict[str, ProviderConfig] = field(
         default_factory=lambda: {
             "ollama": ProviderConfig(

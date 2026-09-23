@@ -40,6 +40,7 @@ async function health(selectedProvider) {
   select.value = selectedProvider;
   const ready = (data.providers || []).filter(p => p.configured).map(p => p.name);
   const audio = data.audio || {};
+  $('traceLog').checked = Boolean(data.trace && data.trace.enabled);
   status('Connected.\nProviders ready: ' + (ready.join(', ') || 'none (answers will only quote the marked text)') +
     '\nSpeech: browser voice by default' + (audio.stt && audio.stt.installed ? '; server whisper available in Power mode' : ''), 'ok');
 }
@@ -61,5 +62,10 @@ $('readAloud').onchange = () => chrome.storage.local.set({ readAloud: $('readAlo
 $('research').onchange = () => chrome.storage.local.set({ research: $('research').checked });
 $('pdfViewer').onchange = () => chrome.storage.local.set({ pdfViewer: $('pdfViewer').checked });
 $('powerMode').onchange = async () => { await chrome.storage.local.set({ powerMode: $('powerMode').checked }); $('providerLabel').hidden = !(CFG.features.providerPicker || $('powerMode').checked); };
+$('traceLog').onchange = async () => {
+  const response = await chrome.runtime.sendMessage({ type: 'spatial:trace', enabled: $('traceLog').checked });
+  if (!response || !response.ok) { $('traceLog').checked = !$('traceLog').checked; status((response && response.error) || 'Could not change the trace log', 'err'); }
+  else status('Trace log ' + (response.trace.enabled ? 'on: ' + response.trace.dir : 'off') + '.', 'ok');
+};
 
 load();
