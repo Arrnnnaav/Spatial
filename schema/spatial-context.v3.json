@@ -1,0 +1,514 @@
+{
+  "$defs": {
+    "Alternative": {
+      "properties": {
+        "candidate_id": {
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "score"
+      ],
+      "title": "Alternative",
+      "type": "object"
+    },
+    "BBox": {
+      "description": "CSS/logical px of the surface the mark was drawn on. x/y may be negative (element partly off-screen).",
+      "properties": {
+        "height": {
+          "minimum": 0,
+          "title": "Height",
+          "type": "number"
+        },
+        "width": {
+          "minimum": 0,
+          "title": "Width",
+          "type": "number"
+        },
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "width",
+        "height"
+      ],
+      "title": "BBox",
+      "type": "object"
+    },
+    "CandidateObject": {
+      "properties": {
+        "attributes": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Attributes",
+          "type": "object"
+        },
+        "bbox": {
+          "$ref": "#/$defs/BBox"
+        },
+        "candidate_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "href": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Href"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "object_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Object Type"
+        },
+        "page": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "role": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Role"
+        },
+        "source": {
+          "enum": [
+            "dom",
+            "pdf_text",
+            "ocr",
+            "uia",
+            "vision"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "src": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Src"
+        },
+        "text": {
+          "default": "",
+          "maxLength": 1500,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "source",
+        "bbox",
+        "provenance"
+      ],
+      "title": "CandidateObject",
+      "type": "object"
+    },
+    "CropInfo": {
+      "description": "Region of the surface the attached image covers, and image px per surface px.",
+      "properties": {
+        "bbox": {
+          "$ref": "#/$defs/BBox"
+        },
+        "scale": {
+          "exclusiveMinimum": 0,
+          "title": "Scale",
+          "type": "number"
+        }
+      },
+      "required": [
+        "bbox",
+        "scale"
+      ],
+      "title": "CropInfo",
+      "type": "object"
+    },
+    "Provenance": {
+      "properties": {
+        "extractor": {
+          "title": "Extractor",
+          "type": "string"
+        },
+        "extractor_version": {
+          "default": "1",
+          "title": "Extractor Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "extractor"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "SemanticResolution": {
+      "properties": {
+        "abstained": {
+          "title": "Abstained",
+          "type": "boolean"
+        },
+        "alternatives": {
+          "items": {
+            "$ref": "#/$defs/Alternative"
+          },
+          "title": "Alternatives",
+          "type": "array"
+        },
+        "confidence": {
+          "title": "Confidence",
+          "type": "number"
+        },
+        "geometric_confidence": {
+          "title": "Geometric Confidence",
+          "type": "number"
+        },
+        "latency_ms": {
+          "title": "Latency Ms",
+          "type": "integer"
+        },
+        "resolver": {
+          "title": "Resolver",
+          "type": "string"
+        },
+        "selected_candidate_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selected Candidate Id"
+        },
+        "semantic_confidence": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Semantic Confidence"
+        }
+      },
+      "required": [
+        "geometric_confidence",
+        "confidence",
+        "abstained",
+        "resolver",
+        "latency_ms"
+      ],
+      "title": "SemanticResolution",
+      "type": "object"
+    },
+    "SpatialContext": {
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/CandidateObject"
+          },
+          "maxItems": 200,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "crop": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CropInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/SpatialMark"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Marks",
+          "type": "array"
+        },
+        "privacy_policy": {
+          "default": "crop_only",
+          "enum": [
+            "anchors_only",
+            "crop_only",
+            "full_frame"
+          ],
+          "title": "Privacy Policy",
+          "type": "string"
+        },
+        "question": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Question",
+          "type": "string"
+        },
+        "surface": {
+          "$ref": "#/$defs/Surface"
+        }
+      },
+      "required": [
+        "surface",
+        "marks",
+        "question"
+      ],
+      "title": "SpatialContext",
+      "type": "object"
+    },
+    "SpatialMark": {
+      "properties": {
+        "bbox": {
+          "$ref": "#/$defs/BBox"
+        },
+        "closed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Closed"
+        },
+        "kind": {
+          "enum": [
+            "point",
+            "rectangle",
+            "circle",
+            "polygon",
+            "arrow",
+            "line"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "mark_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mark Id"
+        },
+        "points": {
+          "anyOf": [
+            {
+              "items": {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array"
+              },
+              "maxItems": 2000,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Points"
+        },
+        "role": {
+          "default": "reference",
+          "enum": [
+            "reference",
+            "source",
+            "target"
+          ],
+          "title": "Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "bbox"
+      ],
+      "title": "SpatialMark",
+      "type": "object"
+    },
+    "Surface": {
+      "properties": {
+        "app": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "App"
+        },
+        "device_pixel_ratio": {
+          "default": 1.0,
+          "exclusiveMinimum": 0,
+          "title": "Device Pixel Ratio",
+          "type": "number"
+        },
+        "kind": {
+          "default": "web",
+          "enum": [
+            "web",
+            "pdf",
+            "desktop"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "process": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Process"
+        },
+        "title": {
+          "default": "",
+          "maxLength": 500,
+          "title": "Title",
+          "type": "string"
+        },
+        "url": {
+          "default": "",
+          "maxLength": 2000,
+          "title": "Url",
+          "type": "string"
+        },
+        "viewport": {
+          "$ref": "#/$defs/Viewport"
+        },
+        "window_title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Window Title"
+        }
+      },
+      "required": [
+        "viewport"
+      ],
+      "title": "Surface",
+      "type": "object"
+    },
+    "Viewport": {
+      "properties": {
+        "height": {
+          "exclusiveMinimum": 0,
+          "title": "Height",
+          "type": "number"
+        },
+        "width": {
+          "exclusiveMinimum": 0,
+          "title": "Width",
+          "type": "number"
+        }
+      },
+      "required": [
+        "width",
+        "height"
+      ],
+      "title": "Viewport",
+      "type": "object"
+    }
+  },
+  "title": "Spatial protocol v3"
+}
