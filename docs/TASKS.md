@@ -22,8 +22,9 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 - [x] Install TypeSafe plugin; brainstorm TypeSafe opportunities (`docs/TYPESAFE_OPPORTUNITIES.md`)
 - [x] Write implementation plan for sub-project 1 (`docs/superpowers/plans/2026-09-23-spatial-core-foundation.md`)
 - [x] Verify `TYPESAFE_API_KEY` in `server/.env` (live Jev call OK)
-- [x] Execute sub-project 1 plan (8 tasks; 114 tests pass)
-- [ ] Final whole-branch review, then merge `feat/core-foundation`
+- [x] Execute sub-project 1 plan (8 tasks + review fixes; 117 tests pass)
+- [x] Final whole-branch review (3 Important fixed)
+- [ ] Merge `feat/core-foundation` into `main`
 - [ ] Sub-project 2: experiments E1–E4 with Jev
 
 ## Sub-project 1 — Core foundation (done)
@@ -51,6 +52,10 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 - [ ] Try on VS Code, Chrome, Word, Figma, File Explorer, a PDF reader; record what UIA returns in `MEMORY.md`
 
 ## Backlog / ideas
+
+- [ ] Trace log hardening (review minors): `status()` stat race on `/api/health`; `export()` reads outside lock;
+      OCR candidate ids can collide with client ids; 64-cap only when OCR ran; OCR runs even without crop geometry;
+      `run_trace` aborts on one malformed record; provider error text lands in traces
 
 - [ ] Split `extension/content.js` (560 lines: overlay + panel + anchors) when touching it
 - [ ] Clean `SPATIAL_PRODUCTION_CHECKLIST.md` of items no longer relevant

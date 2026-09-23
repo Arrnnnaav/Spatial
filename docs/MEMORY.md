@@ -30,7 +30,7 @@ code or git log. Newest first within each section. Remove entries that become wr
   saturates) and #208 (calibration numbers don't reproduce).
 - User linked "layacheck" — that repo 404s; assumed `laya`.
 - Server reads `server/.env` via python-dotenv (`server/app/config.py`).
-- Tests (2026-09-23, after sub-project 1): server pytest 114 passed; extension geometry tests pass.
+- Tests (2026-09-23, after sub-project 1): server pytest 117 passed; extension geometry tests pass.
 - TypeSafe plugin installed at user scope (`typesafe@typesafe-ai` v0.5.7); its skill appears after a
   Claude Code restart (skill file: `~/.claude/plugins/cache/typesafe-ai/typesafe/*/skills/typesafe-ai/SKILL.md`).
 
@@ -46,6 +46,9 @@ code or git log. Newest first within each section. Remove entries that become wr
 - **2026-09-23** — A request without `protocol_version` is v2; v3 = version >= 3 or a `context` field.
 
 ## Gotchas
+
+- JS `slice()` can cut an emoji in half; Python/pydantic reject lone surrogates. v2 text goes through `contracts._text` to repair them.
+- CORS allows only extension origins; a future desktop (Tauri) client origin must be added explicitly.
 
 - A PostToolUse formatter hook reformats Python files after every Write/Edit: re-read before exact-string edits, and don't rely on trailing blank lines in generated blocks.
 - Resolver confidence is hand-tuned, not measured — don't trust it for decisions until calibrated.
