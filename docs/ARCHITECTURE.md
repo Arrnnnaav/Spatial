@@ -89,7 +89,12 @@ Principles:
   Laya (open weights; hosted by impossibl or self-hosted `laya-serve`), deterministic fallback.
 - **Traces are data:** opt-in JSONL trace log (no pixels) feeds the eval harness and, later, Laya fine-tuning.
 
-### Desktop app (planned, sub-project 4)
+### Desktop app (sub-project 4; 4a server built, 4b Tauri app next)
+
+Server owns pixels and OS access (`server/app/desktop.py`): `POST /api/desktop/capture` freezes the monitor under the
+cursor (in memory, last 3, 5 min TTL); `POST /api/desktop/candidates` reads UIA elements under a point grid in the mark
+(+ TextPattern lines) from the topmost non-excluded, non-cloaked window, never from password managers, OCR as fallback;
+`Ask.capture_id` makes the server crop the frozen frame. The Tauri app only draws and asks.
 
 | Browser piece | Desktop equivalent (Windows first) |
 |---|---|

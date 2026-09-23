@@ -13,8 +13,9 @@ from uuid import uuid4
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse, Response, StreamingResponse
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app import store
 from app.audio import audio_status, synthesize, transcribe
@@ -30,8 +31,9 @@ from app.contracts import (
     resolver_inputs,
     to_semantic_resolution,
 )
-from app import research, semantic, system_one, trace
+from app import desktop, research, semantic, system_one, trace
 from app.ocr import ocr_blocks
+from app.ocr import warm as ocr_blocks_warm
 from app.providers import answer_stream, clean_answer, provider_status
 from app.resolver import resolve_marks
 
@@ -44,14 +46,21 @@ MIN_PROTOCOL_VERSION = (
 async def lifespan(_: FastAPI):
     # Open the System One TLS connection early; never blocks startup.
     threading.Thread(target=system_one.warm, daemon=True).start()
+    if desktop.SUPPORTED:
+        desktop.session_token()  # write the token file before the desktop app asks for it
+    if settings.ocr_enabled:  # RapidOCR model load takes ~4 s; pay it before the first ask
+        threading.Thread(target=ocr_blocks_warm, daemon=True).start()
     yield
 
 
 app = FastAPI(title="Spatial — Point & Ask", version="0.2.0", lifespan=lifespan)
+# DNS rebinding: a web page resolving its own hostname to 127.0.0.1 would otherwise be same-origin with us.
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
 app.add_middleware(
     CORSMiddleware,
     # Only the extension may call from a browser: a wildcard would let any web page read history and traces.
-    allow_origin_regex=r"^(chrome|moz)-extension://.*$",
+    # Extension origins + the Tauri desktop app (tauri://localhost on macOS/Linux, http(s)://tauri.localhost on Windows).
+    allow_origin_regex=r"^((chrome|moz)-extension://.*|tauri://localhost|https?://tauri\.localhost)$",
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -100,6 +109,7 @@ class Ask(BaseModel):
     # shared
     context_id: str | None = None
     target_id: str | None = Field(default=None, max_length=200)  # "Did you mean" chip: pin this candidate
+    capture_id: str | None = Field(default=None, max_length=64)  # desktop: crop the frozen frame server-side
     provider: str | None = None
     privacy_policy: str = Field(default="crop_only", max_length=30)
     image_data: str | None = Field(default=None, max_length=8_000_000)
@@ -250,6 +260,18 @@ def prepare_ask(payload: Ask) -> dict:
         if ctx.privacy_policy in {"crop_only", "full_frame"}
         else None
     )
+    if payload.capture_id and image_data is None and ctx.privacy_policy in {"crop_only", "full_frame"}:
+        # Desktop asks never re-upload pixels: crop the frozen frame around the marks here.
+        try:
+            union = {"x": min(m.bbox.x for m in ctx.marks), "y": min(m.bbox.y for m in ctx.marks),
+                     "width": max(m.bbox.x + m.bbox.width for m in ctx.marks) - min(m.bbox.x for m in ctx.marks),
+                     "height": max(m.bbox.y + m.bbox.height for m in ctx.marks) - min(m.bbox.y for m in ctx.marks)}
+            cropped = desktop.crop_for_ask(payload.capture_id, union)
+        except desktop.CaptureNotFound:
+            cropped = None
+        if cropped:
+            image_data, crop = cropped
+            ctx = ctx.model_copy(update={"crop": crop})
     ocr_text = None
     timings: dict[str, int] = {}
     if image_data and settings.ocr_enabled:
@@ -435,8 +457,10 @@ def finish_ask(payload: Ask, prep: dict, text: str, meta: dict) -> dict:
 
 
 @app.post("/api/ask", dependencies=[Depends(require_token)])
-def ask(payload: Ask):
+def ask(payload: Ask, request: Request):
     """The mark is a reference, never authority: this endpoint only explains."""
+    if payload.capture_id:
+        require_desktop(request)
     prep = prepare_ask(payload)
     parts: list[str] = []
     meta: dict = {}
@@ -461,8 +485,10 @@ def ask(payload: Ask):
 
 
 @app.post("/api/ask/stream", dependencies=[Depends(require_token)])
-def ask_stream(payload: Ask):
+def ask_stream(payload: Ask, request: Request):
     """SSE: `status` -> many `delta` {text} -> `complete` (same document as /api/ask) or `error` {code, message}."""
+    if payload.capture_id:
+        require_desktop(request)
 
     def event(name: str, data: dict) -> str:
         return f"event: {name}\ndata: {json.dumps(data)}\n\n"
@@ -543,6 +569,50 @@ def delete_context(context_id: str):
             404, {"code": "CONTEXT_NOT_FOUND", "message": "context not found"}
         )
     return {"deleted": context_id}
+
+
+class DesktopRegion(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False)
+
+    x: float
+    y: float
+    width: float = Field(ge=0)
+    height: float = Field(ge=0)
+
+
+class DesktopCandidatesRequest(BaseModel):
+    capture_id: str = Field(max_length=64)
+    region: DesktopRegion
+    exclude_pids: list[int] = Field(default_factory=list, max_length=16)
+
+
+def _desktop_supported() -> None:
+    if not desktop.SUPPORTED:
+        raise HTTPException(501, {"code": "DESKTOP_UNSUPPORTED", "message": "desktop capture is Windows-only for now"})
+
+
+def require_desktop(request: Request) -> None:
+    """Screen pixels and on-screen text: only the desktop app (holder of the per-launch token file) may ask.
+    The custom header also forces a CORS preflight, which web origins fail."""
+    if not desktop.token_ok(request.headers.get(desktop.TOKEN_HEADER)):
+        raise HTTPException(403, {"code": "DESKTOP_TOKEN", "message": "desktop token missing or wrong"})
+
+
+@app.post("/api/desktop/capture", dependencies=[Depends(require_token), Depends(require_desktop)])
+def desktop_capture():
+    """Freeze the monitor under the cursor; the overlay draws on this frame."""
+    _desktop_supported()
+    return desktop.capture()
+
+
+@app.post("/api/desktop/candidates", dependencies=[Depends(require_token), Depends(require_desktop)])
+def desktop_candidates(body: DesktopCandidatesRequest):
+    """UI Automation elements + editor lines + OCR blocks under the marked region of a frozen frame."""
+    _desktop_supported()
+    try:
+        return desktop.candidates(body.capture_id, body.region.model_dump(), body.exclude_pids)
+    except desktop.CaptureNotFound:
+        raise HTTPException(404, {"code": "CAPTURE_NOT_FOUND", "message": "capture expired or unknown"}) from None
 
 
 class TraceConfig(BaseModel):

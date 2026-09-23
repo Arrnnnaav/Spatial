@@ -60,7 +60,7 @@ docs/          guides + superpowers/specs + superpowers/plans
 cd server && python -m venv .venv && .venv/Scripts/activate && pip install -r requirements.txt
 cp .env.example .env            # then fill keys
 uvicorn app.main:app --port 8787
-python -m pytest -q             # server tests (177 passing as of 2026-09-24)
+python -m pytest -q             # server tests (196 passing as of 2026-09-24)
 
 # extension
 cd extension && node --test tests/geometry.test.mjs

@@ -11,3 +11,5 @@ os.environ["SPATIAL_OCR"] = "0"
 os.environ["SPATIAL_API_TOKEN"] = ""
 os.environ["SPATIAL_DB"] = str(Path(__file__).parent / "test_spatial.db")
 os.environ["TAVILY_API_KEY"] = ""
+os.environ["SPATIAL_ALLOWED_HOSTS"] = "127.0.0.1,localhost,testserver"
+os.environ["SPATIAL_DESKTOP_TOKEN_FILE"] = str(Path(__file__).parent / "test_desktop.token")

@@ -65,6 +65,8 @@ class Settings:
         if part.strip()
     )
     ocr_enabled: bool = _env("SPATIAL_OCR", "1") not in {"0", "false", "no"}
+    # Host headers we answer to (DNS-rebinding guard); "*" disables the check.
+    allowed_hosts: list[str] = field(default_factory=lambda: [h.strip() for h in _env("SPATIAL_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if h.strip()])
     stt_model: str = _env("SPATIAL_STT_MODEL", "base")
     stt_device: str = _env("SPATIAL_STT_DEVICE", "cpu")
     tts_voice: str = _env("SPATIAL_TTS_VOICE", "alba")
