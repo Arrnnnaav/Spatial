@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import re
 import time
+from dataclasses import replace
 from typing import Any, Iterator
 
 import httpx
@@ -95,14 +96,24 @@ def estimate_cost(model: str, usage: dict[str, Any] | None) -> float:
 
 
 RETRY_DELAY = 0.5
-_TRANSIENT_STATUS = {429, 502, 503, 504}
+PROVIDER_ATTEMPTS = settings.provider_attempts  # tries per model on "busy" errors (429/5xx/connection)
+_BUSY_STATUS = {429, 500, 502, 503, 504}
 
 
-def _transient(exc: Exception) -> bool:
-    """Worth one quick retry on the same provider before falling through to the next one."""
+def _failure_kind(exc: Exception) -> str:
+    """busy: retry the same model; model: try the next model in the chain (slow/missing); fatal: stop this provider."""
     if isinstance(exc, httpx.HTTPStatusError):
-        return exc.response.status_code in _TRANSIENT_STATUS
-    return isinstance(exc, (httpx.ConnectError, httpx.ConnectTimeout, httpx.RemoteProtocolError))
+        status = exc.response.status_code
+        if status in _BUSY_STATUS:
+            return "busy"
+        if status in (404, 410, 422):
+            return "model"
+        return "fatal"  # 400/401/403: retrying or switching models will not help
+    if isinstance(exc, httpx.TimeoutException):
+        return "model"  # a slow model stays slow; 3x the timeout would stall the answer
+    if isinstance(exc, (httpx.ConnectError, httpx.RemoteProtocolError, httpx.ReadError)):
+        return "busy"
+    return "model"
 
 
 def classify_error(exc: Exception) -> tuple[str, str]:
@@ -550,66 +561,50 @@ def answer_stream(
         for use_vision in attempts:
             if not use_vision:
                 ensure_ocr()
-            prompt = build_prompt(
-                question,
-                page,
-                anchors,
-                "" if use_vision else ocr_text,
-                history,
-                sources,
-            )
-            for retry in range(2):  # one retry for transient provider errors (free tiers 503 often)
-                produced = False
-                try:
-                    for item in stream_provider(
-                        config, prompt, image_data if use_vision else None, use_vision
-                    ):
-                        if isinstance(item, dict):
-                            item.update(
-                                {
+            prompt = build_prompt(question, page, anchors, "" if use_vision else ocr_text, history, sources)
+            # Text answers walk the model chain (NVIDIA_FALLBACK_MODELS, ...); vision uses the one vision model.
+            models = [config.model] if use_vision else [config.model, *config.fallback_models]
+            give_up = False
+            for model in models:
+                model_config = config if model == config.model else replace(config, model=model)
+                key = f"{name}{'' if use_vision else ':text'}{'' if model == config.model else '@' + model}"
+                for attempt in range(PROVIDER_ATTEMPTS):
+                    produced = False
+                    try:
+                        for item in stream_provider(model_config, prompt, image_data if use_vision else None, use_vision):
+                            if isinstance(item, dict):
+                                item.update({
                                     "status": "generated",
                                     "sources": sources,
                                     "diagram": diagram,
                                     "level": _SYSTEM_OVERRIDE.get("level"),
-            "mode": _SYSTEM_OVERRIDE.get("mode"),
+                                    "mode": _SYSTEM_OVERRIDE.get("mode"),
                                     "ocr": bool(ocr_text and not use_vision),
                                     "errors": errors,
-                                    "cost_usd": estimate_cost(
-                                        item.get("model", ""), item.get("usage")
-                                    ),
-                                }
-                            )
-                            if not use_vision and has_vision:
-                                item["note"] = (
-                                    "vision model unavailable, answered from text"
-                                )
-                            yield item
+                                    "attempts": attempt + 1,
+                                    "cost_usd": estimate_cost(item.get("model", ""), item.get("usage")),
+                                })
+                                if not use_vision and has_vision:
+                                    item["note"] = "vision model unavailable, answered from text"
+                                yield item
+                                return
+                            if item:
+                                produced = True
+                                yield item
+                    except Exception as exc:
+                        code, message = classify_error(exc)
+                        errors[key] = {"code": code, "message": message, "attempts": attempt + 1}
+                        if produced:  # partial answer already streamed; finish with what we have
+                            yield {"provider": config.name, "model": model, "vision": use_vision, "ocr": False,
+                                   "status": "partial", "errors": errors, "cost_usd": 0.0}
                             return
-                        if item:
-                            produced = True
-                            yield item
-                except Exception as exc:
-                    code, message = classify_error(exc)
-                    errors[f"{name}{'' if use_vision else ':text'}"] = {
-                        "code": code,
-                        "message": message,
-                    }
-                    if (
-                        produced
-                    ):  # partial answer already streamed; finish with what we have
-                        yield {
-                            "provider": config.name,
-                            "model": config.model,
-                            "vision": use_vision,
-                            "ocr": False,
-                            "status": "partial",
-                            "errors": errors,
-                            "cost_usd": 0.0,
-                        }
-                        return
-                    if retry == 0 and _transient(exc):
-                        time.sleep(RETRY_DELAY)
-                        continue
+                        kind = _failure_kind(exc)
+                        if kind == "busy" and attempt < PROVIDER_ATTEMPTS - 1:
+                            time.sleep(RETRY_DELAY * (attempt + 1))  # 0.5 s, then 1 s
+                            continue
+                        give_up = kind == "fatal"
+                        break  # busy x3 or model-level failure: next model in the chain
+                if give_up:
                     break
     ensure_ocr()
     text = fallback_answer(question, anchors, ocr_text)

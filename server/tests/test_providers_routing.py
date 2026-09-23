@@ -76,33 +76,49 @@ def test_diagram_keeps_vision_even_if_routing_says_not_visual(monkeypatch):
     assert calls[0][0] is True
 
 
-def run_flaky(monkeypatch, failures):
+def run_flaky(monkeypatch, failures, error=503, fallbacks=()):
     import httpx
-    fake = {"p": ProviderConfig("p", "https://example", "key", "text-model", None, "openai")}
+    fake = {"p": ProviderConfig("p", "https://example", "key", "main-model", None, "openai", tuple(fallbacks))}
     monkeypatch.setattr(providers.settings, "providers", fake, raising=False)
     monkeypatch.setattr(providers.settings, "provider_order", ("p",), raising=False)
     monkeypatch.setattr(providers, "RETRY_DELAY", 0.0)
     calls = []
 
     def fake_stream(config, prompt, image_data, use_vision=True):
-        calls.append(1)
+        calls.append(config.model)
         if len(calls) <= failures:
             request = httpx.Request("POST", "https://example/chat/completions")
-            raise httpx.HTTPStatusError("busy", request=request, response=httpx.Response(503, request=request))
+            if error == "timeout":
+                raise httpx.ReadTimeout("slow", request=request)
+            raise httpx.HTTPStatusError("busy", request=request, response=httpx.Response(error, request=request))
         yield "answer"
-        yield {"provider": "p", "model": "m", "vision": False}
+        yield {"provider": "p", "model": config.model, "vision": False}
 
     monkeypatch.setattr(providers, "stream_provider", fake_stream)
     items = list(providers.answer_stream("q", {"title": "t"}, [{"id": "a", "type": "p", "text": "x"}], None))
     return calls, items[-1]
 
 
-def test_transient_503_is_retried_once(monkeypatch):
-    calls, meta = run_flaky(monkeypatch, failures=1)
-    assert len(calls) == 2 and meta["status"] == "generated"
-
-
-def test_second_503_falls_through(monkeypatch):
+def test_busy_is_retried_up_to_three_attempts(monkeypatch):
     calls, meta = run_flaky(monkeypatch, failures=2)
-    assert len(calls) == 2 and meta["status"] == "fallback"
+    assert calls == ["main-model"] * 3 and meta["status"] == "generated"
 
+
+def test_three_busy_attempts_then_falls_through(monkeypatch):
+    calls, meta = run_flaky(monkeypatch, failures=3)
+    assert calls == ["main-model"] * 3 and meta["status"] == "fallback"
+
+
+def test_busy_three_times_moves_to_fallback_model(monkeypatch):
+    calls, meta = run_flaky(monkeypatch, failures=3, fallbacks=("backup-model",))
+    assert calls == ["main-model"] * 3 + ["backup-model"] and meta["model"] == "backup-model"
+
+
+def test_timeout_skips_straight_to_fallback_model(monkeypatch):
+    calls, meta = run_flaky(monkeypatch, failures=1, error="timeout", fallbacks=("backup-model",))
+    assert calls == ["main-model", "backup-model"] and meta["status"] == "generated"
+
+
+def test_auth_error_is_not_retried(monkeypatch):
+    calls, meta = run_flaky(monkeypatch, failures=5, error=401, fallbacks=("backup-model",))
+    assert calls == ["main-model"] and meta["status"] == "fallback"
