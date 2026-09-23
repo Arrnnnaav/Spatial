@@ -94,6 +94,8 @@ def build_record(
     answer: str,
     meta: dict,
     timings: dict,
+    system_one: dict | None = None,
+    label: str | None = None,
 ) -> dict[str, Any]:
     return _scrub(
         {
@@ -115,6 +117,8 @@ def build_record(
             "timings_ms": timings,
             "errors": meta.get("errors", {}),
             "cost_usd": meta.get("cost_usd", 0.0),
+            "system_one": system_one,
+            "label": label,
         }
     )
 
