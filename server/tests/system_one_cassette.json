@@ -1,0 +1,1396 @@
+{
+ "1db1e62c7851dd6c861b7e05a645e5283052521a6c82f3b79f9743b7336bf933": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 1.0,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 1.0,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.25,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.99,
+   "probabilities": {
+    "A": 1.0,
+    "none": 0.0
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.09,
+   "type": "noul"
+  }
+ },
+ "231065503b594de504d0ff805211a2e6a69daf2282efc8c9090f035462dfa92d": {
+  "mode": {
+   "choice": "summarize",
+   "confidence": 1.0,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 0.0,
+    "other": 0.0,
+    "summarize": 1.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.04,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.95,
+   "probabilities": {
+    "A": 0.96,
+    "B": 0.0,
+    "C": 0.0,
+    "D": 0.0,
+    "E": 0.0,
+    "none": 0.04
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.06,
+   "type": "noul"
+  }
+ },
+ "2f666028ff679f433c3e0a02a49b17d4d4080c28a8294930b24c1c8fa30654ad": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.71,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.19,
+    "explain": 0.75,
+    "other": 0.06,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.52,
+   "type": "noul"
+  },
+  "visual": {
+   "noul": 0.88,
+   "type": "noul"
+  }
+ },
+ "2ff50d20b3af4df9b0deb72dd681938273475c121320a1cec5cc5c9c3d93f01d": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 1.0,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 1.0,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.15,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.99,
+   "probabilities": {
+    "A": 1.0,
+    "B": 0.0,
+    "none": 0.0
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.04,
+   "type": "noul"
+  }
+ },
+ "36a0ef6afab88be135c59ab39608ebdb2803c9cd9e70d0096a382555883021d2": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 1.0,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 1.0,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.22,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.99,
+   "probabilities": {
+    "A": 1.0,
+    "B": 0.0,
+    "C": 0.0,
+    "D": 0.0,
+    "none": 0.0
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.05,
+   "type": "noul"
+  }
+ },
+ "3e1b615e9aa23104217238e773082ea1e90760e1d27dc054ec5a2803dc6899f9": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.89,
+   "probabilities": {
+    "compare": 0.01,
+    "debug_error": 0.06,
+    "define": 0.01,
+    "explain": 0.9,
+    "other": 0.02,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.48,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.87,
+   "probabilities": {
+    "A": 0.91,
+    "B": 0.08,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.21,
+   "type": "noul"
+  }
+ },
+ "3fc69267208e4f0f3ec77f03a0300977aaa176576accfc40ed55239ae0550685": {
+  "mode": {
+   "choice": "define",
+   "confidence": 0.45,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.53,
+    "explain": 0.46,
+    "other": 0.01,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.42,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.89,
+   "probabilities": {
+    "A": 0.92,
+    "B": 0.07,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.23,
+   "type": "noul"
+  }
+ },
+ "45c2b4a9054d028b7aa1844961b2b053670569f768bc0fd1c3bc0aa32e619373": {
+  "mode": {
+   "choice": "compare",
+   "confidence": 0.44,
+   "probabilities": {
+    "compare": 0.53,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 0.47,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.54,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.35,
+   "probabilities": {
+    "A": 0.57,
+    "B": 0.42,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.18,
+   "type": "noul"
+  }
+ },
+ "48ee8b2e2b07c0b45313ab7913da692edf46c2fe4b775ea4d0f3cebdbb760f11": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 1.0,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 1.0,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.15,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.99,
+   "probabilities": {
+    "A": 0.99,
+    "B": 0.0,
+    "C": 0.0,
+    "D": 0.0,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.06,
+   "type": "noul"
+  }
+ },
+ "4a208979edf22f323c409858a1d423d48dd3164fa266b9d89c168cd1e2824bbe": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.99,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 0.99,
+    "other": 0.01,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.55,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "B",
+   "confidence": 0.43,
+   "probabilities": {
+    "A": 0.37,
+    "B": 0.62,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.23,
+   "type": "noul"
+  }
+ },
+ "4b3613bdcad95a6824077bada1f19d851faae8b56690117e55fb1429628e44a1": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.83,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.01,
+    "define": 0.13,
+    "explain": 0.85,
+    "other": 0.01,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.12,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "B",
+   "confidence": 0.32,
+   "probabilities": {
+    "A": 0.44,
+    "B": 0.55,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.05,
+   "type": "noul"
+  }
+ },
+ "54b5441b5961e156a69494ff6d089aaa4efb3eed28f234af46665af39727f71f": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.35,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.26,
+    "explain": 0.45,
+    "other": 0.29,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.2,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.96,
+   "probabilities": {
+    "A": 0.98,
+    "none": 0.02
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.15,
+   "type": "noul"
+  }
+ },
+ "6024430bc862ca289229415f3eed9c341c38fe3324f82eb7a477d1f528d37c1f": {
+  "mode": {
+   "choice": "define",
+   "confidence": 0.75,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.79,
+    "explain": 0.21,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.27,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.94,
+   "probabilities": {
+    "A": 0.95,
+    "B": 0.04,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.28,
+   "type": "noul"
+  }
+ },
+ "6279f937fe9a9970c9fbe83584580a538118963fe168a3e12543a3a762cc973e": {
+  "mode": {
+   "choice": "define",
+   "confidence": 0.35,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.01,
+    "define": 0.45,
+    "explain": 0.42,
+    "other": 0.12,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.18,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.46,
+   "probabilities": {
+    "A": 0.63,
+    "B": 0.36,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.21,
+   "type": "noul"
+  }
+ },
+ "6bd892b6c01c15fa3d1d2d55a227f74e20fa43d5d6bf665121b677311b85e1ad": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 1.0,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 1.0,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.16,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 1.0,
+   "probabilities": {
+    "A": 1.0,
+    "none": 0.0
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.03,
+   "type": "noul"
+  }
+ },
+ "703c24898782591f311cb017b78718e5309b2dcafad51e6a09f7e5d1e85e3a6d": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 1.0,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 1.0,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.13,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.99,
+   "probabilities": {
+    "A": 0.99,
+    "B": 0.0,
+    "C": 0.0,
+    "D": 0.0,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.08,
+   "type": "noul"
+  }
+ },
+ "75ab1ee16dacad9dbbf88e3f9f86aae0b07d788e78057dcd530878e2f174cbfb": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.58,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.26,
+    "explain": 0.65,
+    "other": 0.09,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.17,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.93,
+   "probabilities": {
+    "A": 0.95,
+    "B": 0.0,
+    "C": 0.0,
+    "none": 0.05
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.95,
+   "type": "noul"
+  }
+ },
+ "773c64c3963e0f24928a79fc68793dd86cf09a574caeb7437c24e2f01422eb06": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.46,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.46,
+    "explain": 0.53,
+    "other": 0.01,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.2,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.86,
+   "probabilities": {
+    "A": 0.91,
+    "B": 0.09,
+    "none": 0.0
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.38,
+   "type": "noul"
+  }
+ },
+ "7a620ccddaaa2b150878c9c998f99acf357895e59ebd94749450238292c85144": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.99,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 0.99,
+    "other": 0.01,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.44,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "B",
+   "confidence": 0.56,
+   "probabilities": {
+    "A": 0.29,
+    "B": 0.7,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.19,
+   "type": "noul"
+  }
+ },
+ "818c05549090a7981e577ff6ee903f8dbd75f12496d75eb8d35fceb00b72ea5d": {
+  "mode": {
+   "choice": "define",
+   "confidence": 0.66,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.71,
+    "explain": 0.28,
+    "other": 0.01,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.32,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.95,
+   "probabilities": {
+    "A": 0.97,
+    "B": 0.03,
+    "none": 0.0
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.2,
+   "type": "noul"
+  }
+ },
+ "841dc8e15f62201996c9c7112b95efca90409109c7e9b02d5e19389cec183c2d": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 1.0,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 1.0,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.15,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 1.0,
+   "probabilities": {
+    "A": 1.0,
+    "B": 0.0,
+    "none": 0.0
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.03,
+   "type": "noul"
+  }
+ },
+ "8505d0c838f0c61941f22f5b9c8206431e823e1aa5068b67952f8870e14c45b8": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.99,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 0.99,
+    "other": 0.01,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.37,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.99,
+   "probabilities": {
+    "A": 1.0,
+    "none": 0.0
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.08,
+   "type": "noul"
+  }
+ },
+ "8c7f42d136031e43c30f34d451c9206212ef06789f3022fceefbb104ef5aed1b": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 1.0,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 1.0,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.28,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.98,
+   "probabilities": {
+    "A": 0.99,
+    "B": 0.0,
+    "C": 0.0,
+    "D": 0.0,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.04,
+   "type": "noul"
+  }
+ },
+ "8db8b56cc1a42e29efacd0ce4cc7d7f41f17aa148fb83e90deff98759610dd11": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 1.0,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 1.0,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.2,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 1.0,
+   "probabilities": {
+    "A": 1.0,
+    "none": 0.0
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.04,
+   "type": "noul"
+  }
+ },
+ "9474ac23c1c6ba0d11faf667ee32029f1df90dcf97282878dc27945407a2602e": {
+  "mode": {
+   "choice": "define",
+   "confidence": 0.48,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.56,
+    "explain": 0.4,
+    "other": 0.04,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.48,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.93,
+   "probabilities": {
+    "A": 0.95,
+    "B": 0.04,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.15,
+   "type": "noul"
+  }
+ },
+ "972a4654f9b62d3a09ea1d11568cdd8750628723bb2e7f9332d2d3511ea64f8d": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.7,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.24,
+    "explain": 0.75,
+    "other": 0.01,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.19,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.97,
+   "probabilities": {
+    "A": 0.99,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.07,
+   "type": "noul"
+  }
+ },
+ "9fed78d2f31977c69a37a14c259dd9ff76cb72876613566403b9d31761204e95": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.85,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.12,
+    "explain": 0.88,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.14,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.99,
+   "probabilities": {
+    "A": 1.0,
+    "B": 0.0,
+    "none": 0.0
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.06,
+   "type": "noul"
+  }
+ },
+ "adbb777d8217733e1339580c148590cb9bf84d2fa7010227a955e04ada7e0497": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 1.0,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 1.0,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.15,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.99,
+   "probabilities": {
+    "A": 1.0,
+    "B": 0.0,
+    "none": 0.0
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.04,
+   "type": "noul"
+  }
+ },
+ "b283d012bbc4703437cb5e4b77daadb7f21c379ca4b0c71a452035e7aebd0809": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.99,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 0.99,
+    "other": 0.01,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.43,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "B",
+   "confidence": 0.62,
+   "probabilities": {
+    "A": 0.24,
+    "B": 0.75,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.2,
+   "type": "noul"
+  }
+ },
+ "b5d178d6c7052c10c52a568332c8ab5a390a23d1e43f90a58c041a4aa887306f": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.99,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 1.0,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.12,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.51,
+   "probabilities": {
+    "A": 0.67,
+    "B": 0.31,
+    "none": 0.02
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.2,
+   "type": "noul"
+  }
+ },
+ "bf7604e971d8db78327f00f85f62b2db781452e4adad6d3050839e7609a4090e": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.98,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 0.99,
+    "other": 0.01,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.26,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 1.0,
+   "probabilities": {
+    "A": 1.0,
+    "none": 0.0
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.08,
+   "type": "noul"
+  }
+ },
+ "c0d419e42d5d2798f100579eb3aa35356a848d6cec169a0423b5adca908ca904": {
+  "mode": {
+   "choice": "define",
+   "confidence": 0.87,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.89,
+    "explain": 0.11,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.47,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.99,
+   "probabilities": {
+    "A": 0.99,
+    "B": 0.01,
+    "C": 0.0,
+    "none": 0.0
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.06,
+   "type": "noul"
+  }
+ },
+ "d02749114d36441956ad74666248c4434f6c40e24ab29fd6c7fd413399baa243": {
+  "mode": {
+   "choice": "compare",
+   "confidence": 0.48,
+   "probabilities": {
+    "compare": 0.56,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 0.44,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.65,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.6,
+   "probabilities": {
+    "A": 0.73,
+    "B": 0.26,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.22,
+   "type": "noul"
+  }
+ },
+ "d5b7e3a84055e3d79e6dbfa2fcd07fb70010c147e528423ef140a1520c8953e4": {
+  "mode": {
+   "choice": "define",
+   "confidence": 0.48,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.55,
+    "explain": 0.41,
+    "other": 0.04,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.43,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.92,
+   "probabilities": {
+    "A": 0.95,
+    "B": 0.05,
+    "none": 0.0
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.16,
+   "type": "noul"
+  }
+ },
+ "d6b383de4fe73f26d858d4e9871d0b228f19ce0d311a4efccf7aaa74d375cda0": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.89,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.06,
+    "define": 0.01,
+    "explain": 0.91,
+    "other": 0.02,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.7,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.98,
+   "probabilities": {
+    "A": 0.99,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.11,
+   "type": "noul"
+  }
+ },
+ "d8b02942122010479850ca9179914b5b89f942af9bd79e44d459d97cd41716b2": {
+  "mode": {
+   "choice": "define",
+   "confidence": 0.32,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.02,
+    "define": 0.42,
+    "explain": 0.35,
+    "other": 0.21,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.18,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.93,
+   "probabilities": {
+    "A": 0.95,
+    "B": 0.0,
+    "C": 0.0,
+    "none": 0.05
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.09,
+   "type": "noul"
+  }
+ },
+ "d98810148728754871aa4e73ac1d52ccaab0ed2fc5841a38d6d9b3d38b3306b6": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.57,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.35,
+    "explain": 0.63,
+    "other": 0.02,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.22,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.98,
+   "probabilities": {
+    "A": 0.99,
+    "B": 0.01,
+    "none": 0.0
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.08,
+   "type": "noul"
+  }
+ },
+ "dc1ee2c90b19f04541bdc76dd54ff28f65ba08882958a5b0583b461c8bfdec10": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 1.0,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 1.0,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.22,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.97,
+   "probabilities": {
+    "A": 0.98,
+    "B": 0.0,
+    "C": 0.0,
+    "D": 0.0,
+    "none": 0.02
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.06,
+   "type": "noul"
+  }
+ },
+ "e3e8a8ee4b2f2f53e0643a34d98e4d2a6e2794b577c4450f6fabe4748ff96ec3": {
+  "mode": {
+   "choice": "define",
+   "confidence": 0.77,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.81,
+    "explain": 0.19,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.31,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.93,
+   "probabilities": {
+    "A": 0.95,
+    "B": 0.04,
+    "none": 0.01
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.22,
+   "type": "noul"
+  }
+ },
+ "f4335fdb8434e083bd1c42d2a4aa9e58acb44360cbb17b9ea76f6050ae8af452": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 0.8,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.16,
+    "explain": 0.84,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.15,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 1.0,
+   "probabilities": {
+    "A": 1.0,
+    "B": 0.0,
+    "none": 0.0
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.06,
+   "type": "noul"
+  }
+ },
+ "f5533808ca318c1665ad35b48fdf29225f7314734620d9118141d0b4b092659a": {
+  "mode": {
+   "choice": "explain",
+   "confidence": 1.0,
+   "probabilities": {
+    "compare": 0.0,
+    "debug_error": 0.0,
+    "define": 0.0,
+    "explain": 1.0,
+    "other": 0.0,
+    "summarize": 0.0,
+    "translate": 0.0
+   },
+   "type": "choice"
+  },
+  "needs_outside_facts": {
+   "noul": 0.19,
+   "type": "noul"
+  },
+  "target": {
+   "choice": "A",
+   "confidence": 0.98,
+   "probabilities": {
+    "A": 0.98,
+    "B": 0.0,
+    "C": 0.0,
+    "D": 0.0,
+    "none": 0.02
+   },
+   "type": "choice"
+  },
+  "visual": {
+   "noul": 0.06,
+   "type": "noul"
+  }
+ }
+}

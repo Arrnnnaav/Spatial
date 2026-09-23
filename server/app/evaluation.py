@@ -10,6 +10,7 @@ from statistics import median
 from time import perf_counter
 from typing import Any
 
+from app import semantic, system_one
 from app.contracts import SpatialContext, from_v2, resolver_inputs
 from app.resolver import resolve_marks
 
@@ -152,3 +153,47 @@ def summarize(results: list[dict]) -> dict[str, Any]:
         },
         "failures": [r["name"] for r in results if not r["top1"]],
     }
+
+
+def load_cassette(path: Path) -> dict:
+    path = Path(path)
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+
+
+def save_cassette(path: Path, cassette: dict) -> None:
+    with Path(path).open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(cassette, indent=1, sort_keys=True) + "\n")
+
+
+def run_case_hybrid(case: dict, cassette: dict, record: bool = False) -> dict:
+    """Same scoring as run_case, but the target is the System One hybrid decision (answers replayed from cassette)."""
+    if case.get("multi"):
+        return {**run_case(case), "flagged_ambiguous": False}
+    ctx = from_v2(question=case["question"], marks=case["marks"], anchors=case["anchors"], canvas=case["canvas"],
+                  page={"surface": case["surface"]}, privacy_policy="anchors_only")
+    marks, canvas, anchors = resolver_inputs(ctx)
+    started = perf_counter()
+    resolution = resolve_marks(marks, canvas, anchors)
+    state, questions, letters = semantic.build_request(ctx, resolution, anchors)
+    key = semantic.request_key(state, questions)
+    if key not in cassette:
+        if not record:
+            raise KeyError(f"no cassette entry for {case['name']}; run: python scripts/eval.py cases --resolver hybrid --record")
+        result = system_one.evaluate(state, questions)
+        if result.status != "ok":
+            raise RuntimeError(f"System One {result.status} while recording {case['name']}")
+        cassette[key] = result.answers
+    judgment = semantic.decide(cassette[key], letters, semantic.deterministic_top(resolution))
+    latency = (perf_counter() - started) * 1000
+    geometric = [item["id"] for item in (resolution["candidates"] or [{}])[0].get("anchors_ranked", [])]
+    by_prob = sorted(judgment.probabilities, key=judgment.probabilities.get, reverse=True)
+    order = [cid for cid in dict.fromkeys([judgment.target_id, *by_prob, *geometric]) if cid]
+    intended = case["intended"]
+    if intended == [None]:
+        top1 = top3 = judgment.target_id is None
+    else:
+        top1 = judgment.target_id in intended
+        top3 = any(cid in intended for cid in order[:3])
+    return {"name": case["name"], "category": case["category"], "top1": top1, "top3": top3,
+            "abstained": judgment.ambiguous, "flagged_ambiguous": judgment.ambiguous, "latency_ms": latency,
+            "predicted": [judgment.target_id] if judgment.target_id else [], "confidence": judgment.semantic_confidence}

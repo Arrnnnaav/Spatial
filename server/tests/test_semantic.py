@@ -131,8 +131,14 @@ def test_decide_hybrid_and_routing():
     j = semantic.decide(answers(), {"A": "a", "B": "b"}, "b")
     assert j.target_id == "a" and j.semantic_confidence == 0.9 and not j.ambiguous
     assert j.mode == "define" and j.needs_outside_facts == 0.1 and j.visual == 0.7
-    low = semantic.decide(answers(conf=0.3), {"A": "a", "B": "b"}, "b")
-    assert low.target_id == "b"
+
+
+def test_target_gate_uses_pick_probability_not_confidence():
+    # Confidence is diluted by the extra options; Jev still prefers A more likely than not -> take A.
+    likely = semantic.decide(answers(conf=0.43, probs={"A": 0.62, "B": 0.37, "none": 0.01}), {"A": "a", "B": "b"}, "b")
+    assert likely.target_id == "a"
+    unsure = semantic.decide(answers(conf=0.1, probs={"A": 0.4, "B": 0.35, "none": 0.25}), {"A": "a", "B": "b"}, "b")
+    assert unsure.target_id == "b"
 
 
 def test_decide_ambiguity_rules():

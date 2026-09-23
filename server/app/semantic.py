@@ -1,6 +1,6 @@
 """Spatial's System One judgments: one Jev request per ask decides which object was meant and how to answer.
 Geometry stays in code and reaches Jev as words (numbers cost 7 points of accuracy in the spike). Wording and
-thresholds come from docs/TYPESAFE_OPPORTUNITIES.md -> Results (hybrid 48/49 on the eval set)."""
+thresholds come from docs/TYPESAFE_OPPORTUNITIES.md -> Results and the recorded eval (hybrid 49/49 single-mark cases)."""
 
 from __future__ import annotations
 
@@ -12,7 +12,9 @@ from typing import Any
 from app import system_one
 from app.contracts import SpatialContext, mark_to_v2
 
-TARGET_MIN_CONF = 0.5
+# Take Jev's pick when it is more likely than not. Gating on `confidence` instead lost 2/49 eval cases: with
+# several options plus `none`, confidence is diluted even when the pick is clearly preferred (p=0.55-0.62).
+TARGET_MIN_PROB = 0.5
 AMBIGUITY_RATIO = 0.4
 FACTS_MIN = 0.8
 VISUAL_MIN = 0.5
@@ -271,7 +273,7 @@ def decide(
         judgment.semantic_confidence = (
             float(confidence) if isinstance(confidence, (int, float)) else None
         )
-        if picked and (judgment.semantic_confidence or 0.0) >= TARGET_MIN_CONF:
+        if picked and probs.get(picked, 0.0) >= TARGET_MIN_PROB:
             judgment.target_id = picked
         ordered = sorted(probs.values(), reverse=True)
         close = (

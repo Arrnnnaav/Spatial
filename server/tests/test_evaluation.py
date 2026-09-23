@@ -3,6 +3,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1]))
+import pytest  # noqa: E402
+
 from app import evaluation  # noqa: E402
 
 TESTS = Path(__file__).parent
@@ -151,3 +153,21 @@ def test_trace_replay(tmp_path):
     records = evaluation.load_traces(tmp_path)
     assert len(records) == 1
     assert evaluation.run_trace(records[0])["top1"] is True
+
+
+CASSETTE = TESTS / "system_one_cassette.json"
+
+
+def test_hybrid_replays_cassette_and_beats_geometry():
+    cassette = evaluation.load_cassette(CASSETTE)
+    cases = [c for c in evaluation.load_cases(DIRS) if not c.get("multi")]
+    hybrid = [evaluation.run_case_hybrid(c, cassette) for c in cases]
+    geometry = [evaluation.run_case(c) for c in cases]
+    assert sum(r["top1"] for r in hybrid) >= sum(r["top1"] for r in geometry)
+    assert sum(r["top1"] for r in hybrid) >= 47
+
+
+def test_hybrid_without_cassette_entry_asks_to_record():
+    case = evaluation.load_cases(DIRS)[0]
+    with pytest.raises(KeyError, match="--record"):
+        evaluation.run_case_hybrid(case, {})
