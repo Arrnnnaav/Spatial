@@ -9,7 +9,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 | # | Sub-project | Status | Spec / plan |
 |---|---|---|---|
 | 1 | Core foundation: independence, contract v3, OCR candidates, trace log, eval harness | Done on branch `feat/core-foundation` (review + merge pending) | `docs/superpowers/specs/2026-09-23-spatial-core-foundation-design.md` |
-| 2 | System-One resolver (Jev now, Laya later; geometry fallback) + clarification UI | Spec written, awaiting review | `docs/superpowers/specs/2026-09-23-system-one-resolver-design.md` |
+| 2 | System-One resolver (Jev now, Laya later; geometry fallback) + clarification UI | Done on branch `feat/system-one-resolver` (review + merge pending) | `docs/superpowers/specs/2026-09-23-system-one-resolver-design.md` |
 | 3 | Windows UIA spike (throwaway) | Not started; can run in parallel | — |
 | 4 | Desktop app (Tauri, Windows → macOS) | Blocked on 1, 3 | — |
 | 5 | Desktop ↔ extension bridge, macOS AX | Blocked on 4 | — |
@@ -43,10 +43,10 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 - [x] User adds `TYPESAFE_API_KEY` to `server/.env`
 - [x] Experiments E1 + E2 (results in `docs/TYPESAFE_OPPORTUNITIES.md`): hybrid 48/49; routing strong
 - [ ] E3 passage rerank (during integration) · E4 Laya (needs impossibl key)
-- [~] Propose changes from experiment results → spec for System-One integration
-- [ ] `/v1/systemone` client with backend config (Jev / Laya / off)
-- [ ] Resolver integration + fallback + eval vs baseline
-- [ ] Clarification UI ("which one?") + correction capture into trace
+- [x] Spec + plan for System-One integration
+- [x] `/v1/systemone` client with backend config (Jev / Laya / off)
+- [x] Resolver integration + fallback + eval vs baseline (hybrid 50/50 vs geometry 46/50 on recorded cassette)
+- [x] Clarification UI ("which one?") + correction capture into trace
 
 ## Sub-project 3 — Windows UIA spike (outline)
 
@@ -54,6 +54,13 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 - [ ] Try on VS Code, Chrome, Word, Figma, File Explorer, a PDF reader; record what UIA returns in `MEMORY.md`
 
 ## Backlog / ideas
+
+- [ ] System One follow-ups (review minors): pass mode/level/system prompt explicitly instead of the shared
+      `_SYSTEM_OVERRIDE` (thread race under concurrent asks); popup/consent note + per-request opt-out for the
+      TypeSafe data flow (esp. when a local answer model is chosen); flag ambiguity when Jev's pick fails the gate;
+      extension: clear stale `pinTarget` on busy/errored asks; pinned re-ask should drop the wrong-target turn and not
+      show "circle tighter?"; multi-mark asks only judge the first mark; 429 retry backoff; trace `_scrub` only
+      catches a `data:` prefix at string start
 
 - [ ] Trace log hardening (review minors): `status()` stat race on `/api/health`; `export()` reads outside lock;
       OCR candidate ids can collide with client ids; 64-cap only when OCR ran; OCR runs even without crop geometry;

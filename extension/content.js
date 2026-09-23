@@ -9,7 +9,7 @@
   const CFG = window.SPATIAL_CONFIG || { mode: 'standalone', productName: 'Point & Ask', features: {} };
   const G = window.SpatialGeometry;
   const STROKE = '#ff3d7f', SOURCE = '#ff3d7f', TARGET = '#2f7cf6', HIGHLIGHT = '#00d4aa';
-  const state = { open: false, tool: 'pen', role: 'reference', marks: [], contextId: null, busy: false, drawing: null, consent: true, requestId: 0, settings: {} };
+  const state = { open: false, tool: 'pen', role: 'reference', marks: [], contextId: null, busy: false, drawing: null, consent: true, requestId: 0, settings: {}, pinTarget: null };
   let host, root, svg, panel, toolbar, hint, consentCard;
 
   const CSS = `
@@ -61,6 +61,11 @@
     @keyframes ring { 0% { stroke-opacity: .9; stroke-width: 3; } 100% { stroke-opacity: 0; stroke-width: 14; } }
     .ring { fill: none; stroke: ${HIGHLIGHT}; animation: ring 1.4s ease-out infinite; }
     .ring-static { fill: rgba(0,212,170,.10); stroke: ${HIGHLIGHT}; stroke-width: 2; }
+    .ring-choice { fill: rgba(47,124,246,.08); stroke: ${TARGET}; stroke-width: 2; stroke-dasharray: 6 4; }
+    .ring-label { fill: ${TARGET}; font: 700 14px system-ui, sans-serif; }
+    .a .clarify { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; font-size: 12px; color: #6b6b7b; }
+    .a .clarify button { all: unset; cursor: pointer; font-size: 12px; padding: 3px 8px; border-radius: 6px; background: #eaf1fe; color: #17171c; }
+    .a .clarify button:hover { background: #d8e6fd; }
     .meta { padding: 0 12px 10px; font-size: 11px; color: #8f8fa3; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     .meta label { display: inline-flex; gap: 4px; align-items: center; color: #17171c; cursor: pointer; white-space: nowrap; }
     .meta input { margin: 0; }
@@ -240,7 +245,7 @@
 
   /* AI → human: pulse a ring around the element the server resolved for each mark. */
   function highlightAnchors(anchorsUsed) {
-    for (const node of svg.querySelectorAll('.ring, .ring-static')) node.remove();
+    for (const node of svg.querySelectorAll('.ring, .ring-static, .ring-choice, .ring-label')) node.remove();
     const seen = new Set();
     for (const anchor of anchorsUsed || []) {
       if (!anchor.bbox || seen.has(anchor.mark_index)) continue;
@@ -251,6 +256,26 @@
       svg.append(ring);
       setTimeout(() => ring.remove(), 8000);
     }
+  }
+
+  /* Ambiguous mark: number the plausible targets on the page and offer them as chips. */
+  function attachClarify(answerNode, clarify, question, input, thread, sendButton) {
+    const row = el('div', { class: 'clarify' }, ['Did you mean:']);
+    clarify.forEach((choice, index) => {
+      const n = String(index + 1);
+      if (choice.bbox) {
+        const b = choice.bbox;
+        svg.append(svgNode('rect', { class: 'ring-choice', x: b.x - 3, y: b.y - 3, width: b.width + 6, height: b.height + 6, rx: 6 }));
+        const label = svgNode('text', { class: 'ring-label', x: b.x - 2, y: Math.max(14, b.y - 6) });
+        label.textContent = n;
+        svg.append(label);
+      }
+      const text = (choice.text || '').trim();
+      const button = el('button', { title: text }, [n + '. ' + (text.length > 40 ? text.slice(0, 39) + '…' : text || 'this')]);
+      button.onclick = () => { state.pinTarget = choice.id; input.value = question; submit(input, thread, sendButton); };
+      row.append(button);
+    });
+    answerNode.insertBefore(row, answerNode.querySelector('small'));
   }
 
   /* Ask panel --------------------------------------------------------------- */
@@ -465,8 +490,7 @@
     const requestId = ++state.requestId;
     let streamed = false;
     state.onDelta = (id, text) => { if (id !== requestId) return; if (!streamed) { answerNode.textContent = ''; answerNode.append(textNode, statusNode); streamed = true; } textNode.data += text; thread.scrollTop = thread.scrollHeight; };
-    state.onStatus = (id, data) => { if (id === requestId && !streamed) answerNode.textContent = (data.anchors ? 'Found ' + data.anchors + ' thing' + (data.anchors === 1 ? '' : 's') + ' under your mark, ' : '') + (state.settings.research !== false ? 'checking sources…' : 'asking…'); };
-    if (state.settings.research !== false) answerNode.textContent = 'Searching sources for what you marked…';
+    state.onStatus = (id, data) => { if (id === requestId && !streamed) answerNode.textContent = (data.anchors ? 'Found ' + data.anchors + ' thing' + (data.anchors === 1 ? '' : 's') + ' under your mark, ' : '') + 'thinking…'; };
     try {
       const marks = state.marks.map(m => ({ ...m }));
       const box = unionBox(marks);
@@ -482,7 +506,9 @@
         page: { url: viewer ? viewer.fileUrl : location.href, title: (viewer ? viewer.title : document.title || location.hostname).slice(0, 500), surface: viewer ? 'pdf' : 'web' },
         image_data: capture.ok ? capture.image : null,
         crop: capture.ok ? capture.crop : null,
+        target_id: state.pinTarget,
       };
+      state.pinTarget = null;
       const response = await send({ type: 'spatial:ask-stream', payload, requestId });
       if (!response.ok) throw response;
       const result = response.result;
@@ -500,7 +526,7 @@
       if (result.level && result.level !== 'student') note.push(result.level.toUpperCase());
       if (pages.size) note.push('page' + (pages.size > 1 ? 's ' : ' ') + Array.from(pages).sort((a,b)=>a-b).join(', '));
       if (result.note) note.push(result.note);
-      if (result.confirmation_required) note.push('low confidence – circle tighter?');
+      if (result.confirmation_required && !(result.clarify || []).length) note.push('low confidence – circle tighter?');
       answerNode.append(el('small', {}, [note.join(' · ')]));
       const actions = el('div', { class: 'actions' });
       answerNode.append(actions);
@@ -512,6 +538,7 @@
         answerNode.insertBefore(list, answerNode.querySelector('small'));
       }
       highlightAnchors(result.anchors_used);
+      if ((result.clarify || []).length >= 2) attachClarify(answerNode, result.clarify, question, input, thread, sendButton);
       if (state.settings.readAloud) speaker.click();
     } catch (error) {
       answerNode.className = 'a err';

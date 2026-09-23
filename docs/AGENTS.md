@@ -60,14 +60,14 @@ docs/          guides + superpowers/specs + superpowers/plans
 cd server && python -m venv .venv && .venv/Scripts/activate && pip install -r requirements.txt
 cp .env.example .env            # then fill keys
 uvicorn app.main:app --port 8787
-python -m pytest -q             # server tests (117 passing as of 2026-09-23)
+python -m pytest -q             # server tests (153 passing as of 2026-09-23)
 
 # extension
 cd extension && node --test tests/geometry.test.mjs
 # load unpacked: chrome://extensions → Developer mode → Load unpacked → extension/ ; hotkey Alt+Shift+A
 
 # resolver eval + schema (repo root)
-python scripts/eval.py cases
+python scripts/eval.py cases [--resolver hybrid] [--record]   # hybrid replays server/tests/system_one_cassette.json
 python scripts/export_schema.py
 
 # providers live check
@@ -80,7 +80,7 @@ All keys live in `server/.env` (gitignored, loaded by `server/app/config.py` via
 Never put keys in extension code. Relevant keys:
 
 - LLM answerers: `OPENROUTER_API_KEY`, `NVIDIA_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, Bedrock via AWS chain.
-- **System One (Jev):** `TYPESAFE_API_KEY` — in `server/.env` for the server, and exported in the shell
+- **System One (Jev):** `SPATIAL_SYSTEM_ONE=jev|off` (default jev when a key is set), `SPATIAL_SYSTEM_ONE_TIMEOUT=1.5`, `TYPESAFE_API_KEY` — in `server/.env` for the server, and exported in the shell
   (`$env:TYPESAFE_API_KEY="…"` in PowerShell) for experiment scripts.
 - **Laya (Jev-compatible):** `LAYA_API_KEY` (impossibl hosted) or `LAYA_BASE_URL` for self-hosted `laya-serve`.
 

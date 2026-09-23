@@ -1,5 +1,5 @@
 """Resolver eval CLI.
-  python scripts/eval.py cases [--json] [--baseline server/tests/eval_baseline.json] [--write-baseline PATH]
+  python scripts/eval.py cases [--resolver geometry|hybrid] [--record] [--json] [--baseline server/tests/eval_baseline.json] [--write-baseline PATH]
   python scripts/eval.py traces <log dir> [--json]
 Exits 1 when --baseline is given and top-1 dropped by more than 2 points."""
 
@@ -24,12 +24,19 @@ def main() -> int:
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--baseline")
     parser.add_argument("--write-baseline")
+    parser.add_argument("--resolver", choices=["geometry", "hybrid"], default="geometry")
+    parser.add_argument("--record", action="store_true", help="hybrid: call System One live and save answers to the cassette")
     args = parser.parse_args()
+    cassette_path = TESTS / "system_one_cassette.json"
     if args.mode == "cases":
-        results = [
-            evaluation.run_case(c)
-            for c in evaluation.load_cases([TESTS / "cases", TESTS / "eval_cases"])
-        ]
+        cases = evaluation.load_cases([TESTS / "cases", TESTS / "eval_cases"])
+        if args.resolver == "hybrid":
+            cassette = evaluation.load_cassette(cassette_path)
+            results = [evaluation.run_case_hybrid(c, cassette, record=args.record) for c in cases]
+            if args.record:
+                evaluation.save_cassette(cassette_path, cassette)
+        else:
+            results = [evaluation.run_case(c) for c in cases]
     else:
         if not args.directory:
             parser.error("traces mode needs a log directory")

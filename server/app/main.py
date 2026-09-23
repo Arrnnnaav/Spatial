@@ -4,6 +4,8 @@ exactly that region. Single-user local tool: no accounts, optional bearer token,
 from __future__ import annotations
 
 import json
+import threading
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from time import perf_counter
 from uuid import uuid4
@@ -19,6 +21,7 @@ from app.audio import audio_status, synthesize, transcribe
 from app.candidates import merge, ocr_candidates
 from app.config import settings
 from app.contracts import (
+    Alternative,
     CropInfo,
     SpatialContext,
     from_v2,
@@ -27,7 +30,7 @@ from app.contracts import (
     resolver_inputs,
     to_semantic_resolution,
 )
-from app import research, trace
+from app import research, semantic, system_one, trace
 from app.ocr import ocr_blocks
 from app.providers import answer_stream, clean_answer, provider_status
 from app.resolver import resolve_marks
@@ -37,7 +40,14 @@ MIN_PROTOCOL_VERSION = (
     2  # the v2 browser extension payload is still accepted and converted
 )
 
-app = FastAPI(title="Spatial — Point & Ask", version="0.2.0")
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    # Open the System One TLS connection early; never blocks startup.
+    threading.Thread(target=system_one.warm, daemon=True).start()
+    yield
+
+
+app = FastAPI(title="Spatial — Point & Ask", version="0.2.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     # Only the extension may call from a browser: a wildcard would let any web page read history and traces.
@@ -89,6 +99,7 @@ class Ask(BaseModel):
     context: SpatialContext | None = None
     # shared
     context_id: str | None = None
+    target_id: str | None = Field(default=None, max_length=200)  # "Did you mean" chip: pin this candidate
     provider: str | None = None
     privacy_policy: str = Field(default="crop_only", max_length=30)
     image_data: str | None = Field(default=None, max_length=8_000_000)
@@ -147,6 +158,23 @@ def anchors_used(resolution: dict, anchors: list[dict]) -> list[dict]:
     return used
 
 
+def promote_target(used: list[dict], target_id: str | None, anchors: list[dict]) -> list[dict]:
+    """Put the chosen target first (even if its geometric score fell below the anchors_used cut) and mark it."""
+    if not target_id:
+        return used
+    rest = [item for item in used if item["id"] != target_id]
+    chosen = next((item for item in used if item["id"] == target_id), None)
+    if chosen is None:
+        source = next((a for a in anchors if a["id"] == target_id), None)
+        if source is None:
+            return used
+        chosen = {"id": source["id"], "type": source.get("type"), "text": str(source.get("text") or "")[:1500],
+                  "score": 0.0, "page": source.get("page"), "href": str(source.get("href") or "")[:500],
+                  "src": str(source.get("src") or "")[:500], "role": "reference", "mark_index": 0,
+                  "bbox": source.get("bbox")}
+    return [{**chosen, "is_target": True}, *rest]
+
+
 def check_protocol(payload: Ask) -> None:
     if payload.protocol_version < MIN_PROTOCOL_VERSION:
         raise HTTPException(
@@ -203,6 +231,7 @@ def health():
         "audio": audio_status(),
         "auth_required": bool(settings.api_token),
         "trace": trace.status(),
+        "system_one": system_one.status(),
     }
 
 
@@ -244,9 +273,32 @@ def prepare_ask(payload: Ask) -> dict:
         }
     )
     used = anchors_used(resolution, anchors)
-    history = (previous or {}).get("answer", {}).get("history", [])
+    previous_answer = (previous or {}).get("answer", {})
+    history = previous_answer.get("history", [])
+    known_ids = {a["id"] for a in anchors}
+    pinned = payload.target_id if payload.target_id in known_ids else None
+    judge_started = perf_counter()
+    judgment = semantic.judge(ctx, resolution, anchors,
+                              previous_question=history[-1]["question"] if history else None, pinned=pinned)
+    timings["system_one"] = round((perf_counter() - judge_started) * 1000)
+    target_id = semantic.final_target(judgment, semantic.deterministic_top(resolution), pinned,
+                                      previous_answer.get("target_id"), known_ids)
+    judged = judgment.status == "ok"
+    reused = bool(judged and judgment.same_target is not None and judgment.same_target >= semantic.SAME_TARGET_MIN
+                  and previous_answer.get("target_id") in known_ids)
+    # Tag a target only when System One (or the user) actually chose it, and only for one mark: without a judgment
+    # the prompt stays exactly as before, and source/target asks keep both marks' anchors on equal footing.
+    if len(ctx.marks) == 1 and (pinned or (judged and (judgment.asked_target or reused))):
+        used = promote_target(used, target_id, anchors)
+    allow_research = payload.research
+    if allow_research and judged and judgment.needs_outside_facts is not None:
+        allow_research = judgment.needs_outside_facts >= semantic.FACTS_MIN
+    prefer_vision = (judgment.visual >= semantic.VISUAL_MIN) if judged and judgment.visual is not None else None
+    by_id = {a["id"]: a for a in anchors}
+    clarify = ([{"id": cid, "text": str(by_id[cid].get("text") or "")[:200], "bbox": by_id[cid].get("bbox")}
+                for cid in judgment.clarify_ids if cid in by_id] if judgment.ambiguous and not pinned else [])
     research_started = perf_counter()
-    sources = research.gather(ctx.question, used) if payload.research else []
+    sources = research.gather(ctx.question, used) if allow_research else []
     timings["research"] = round((perf_counter() - research_started) * 1000)
     return {
         "context": ctx,
@@ -261,6 +313,11 @@ def prepare_ask(payload: Ask) -> dict:
         "timings": timings,
         "request_id": str(uuid4()),
         "ocr_text": ocr_text,
+        "judgment": judgment,
+        "target_id": target_id,
+        "pinned": pinned,
+        "clarify": clarify,
+        "prefer_vision": prefer_vision,
     }
 
 
@@ -284,6 +341,7 @@ def finish_ask(payload: Ask, prep: dict, text: str, meta: dict) -> dict:
         "anchors_used": prep["used"],
         "sources": prep["sources"],
         "meta": meta,
+        "target_id": prep["target_id"],
     }
     if prep["previous"]:
         store.update(prep["previous"]["id"], prep["resolution"], record)
@@ -297,7 +355,20 @@ def finish_ask(payload: Ask, prep: dict, text: str, meta: dict) -> dict:
             record,
         )
     resolution = prep["resolution"]
-    semantic = to_semantic_resolution(resolution)
+    judgment = prep["judgment"]
+    semantic_resolution = to_semantic_resolution(resolution)
+    if judgment.status == "ok":
+        alternatives = [Alternative(candidate_id=cid, score=round(p, 4))  # model_copy(update=) does not validate
+                        for cid, p in sorted(judgment.probabilities.items(), key=lambda kv: -kv[1])]
+        semantic_resolution = semantic_resolution.model_copy(update={
+            "selected_candidate_id": prep["target_id"], "semantic_confidence": judgment.semantic_confidence,
+            "abstained": judgment.ambiguous if judgment.asked_target else semantic_resolution.abstained,
+            "resolver": f"hybrid-{judgment.model or 'jev'}",
+            **({"alternatives": alternatives} if alternatives else {}),
+        })
+    elif prep["target_id"]:
+        semantic_resolution = semantic_resolution.model_copy(update={"selected_candidate_id": prep["target_id"]})
+    system_one_meta = {"status": judgment.status, "model": judgment.model, "latency_ms": judgment.latency_ms}
     response = {
         "id": context_id,
         "answer": text,
@@ -315,11 +386,17 @@ def finish_ask(payload: Ask, prep: dict, text: str, meta: dict) -> dict:
         "note": meta.get("note"),
         "cost_usd": meta.get("cost_usd", 0.0),
         "confidence": resolution["confidence"],
-        "confirmation_required": resolution["confidence"] < 0.6,
+        "confirmation_required": (judgment.ambiguous if judgment.status == "ok" and judgment.asked_target
+                                  else resolution["confidence"] < 0.6),
         "turns": len(history),
         "page": page,
         "resolution": resolution,
-        "resolution_v3": semantic.model_dump(),
+        "resolution_v3": semantic_resolution.model_dump(),
+        "routing": ({"mode": judgment.mode, "needs_outside_facts": judgment.needs_outside_facts,
+                     "visual": judgment.visual, "same_target": judgment.same_target}
+                    if judgment.status == "ok" else None),
+        "clarify": prep["clarify"],
+        "system_one": system_one_meta,
         "latency_ms": round((perf_counter() - prep["started"]) * 1000),
         "protocol_version": PROTOCOL_VERSION,
     }
@@ -338,10 +415,15 @@ def finish_ask(payload: Ask, prep: dict, text: str, meta: dict) -> dict:
                 },
                 ctx=prep["context"],
                 image_attached=bool(prep["image_data"]),
-                resolution=semantic,
+                resolution=semantic_resolution,
                 answer=text,
                 meta=meta,
                 timings=timings,
+                system_one={**system_one_meta, "answers_used": {
+                    "mode": judgment.mode, "needs_outside_facts": judgment.needs_outside_facts,
+                    "visual": judgment.visual, "same_target": judgment.same_target,
+                    "probabilities": judgment.probabilities}},
+                label=prep["pinned"],
             )
         )
     return response
@@ -363,6 +445,8 @@ def ask(payload: Ask):
         prep["sources"],
         payload.level,
         precomputed_ocr=prep["ocr_text"],
+        mode=prep["judgment"].mode,
+        prefer_vision=prep["prefer_vision"],
     ):
         if isinstance(item, dict):
             meta = item
@@ -410,6 +494,8 @@ def ask_stream(payload: Ask):
                 prep["sources"],
                 payload.level,
                 precomputed_ocr=prep["ocr_text"],
+                mode=prep["judgment"].mode,
+                prefer_vision=prep["prefer_vision"],
             ):
                 if isinstance(item, dict):
                     meta = item

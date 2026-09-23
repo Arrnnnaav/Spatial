@@ -1,0 +1,12 @@
+"""Test environment, set before any app module is imported: never reach real LLM providers or the System One API,
+whatever server/.env contains, and whichever test file pytest happens to import first."""
+
+import os
+from pathlib import Path
+
+os.environ["SPATIAL_SYSTEM_ONE"] = "off"
+os.environ["TYPESAFE_API_KEY"] = ""
+os.environ["SPATIAL_PROVIDERS"] = "nothing"
+os.environ["SPATIAL_OCR"] = "0"
+os.environ["SPATIAL_API_TOKEN"] = ""
+os.environ["SPATIAL_DB"] = str(Path(__file__).parent / "test_spatial.db")

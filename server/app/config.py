@@ -18,7 +18,9 @@ except ImportError:  # pragma: no cover
 def _env(name: str, default: str | None = None) -> str | None:
     value = os.environ.get(name)
     if value is not None and value.strip().lower() in {"none", "off"}:
-        return None  # explicit opt-out (e.g. OLLAMA_VISION_MODEL=none for text-only + OCR)
+        return (
+            None  # explicit opt-out (e.g. OLLAMA_VISION_MODEL=none for text-only + OCR)
+        )
     return value if value not in (None, "") else default
 
 
@@ -33,7 +35,9 @@ class ProviderConfig:
 
     @property
     def configured(self) -> bool:
-        if self.kind == "bedrock":  # base_url holds the region; credentials come from the AWS chain (role/env/profile)
+        if (
+            self.kind == "bedrock"
+        ):  # base_url holds the region; credentials come from the AWS chain (role/env/profile)
             return bool(self.base_url) and self.api_key == "1"
         return bool(self.base_url) and (self.kind == "ollama" or bool(self.api_key))
 
@@ -61,14 +65,30 @@ class Settings:
     tts_voice: str = _env("SPATIAL_TTS_VOICE", "alba")
     tts_enabled: bool = _env("SPATIAL_TTS", "1") not in {"0", "false", "no"}
     # Free the speech models after this many idle seconds so Ollama has RAM again (0 = keep loaded).
-    audio_idle_unload_seconds: int = int(_env("SPATIAL_AUDIO_IDLE_UNLOAD_SECONDS", "300"))
+    audio_idle_unload_seconds: int = int(
+        _env("SPATIAL_AUDIO_IDLE_UNLOAD_SECONDS", "300")
+    )
     # Some networks have a broken IPv6 route to Hugging Face; this makes model downloads use IPv4 only.
     force_ipv4: bool = _env("SPATIAL_FORCE_IPV4", "0") in {"1", "true", "yes"}
     # Opt-in local trace log (app/trace.py): metadata + resolution trace per ask, never pixels.
-    trace_enabled: bool = (_env("SPATIAL_TRACE") or "off").lower() in {"on", "1", "true", "yes"}
+    trace_enabled: bool = (_env("SPATIAL_TRACE") or "off").lower() in {
+        "on",
+        "1",
+        "true",
+        "yes",
+    }
     trace_dir: str | None = _env("SPATIAL_LOG_DIR")
     trace_max_mb: float = float(_env("SPATIAL_TRACE_MAX_MB", "50"))
     trace_retention_days: int = int(_env("SPATIAL_TRACE_RETENTION_DAYS", "14"))
+    # System One judgments (app/system_one.py, app/semantic.py): TypeSafe Jev today, Laya later (same protocol).
+    typesafe_api_key: str | None = _env("TYPESAFE_API_KEY")
+    typesafe_model: str = _env("TYPESAFE_MODEL", "jev-latest")
+    typesafe_base_url: str = _env("TYPESAFE_BASE_URL", "https://api.typesafe.ai")
+    # Read raw: _env() maps "off" to None, which would fall through to the key-based default.
+    system_one_backend: str = os.environ.get(
+        "SPATIAL_SYSTEM_ONE", ""
+    ).strip().lower() or ("jev" if _env("TYPESAFE_API_KEY") else "off")
+    system_one_timeout: float = float(_env("SPATIAL_SYSTEM_ONE_TIMEOUT", "1.5"))
     providers: dict[str, ProviderConfig] = field(
         default_factory=lambda: {
             "ollama": ProviderConfig(
