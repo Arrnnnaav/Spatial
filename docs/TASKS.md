@@ -2,17 +2,17 @@
 
 *Live board. Update status when you start (`[~]`) or finish (`[x]`) a task; add new tasks as discovered.
 Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why).*
-**Last updated:** 2026-09-23
+**Last updated:** 2026-09-25
 
 ## Roadmap
 
 | # | Sub-project | Status | Spec / plan |
 |---|---|---|---|
-| 1 | Core foundation: independence, contract v3, OCR candidates, trace log, eval harness | Done on branch `feat/core-foundation` (review + merge pending) | `docs/superpowers/specs/2026-09-23-spatial-core-foundation-design.md` |
-| 2 | System-One resolver (Jev now, Laya later; geometry fallback) + clarification UI | Done on branch `feat/system-one-resolver` (review + merge pending) | `docs/superpowers/specs/2026-09-23-system-one-resolver-design.md` |
+| 1 | Core foundation: independence, contract v3, OCR candidates, trace log, eval harness | Done, merged | `docs/superpowers/specs/2026-09-23-spatial-core-foundation-design.md` |
+| 2 | System-One resolver (Jev now, Laya later; geometry fallback) + clarification UI | Done, merged | `docs/superpowers/specs/2026-09-23-system-one-resolver-design.md` |
 | 3 | Windows UIA spike (throwaway) | Done 2026-09-24 | `scripts/spikes/uia_region_probe.py` |
 | 4 | Desktop app (Tauri, Windows → macOS) | Done 2026-09-24 (4a server, 4b Tauri app; Windows) | `docs/superpowers/specs/2026-09-24-desktop-app-design.md` |
-| 5 | Desktop ↔ extension bridge, macOS AX | Blocked on 4 | — |
+| 5 | Desktop ↔ extension bridge, macOS AX | Next (unblocked) | — |
 
 ## Now
 
