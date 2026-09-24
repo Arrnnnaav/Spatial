@@ -105,6 +105,15 @@ code or git log. Newest first within each section. Remove entries that become wr
   invisible to UIA → handled in Rust (`PermissionRequested`, mic + own origin only). An emoji-only `<button>` gets
   the emoji as its UIA name, not its `title`.
 
+- **2026-09-24** — Shared machine Python: `nvidia-riva-client` >= 2.25 pins `protobuf==6.33.5`, which breaks
+  tensorflow / grpcio-status / google-ai (need protobuf < 6) → pinned **riva 2.24.0 + protobuf 5.29** (hosted speech
+  verified). Machine cleanup the same day: TensorFlow 2.18 (intel/cpu builds) → 2.20 (accepts numpy 2.2), keras
+  installed, python-telegram-bot → 22 (httpx 0.28), torch/torchaudio/torchvision → 2.8.0+cu128 + torchcodec 0.7
+  (whisperx/pyannote). Only `tribev2`'s metadata cap (torch < 2.7) remains; it imports and runs on 2.8.
+  Drive C: was full (835 MB free): pip/npm caches, old %TEMP% and 5.2 GB of `site-packages/~*` rollback folders
+  from interrupted installs were deleted. A full C: shows up in Rust as "paging file is too small (os error 1455)"
+  and bogus "only metadata stub found for `core`" errors; build with `-j 4`. Release build: 12m44s cold, 8.5 MB exe.
+
 ## Gotchas
 
 - Citation-check sentence split is naive (`. ` boundaries): initials like "Diederik P. Kingma" split a sentence;
