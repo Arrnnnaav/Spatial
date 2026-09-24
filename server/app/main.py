@@ -4,6 +4,7 @@ exactly that region. Single-user local tool: no accounts, optional bearer token,
 from __future__ import annotations
 
 import json
+import re
 import threading
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -19,6 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app import store
 from app.audio import audio_status, synthesize, transcribe
+from app.audio import warm as audio_warm
 from app.candidates import merge, ocr_candidates
 from app.config import settings
 from app.contracts import (
@@ -48,6 +50,7 @@ async def lifespan(_: FastAPI):
     threading.Thread(target=system_one.warm, daemon=True).start()
     if desktop.SUPPORTED:
         desktop.session_token()  # write the token file before the desktop app asks for it
+    threading.Thread(target=audio_warm, daemon=True).start()  # speech backend ready before the first 🎤
     if settings.ocr_enabled:  # RapidOCR model load takes ~4 s; pay it before the first ask
         threading.Thread(target=ocr_blocks_warm, daemon=True).start()
     yield
@@ -657,7 +660,9 @@ def delete_traces():
 async def speech_to_text(
     audio: UploadFile = File(...), language: str | None = Form(default=None)
 ):
-    """Speech -> text with faster-whisper on CPU. Accepts webm/ogg/wav/mp3 from MediaRecorder."""
+    """Speech -> text (NVIDIA Parakeet/Whisper, local faster-whisper fallback). Accepts webm/ogg/wav/mp3 from MediaRecorder."""
+    if language is not None and not re.fullmatch(r"[a-z]{2,3}(-[A-Za-z]{2,4})?", language):
+        raise HTTPException(400, {"code": "BAD_LANGUAGE", "message": "language must look like 'en' or 'en-US'"})
     data = await audio.read()
     if not data:
         raise HTTPException(400, {"code": "EMPTY_AUDIO", "message": "empty audio"})
@@ -679,7 +684,7 @@ async def speech_to_text(
 
 @app.post("/api/tts", dependencies=[Depends(require_token)])
 def text_to_speech(payload: Speak):
-    """Text -> WAV with Kyutai pocket-tts on CPU."""
+    """Text -> WAV (NVIDIA Magpie, local pocket-tts fallback)."""
     wav, meta = synthesize(payload.text, payload.voice)
     if wav is None:
         raise HTTPException(
@@ -694,5 +699,5 @@ def text_to_speech(payload: Speak):
     return Response(
         content=wav,
         media_type="audio/wav",
-        headers={"X-TTS-Seconds": str(meta["seconds"]), "X-TTS-Voice": meta["voice"]},
+        headers={"X-TTS-Seconds": str(meta["seconds"]), "X-TTS-Voice": meta["voice"], "X-TTS-Backend": meta.get("backend", "")},
     )

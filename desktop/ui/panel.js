@@ -9,18 +9,32 @@
   const input = $('question');
   const send = $('send');
   const POINT_PAD = 40; // monitor px around a point mark to look for candidates
+  const MAX_RECORD_MS = 60000; // a forgotten mic never stays open
+  let stopRecording = () => {};
   let state = null; // { capture_id, monitor, mark, candidates, window, contextId }
   let ownPid = null;
 
   T.core.invoke('own_pid').then((pid) => { ownPid = pid; });
+  setupMic($('mic'));
 
   T.event.listen('spatial://mark', (event) => onMark(event.payload));
   T.event.listen('spatial://error', (event) => showError(event.payload.message));
   T.event.listen('spatial://settings', () => openSettings());
 
-  $('close').onclick = () => win.hide();
+  $('close').onclick = () => hidePanel();
   $('gear').onclick = () => (document.body.classList.contains('show-settings') ? closeSettings() : openSettings());
-  window.addEventListener('keydown', (event) => { if (event.key === 'Escape') win.hide(); });
+  window.addEventListener('keydown', (event) => { if (event.key === 'Escape') hidePanel(); });
+  function hidePanel() {
+    stopRecording();
+    if (player) { player.pause(); player = null; }
+    win.hide();
+  }
+  // Speech goes to the server's backend (NVIDIA hosted by default): say so where the user presses.
+  fetch(Spatial.server() + '/api/health').then((r) => r.json()).then((health) => {
+    const where = (health.audio && health.audio.backend) === 'nvidia' ? ' — sent to NVIDIA speech' : ' — on this computer';
+    $('mic').title += where;
+    speechWhere = where;
+  }).catch(() => {});
   $('ask').addEventListener('submit', (event) => { event.preventDefault(); ask(input.value.trim()); });
   $('saveSettings').onclick = () => {
     Spatial.save('spatial.server', $('server').value.trim());
@@ -199,6 +213,86 @@
     }
   }
 
+  /* 🎤 Speech in: MediaRecorder (webm/opus) -> /api/stt (NVIDIA Parakeet, local whisper fallback) -> question box. */
+  function setupMic(button) {
+    let recorder = null;
+    stopRecording = () => { if (recorder) recorder.stop(); };
+    button.onclick = async () => {
+      if (recorder) { recorder.stop(); return; }
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        showError('Microphone unavailable: ' + (err.message || err.name));
+        return;
+      }
+      const parts = [];
+      try {
+        recorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+      } catch (err) {
+        stream.getTracks().forEach((track) => track.stop());
+        showError('Cannot record: ' + (err.message || err.name));
+        return;
+      }
+      const cap = setTimeout(() => { if (recorder) recorder.stop(); }, MAX_RECORD_MS);
+      recorder.ondataavailable = (event) => { if (event.data.size) parts.push(event.data); };
+      recorder.onstop = async () => {
+        clearTimeout(cap);
+        stream.getTracks().forEach((track) => track.stop());
+        recorder = null;
+        button.classList.remove('on');
+        button.classList.add('busy');
+        input.placeholder = 'Transcribing…';
+        try {
+          const form = new FormData();
+          form.append('audio', new Blob(parts, { type: 'audio/webm' }), 'question.webm');
+          const result = await (await Spatial.send('/api/stt', form)).json();
+          input.value = (input.value ? input.value + ' ' : '') + (result.text || '');
+          if (input.value.trim() && state) ask(input.value.trim()); // spoken question goes straight out
+        } catch (err) {
+          showError('Could not transcribe: ' + err.message);
+        } finally {
+          button.classList.remove('busy');
+          input.placeholder = 'Ask about what you marked…';
+          input.focus();
+        }
+      };
+      recorder.start();
+      button.classList.add('on');
+      input.placeholder = 'Listening… click 🎤 again to stop';
+    };
+  }
+
+  /* 🔊 Speech out: /api/tts (NVIDIA Magpie, local pocket-tts fallback) -> WAV blob; click again to stop. */
+  let player = null;
+  let speechWhere = '';
+  function readAloudButton(text) {
+    const button = el('button', { title: 'Read aloud' + speechWhere }, ['🔊']);
+    button.onclick = async () => {
+      if (player) {
+        player.pause();
+        player = null;
+        button.textContent = '🔊';
+        return;
+      }
+      button.textContent = '…';
+      try {
+        const spoken = text.replace(/\*\*|`/g, '').replace(/\[\d{1,2}\]/g, '');
+        const wav = await (await Spatial.send('/api/tts', JSON.stringify({ text: spoken.slice(0, 4000) }), 'application/json')).blob();
+        const url = URL.createObjectURL(wav);
+        player = new Audio(url);
+        player.onended = () => { URL.revokeObjectURL(url); player = null; button.textContent = '🔊'; };
+        button.textContent = '⏹';
+        await player.play();
+      } catch (err) {
+        player = null;
+        button.textContent = '🔊';
+        showError('Could not read aloud: ' + err.message);
+      }
+    };
+    return button;
+  }
+
   function finish(turn, answer, meta, result, question) {
     state.contextId = result.id || state.contextId;
     renderAnswer(answer, result.answer || '', result.unsupported_citations);
@@ -207,7 +301,8 @@
     if (used && used.text && target) target.textContent = used.text.slice(0, 300);
     const bits = [result.provider, result.model].filter(Boolean);
     if (result.confirmation_required && !(result.clarify || []).length) bits.push('low confidence — mark tighter?');
-    meta.textContent = bits.join(' · ');
+    meta.replaceChildren(bits.join(' · '));
+    if (result.answer) meta.append(readAloudButton(result.answer));
     const sources = result.sources || [];
     if (sources.length) {
       const bad = new Set((result.unsupported_citations || []).map(Number));

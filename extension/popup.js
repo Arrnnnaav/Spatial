@@ -42,7 +42,8 @@ async function health(selectedProvider) {
   const audio = data.audio || {};
   $('traceLog').checked = Boolean(data.trace && data.trace.enabled);
   status('Connected.\nProviders ready: ' + (ready.join(', ') || 'none (answers will only quote the marked text)') +
-    '\nSpeech: browser voice by default' + (audio.stt && audio.stt.installed ? '; server whisper available in Power mode' : ''), 'ok');
+    '\nSpeech: browser voice by default' + (audio.stt && audio.stt.installed
+      ? '; server speech in Power mode (' + (audio.backend === 'nvidia' ? 'NVIDIA Parakeet + Magpie' : 'local whisper + pocket-tts') + ')' : ''), 'ok');
 }
 
 $('start').onclick = async () => {

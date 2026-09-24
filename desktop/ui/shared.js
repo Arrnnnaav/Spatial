@@ -34,5 +34,18 @@
     return data;
   }
 
-  window.Spatial = { load, save, headers, post, server, DEFAULT_SERVER };
+  /* Multipart/binary calls (speech): same auth, but let the browser set Content-Type. */
+  async function send(path, body, contentType) {
+    const h = await headers();
+    delete h['Content-Type'];
+    if (contentType) h['Content-Type'] = contentType;
+    const response = await fetch(server() + path, { method: 'POST', headers: h, body });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error((data.detail && data.detail.message) || 'server error ' + response.status);
+    }
+    return response;
+  }
+
+  window.Spatial = { load, save, headers, post, send, server, DEFAULT_SERVER };
 })();
