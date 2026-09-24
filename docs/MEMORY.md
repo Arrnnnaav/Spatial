@@ -97,6 +97,14 @@ code or git log. Newest first within each section. Remove entries that become wr
   editing `ui/`. The panel preview must filter huge containers (`anchorFilter`) or the Notepad window itself ranks
   first. Git Bash heredocs containing JS/regex break unpredictably here: write files with the Write tool.
 
+- **2026-09-24** — Speech: NVIDIA hosted Riva works with the normal `nvapi-` key over gRPC `grpc.nvcf.nvidia.com:443`
+  with `function-id` metadata (parakeet-tdt-0.6b-v2 `d3fe9151-…`, whisper-large-v3 `b702f636-…`,
+  magpie-tts-multilingual `877104f7-…`); build.nvidia.com model pages are JS-rendered, so ids came from a live probe.
+  The first RPC is slow (6 s TTS / 22 s ASR: channel + function wake + heavy faster-whisper import) → warm-up makes
+  real tiny calls. WebView2 asks for the microphone on every launch and does not remember "Allow", and its prompt is
+  invisible to UIA → handled in Rust (`PermissionRequested`, mic + own origin only). An emoji-only `<button>` gets
+  the emoji as its UIA name, not its `title`.
+
 ## Gotchas
 
 - Citation-check sentence split is naive (`. ` boundaries): initials like "Diederik P. Kingma" split a sentence;

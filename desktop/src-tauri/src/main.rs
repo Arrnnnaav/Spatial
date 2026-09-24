@@ -4,7 +4,7 @@
 
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
-use tauri::{Emitter, WindowEvent};
+use tauri::{Emitter, Manager, WindowEvent};
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 
 const HOTKEY_LABEL: &str = "Alt+Shift+S";
@@ -26,6 +26,37 @@ fn desktop_token() -> Result<String, String> {
         .map_err(|_| "Spatial server not started yet (no desktop token)".to_string())
 }
 
+/// WebView2 asks "tauri.localhost wants to use your microphones" on every launch and does not remember "Allow".
+/// Grant it here instead — microphone only, and only to our own bundled pages (the CSP already blocks remote content).
+#[cfg(windows)]
+fn allow_own_microphone(window: &tauri::WebviewWindow) {
+    let _ = window.with_webview(|webview| unsafe {
+        use webview2_com::Microsoft::Web::WebView2::Win32::{
+            COREWEBVIEW2_PERMISSION_KIND, COREWEBVIEW2_PERMISSION_KIND_MICROPHONE, COREWEBVIEW2_PERMISSION_STATE_ALLOW,
+        };
+        use webview2_com::{take_pwstr, PermissionRequestedEventHandler};
+        let Ok(core) = webview.controller().CoreWebView2() else {
+            return;
+        };
+        let handler = PermissionRequestedEventHandler::create(Box::new(|_, args| {
+            if let Some(args) = args {
+                let mut kind = COREWEBVIEW2_PERMISSION_KIND::default();
+                args.PermissionKind(&mut kind)?;
+                let mut uri = windows_core::PWSTR::null();
+                args.Uri(&mut uri)?;
+                let uri = take_pwstr(uri);
+                let own = uri.starts_with("http://tauri.localhost/") || uri.starts_with("https://tauri.localhost/");
+                if kind == COREWEBVIEW2_PERMISSION_KIND_MICROPHONE && own {
+                    args.SetState(COREWEBVIEW2_PERMISSION_STATE_ALLOW)?;
+                }
+            }
+            Ok(())
+        }));
+        let mut token = 0i64;
+        let _ = core.add_PermissionRequested(&handler, &mut token);
+    });
+}
+
 fn start_ask(app: &tauri::AppHandle) {
     let _ = app.emit_to("overlay", "spatial://start", ());
 }
@@ -45,6 +76,10 @@ fn main() {
         .invoke_handler(tauri::generate_handler![own_pid, desktop_token])
         .setup(move |app| {
             use tauri_plugin_global_shortcut::GlobalShortcutExt;
+            #[cfg(windows)]
+            if let Some(panel) = app.get_webview_window("panel") {
+                allow_own_microphone(&panel);
+            }
             if let Err(err) = app.global_shortcut().register(hotkey) {
                 eprintln!("could not register {HOTKEY_LABEL}: {err} (another app owns it?) — use the tray");
             }

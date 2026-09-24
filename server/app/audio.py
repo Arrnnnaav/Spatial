@@ -1,5 +1,6 @@
-"""CPU speech: faster-whisper for speech-to-text, Kyutai pocket-tts for text-to-speech.
-Both lazy-loaded and optional; the endpoints report 'unavailable' instead of failing the server."""
+"""Speech in/out. Primary: NVIDIA hosted models (app/nvidia_speech.py, ~1 s, no model load). Fallback: local CPU
+faster-whisper (STT) and Kyutai pocket-tts (TTS), lazy-loaded and optional; the endpoints report 'unavailable'
+instead of failing the server. `SPATIAL_SPEECH_BACKEND=auto|nvidia|local`."""
 from __future__ import annotations
 
 import gc
@@ -63,7 +64,7 @@ def _cached_whisper_dir(size: str) -> str:
     return size
 
 
-def transcribe(audio_bytes: bytes, language: str | None = None) -> dict:
+def _local_transcribe(audio_bytes: bytes, language: str | None = None) -> dict:
     _touch()
     try:
         model = _whisper()
@@ -80,7 +81,9 @@ def transcribe(audio_bytes: bytes, language: str | None = None) -> dict:
                 return {"status": "unavailable", "error": f"RuntimeError: {str(exc)[:160]} (low memory? close other models)", "text": ""}
             import gc
             gc.collect()
-    return {"status": "ok", "text": text, "language": info.language, "duration": round(info.duration, 2), "model": settings.stt_model}
+        except Exception as exc:  # bad language code, undecodable audio, ...
+            return {"status": "unavailable", "error": type(exc).__name__, "text": ""}
+    return {"status": "ok", "text": text, "language": info.language, "duration": round(info.duration, 2), "model": settings.stt_model, "backend": "local"}
 
 
 @lru_cache(maxsize=1)
@@ -95,7 +98,7 @@ def _voice(name: str):
     return _tts().get_state_for_audio_prompt(name)
 
 
-def synthesize(text: str, voice: str | None = None) -> tuple[bytes | None, dict]:
+def _local_synthesize(text: str, voice: str | None = None) -> tuple[bytes | None, dict]:
     if not settings.tts_enabled:
         return None, {"status": "disabled"}
     _touch()
@@ -108,7 +111,7 @@ def synthesize(text: str, voice: str | None = None) -> tuple[bytes | None, dict]
     with _lock:
         audio = model.generate_audio(state, text[:2000])
     pcm = audio.detach().cpu().numpy() if hasattr(audio, "detach") else np.asarray(audio)
-    return _wav_bytes(pcm, model.sample_rate), {"status": "ok", "sample_rate": model.sample_rate, "voice": voice or settings.tts_voice, "seconds": round(len(pcm) / model.sample_rate, 2)}
+    return _wav_bytes(pcm, model.sample_rate), {"status": "ok", "sample_rate": model.sample_rate, "voice": voice or settings.tts_voice, "seconds": round(len(pcm) / model.sample_rate, 2), "backend": "local"}
 
 
 def _wav_bytes(pcm, sample_rate: int) -> bytes:
@@ -123,7 +126,89 @@ def _wav_bytes(pcm, sample_rate: int) -> bytes:
     return buffer.getvalue()
 
 
+def _reason(exc: Exception) -> str:
+    """Short, safe fallback reason for clients (gRPC details can carry peer addresses / internal text)."""
+    from app import nvidia_speech
+
+    return "nvidia: " + (str(exc).split(":", 1)[0][:40] if isinstance(exc, nvidia_speech.SpeechError) else type(exc).__name__)
+
+
+def backend() -> str:
+    """nvidia | local, from SPATIAL_SPEECH_BACKEND (auto picks nvidia when it is usable)."""
+    from app import nvidia_speech
+
+    if settings.speech_backend == "local":
+        return "local"
+    if settings.speech_backend == "nvidia" or nvidia_speech.available():
+        return "nvidia"
+    return "local"
+
+
+def transcribe(audio_bytes: bytes, language: str | None = None) -> dict:
+    if backend() == "nvidia":
+        from app import nvidia_speech
+
+        try:
+            return nvidia_speech.transcribe(audio_bytes, language)
+        except Exception as exc:  # timeout, busy x3, auth, undecodable audio: the local model still answers
+            fallback = _local_transcribe(audio_bytes, language)
+            fallback["fallback_reason"] = _reason(exc)
+            return fallback
+    return _local_transcribe(audio_bytes, language)
+
+
+def synthesize(text: str, voice: str | None = None) -> tuple[bytes | None, dict]:
+    if not settings.tts_enabled:
+        return None, {"status": "disabled"}
+    if backend() == "nvidia":
+        from app import nvidia_speech
+
+        try:
+            return nvidia_speech.synthesize(text, voice)
+        except Exception as exc:
+            wav, meta = _local_synthesize(text, None if (voice or "").startswith("Magpie") else voice)
+            meta["fallback_reason"] = _reason(exc)
+            return wav, meta
+    return _local_synthesize(text, voice)
+
+
+def warm() -> None:
+    """Pay the first-use cost at server start, off the request path (the local models take 25-30 s to load)."""
+    if not settings.audio_warm:
+        return
+    try:
+        if backend() == "nvidia":
+            from app import nvidia_speech
+
+            nvidia_speech.warm()
+            return
+        from importlib.util import find_spec
+
+        if find_spec("faster_whisper"):
+            _whisper()
+        if settings.tts_enabled and find_spec("pocket_tts"):
+            _voice(settings.tts_voice)
+        _touch()
+    except Exception:
+        pass  # the first request will report what is wrong
+
+
 def audio_status() -> dict:
     from importlib.util import find_spec
-    return {"stt": {"model": settings.stt_model, "device": settings.stt_device, "installed": find_spec("faster_whisper") is not None},
-            "tts": {"voice": settings.tts_voice, "enabled": settings.tts_enabled, "installed": find_spec("pocket_tts") is not None}}
+
+    active = backend()
+    return {
+        "backend": active,
+        "stt": {
+            "model": "parakeet-tdt-0.6b-v2 (NVIDIA hosted)" if active == "nvidia" else settings.stt_model,
+            "device": "cloud" if active == "nvidia" else settings.stt_device,
+            "installed": active == "nvidia" or find_spec("faster_whisper") is not None,
+            "fallback": settings.stt_model if find_spec("faster_whisper") else None,
+        },
+        "tts": {
+            "voice": settings.nvidia_tts_voice if active == "nvidia" else settings.tts_voice,
+            "enabled": settings.tts_enabled,
+            "installed": active == "nvidia" or find_spec("pocket_tts") is not None,
+            "fallback": settings.tts_voice if find_spec("pocket_tts") else None,
+        },
+    }

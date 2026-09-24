@@ -28,7 +28,13 @@
   .a sup { color: var(--accent); font-size: 11px; }
   .a code { font: 12.5px ui-monospace, Consolas, monospace; background: var(--chip); padding: 0 4px; border-radius: 4px; }
   .a sup.unsupported { color: var(--warn); }
-  .meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .meta { font-size: 11px; color: var(--muted); margin-top: 4px; display: flex; gap: 8px; align-items: center; }
+  .meta button { all: unset; cursor: pointer; padding: 1px 6px; border-radius: 6px; background: var(--chip); color: var(--fg); }
+  .meta button:hover { background: var(--chip-hover); }
+  form button.icon { background: var(--chip); color: var(--fg); padding: 7px 10px; }
+  form button.icon.on { background: #d93a3a; color: #fff; animation: pulse 1s infinite; }
+  form button.icon.busy { opacity: .6; cursor: progress; }
+  @keyframes pulse { 50% { opacity: .6; } }
   .sources { margin: 6px 0 0; padding: 0; list-style: none; font-size: 12px; }
   .sources li { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sources li.unsupported::before { content: "⚠ "; color: var(--warn); }
@@ -60,6 +66,7 @@
 <main id="thread"></main>
 <form id="ask">
   <input type="text" id="question" placeholder="Ask about what you marked…" autocomplete="off" maxlength="2000">
+  <button id="mic" type="button" class="icon" title="Speak your question (click again to stop)">🎤</button>
   <button id="send" type="submit">Ask</button>
 </form>
 <section class="settings" id="settings">

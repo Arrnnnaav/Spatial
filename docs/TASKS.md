@@ -74,6 +74,16 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 - [ ] Multi-monitor + mixed-DPI manual check (overlay sized in physical px per captured monitor)
 - [ ] Reuse one COM/UIA object per worker thread (cold first call ~1 s)
 
+## Speech v2 (2026-09-24, branch `feat/speech-nvidia`)
+
+- [x] NVIDIA hosted Parakeet / Whisper-large-v3 ASR + Magpie TTS as primary, local faster-whisper / pocket-tts
+      fallback, 3× busy retry, hard timeout (`server/app/nvidia_speech.py`, `audio.py`)
+- [x] Startup warm-up (first real STT 0.48 s / TTS 0.42 s instead of 25–30 s)
+- [x] 21 speech tests (`tests/test_audio.py`); privacy review fixes (safe fallback reasons, language check, mic cap)
+- [x] Desktop panel 🎤 / 🔊; WebView2 microphone auto-granted for our own pages only; verified E2E
+- [ ] Streaming TTS (start playback on the first chunk) and streaming ASR (nemotron-asr-streaming) for long answers
+- [ ] Live voice-conversation mode (revisit nemotron-voicechat / PersonaPlex)
+
 ## Backlog / ideas
 
 - [ ] System One follow-ups (review minors): pass mode/level/system prompt explicitly instead of the shared

@@ -5,7 +5,8 @@ pydantic>=2.7
 python-dotenv>=1.0
 python-multipart>=0.0.9
 # Optional, CPU-friendly extras (server works without them):
-# pip install faster-whisper            # speech-to-text for the mic button
+nvidia-riva-client>=2.17        # NVIDIA hosted speech (Parakeet/Whisper ASR, Magpie TTS) - primary backend
+# pip install faster-whisper            # local speech-to-text fallback for the mic button
 # pip install pocket-tts                # text-to-speech (Kyutai, 100M params, CPU)
 # pip install rapidocr-onnxruntime pillow numpy   # OCR of the crop for text-only models
 # pip install boto3                    # Amazon Bedrock provider (BEDROCK_ENABLED=1)

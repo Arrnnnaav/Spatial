@@ -46,7 +46,7 @@ structured, inspectable reference (`SpatialContext`) and answers about it.
 extension/     Chrome MV3: content.js (overlay, ask panel, anchor collection), background.js (capture, crop,
                server calls, privacy), geometry.js (shared mark/rank math), popup, pdf.js viewer, offscreen audio
 server/app/    FastAPI: main.py (routes), resolver.py (deterministic geometry ranking), providers.py (LLM chain,
-               prompt), ocr.py (RapidOCR), research.py (search + cited answers), audio.py (STT/TTS), store.py
+               prompt), ocr.py (RapidOCR), research.py (search + cited answers), audio.py + nvidia_speech.py (STT/TTS), store.py
                (SQLite history), config.py (.env settings)
 desktop/       Tauri v2 app (Windows): src-tauri/ (Rust: hotkey, tray, token), ui/ (overlay + ask panel)
 server/tests/  pytest + golden resolver cases (tests/cases/*.json, shared with extension geometry tests)
@@ -61,7 +61,7 @@ docs/          guides + superpowers/specs + superpowers/plans
 cd server && python -m venv .venv && .venv/Scripts/activate && pip install -r requirements.txt
 cp .env.example .env            # then fill keys
 uvicorn app.main:app --port 8787
-python -m pytest -q             # server tests (196 passing as of 2026-09-24)
+python -m pytest -q             # server tests (217 passing as of 2026-09-24)
 
 # extension
 cd extension && node --test tests/geometry.test.mjs

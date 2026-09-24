@@ -71,6 +71,15 @@ class Settings:
     stt_device: str = _env("SPATIAL_STT_DEVICE", "cpu")
     tts_voice: str = _env("SPATIAL_TTS_VOICE", "alba")
     tts_enabled: bool = _env("SPATIAL_TTS", "1") not in {"0", "false", "no"}
+    # Speech backend: auto = NVIDIA hosted (Parakeet/Whisper ASR, Magpie TTS) when an NVIDIA key + riva client are
+    # present, local CPU models (faster-whisper, pocket-tts) as fallback; nvidia | local force one side.
+    speech_backend: str = _env("SPATIAL_SPEECH_BACKEND", "auto").lower()
+    speech_timeout: float = float(_env("SPATIAL_SPEECH_TIMEOUT", "12"))
+    audio_warm: bool = _env("SPATIAL_AUDIO_WARM", "1") not in {"0", "false", "no"}  # load speech at startup
+    nvidia_asr_function: str = _env("NVIDIA_ASR_FUNCTION", "d3fe9151-442b-4204-a70d-5fcc597fd610")  # parakeet-tdt-0.6b-v2
+    nvidia_asr_multilingual_function: str = _env("NVIDIA_ASR_MULTI_FUNCTION", "b702f636-f60c-4a3d-a6f4-f3568c13bd7d")  # whisper-large-v3
+    nvidia_tts_function: str = _env("NVIDIA_TTS_FUNCTION", "877104f7-e885-42b9-8de8-f6e4c6303969")  # magpie-tts-multilingual
+    nvidia_tts_voice: str = _env("NVIDIA_TTS_VOICE", "Magpie-Multilingual.EN-US.Aria")
     # Free the speech models after this many idle seconds so Ollama has RAM again (0 = keep loaded).
     audio_idle_unload_seconds: int = int(
         _env("SPATIAL_AUDIO_IDLE_UNLOAD_SECONDS", "300")
