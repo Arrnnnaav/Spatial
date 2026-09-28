@@ -38,6 +38,7 @@
     </select>
   </label>
   <label class="row"><input type="checkbox" id="research"> Verify with sources when needed (~5 s when used)</label>
+  <label class="row"><input type="checkbox" id="systemOne"> Use TypeSafe Jev to choose the marked object (sends the question and candidate text to TypeSafe when configured)</label>
   <label class="row"><input type="checkbox" id="readAloud"> Read answers aloud automatically</label>
   <label class="row"><input type="checkbox" id="pdfViewer"> Always open PDFs in the Point &amp; Ask viewer</label>
   <label class="row"><input type="checkbox" id="powerMode"> Power mode (local models &amp; server speech)</label>
@@ -49,7 +50,7 @@
       <select id="provider"><option value="">Auto (server order)</option></select>
     </label>
     <label>Server URL<input id="apiBase"></label>
-    <label id="tokenLabel">API token (self-hosted servers with SPATIAL_API_TOKEN)<input id="token" type="password" autocomplete="off"></label>
+    <label id="tokenLabel">API token (copy from Spatial desktop settings, or use your self-hosted server token)<input id="token" type="password" autocomplete="off"></label>
     <label>Voice for server read-aloud (alba, jane, paul)<input id="voice" placeholder="alba"></label>
     <label>Extra blocked sites (comma separated hosts)<input id="blocklistExtra" placeholder="intranet.example.com"></label>
     <button class="ghost" id="save">Save &amp; test connection</button>

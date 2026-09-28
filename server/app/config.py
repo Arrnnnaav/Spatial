@@ -10,7 +10,7 @@ from pathlib import Path
 try:  # .env is a convenience, not a requirement
     from dotenv import load_dotenv
 
-    load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+    load_dotenv(Path(os.environ.get("SPATIAL_ENV_FILE") or Path(__file__).resolve().parents[1] / ".env"))
 except ImportError:  # pragma: no cover
     pass
 

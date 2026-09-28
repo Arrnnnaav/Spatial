@@ -17,12 +17,13 @@ from app.contracts import SpatialContext, mark_to_v2
 logger = logging.getLogger("spatial.semantic")
 # Never send pixels to a third party: data: URLs anywhere in a string, and long base64-looking runs.
 _DATA_URL = re.compile(r"data:[\w.+-]+/[\w.+-]+[;,][^\s\"']*", re.I)
+_WRAPPED_BASE64_URL = re.compile(r"data:[\w.+-]+/[\w.+-]+;base64,[A-Za-z0-9+/=]+(?:\r?\n[A-Za-z0-9+/=]+)*", re.I)
 _BASE64_RUN = re.compile(r"[A-Za-z0-9+/=]{100,}")
 
 
 def _clean(value: Any, limit: int) -> str:
     text = str(value or "")
-    text = _BASE64_RUN.sub("[binary]", _DATA_URL.sub("[image]", text))
+    text = _BASE64_RUN.sub("[binary]", _DATA_URL.sub("[image]", _WRAPPED_BASE64_URL.sub("[image]", text)))
     return text[:limit]
 
 
@@ -303,7 +304,8 @@ def decide(
         choice = target.get("choice")
         picked = letters.get(choice) if isinstance(choice, str) else None
         judgment.semantic_confidence = _num(target.get("confidence"))
-        if picked and probs.get(picked, 0.0) >= TARGET_MIN_PROB:
+        accepted = bool(picked and probs.get(picked, 0.0) >= TARGET_MIN_PROB)
+        if accepted:
             judgment.target_id = picked
         ordered = sorted(probs.values(), reverse=True)
         close = (
@@ -311,7 +313,7 @@ def decide(
             and ordered[0] > 0
             and ordered[1] / ordered[0] >= AMBIGUITY_RATIO
         )
-        judgment.ambiguous = picked is None or close
+        judgment.ambiguous = not accepted or close
         if judgment.ambiguous:
             ranked = sorted(probs, key=probs.get, reverse=True)
             judgment.clarify_ids = ranked[:4] if len(ranked) >= 2 else []

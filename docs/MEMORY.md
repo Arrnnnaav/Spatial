@@ -116,6 +116,22 @@ code or git log. Newest first within each section. Remove entries that become wr
 
 ## Gotchas
 
+- **2026-09-28** — The desktop Chrome bridge checks focused Chrome window bounds, then binds the active tab and document when the screen freezes. While paired,
+  a blocked, unmatched, or unreadable tab is protected across UIA, OCR, and model crops; a verified safe tab may use
+  UIA/OCR if DOM candidates are unavailable. Without pairing, desktop retains its existing UIA/OCR policy.
+
+- **2026-09-26** — The desktop release build uses a PyInstaller server binary as a Tauri bundle resource. Its
+  database and optional provider settings live in `%LOCALAPPDATA%\Spatial` (`spatial.db`, `server.env`), never in the
+  extracted executable. The Tauri app owns only the server process it spawns and stops that child on exit.
+- **2026-09-26** — Bundled server authentication is required: a random per-install bearer token lives in
+  `%LOCALAPPDATA%\Spatial\api.token`. Tauri reads it automatically; the extension pairs by copying it from desktop
+  Settings into its popup. This closes the default loopback CORS exposure to other installed extensions.
+- **2026-09-26** — Provider system prompts must be passed as request-local values through the stream call. A module
+  global can cross-contaminate concurrent asks, including the user's explanation level and research instructions.
+- **2026-09-26** — System One is opt-in per ask. The first-run Chrome consent and both clients' settings disclose
+  TypeSafe's question/candidate-text flow; `system_one: false` skips Jev target judgment, research passage ranking,
+  and citation checks together. Disabling only target judgment still sends source text to TypeSafe.
+
 - Citation-check sentence split is naive (`. ` boundaries): initials like "Diederik P. Kingma" split a sentence;
   checks still run per fragment. Improve if it causes false flags.
 

@@ -1,0 +1,7 @@
+{
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "resources": ["resources/spatial-server.exe"]
+  }
+}

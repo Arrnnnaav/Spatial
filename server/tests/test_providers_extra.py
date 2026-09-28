@@ -53,7 +53,7 @@ def test_bedrock_not_configured_without_flag():
 def test_level_changes_system_prompt_and_is_reported():
     items = list(providers.answer_stream("q", {"title": "t"}, [{"text": "abc"}], None, [], None, [], "eli5"))
     meta = items[-1]
-    assert meta["level"] == "eli5" and "10 years old" in providers._system()
+    assert meta["level"] == "eli5" and "10 years old" in providers._system(level="eli5")
     list(providers.answer_stream("q", {"title": "t"}, [{"text": "abc"}], None, [], None, [], "bogus"))
     assert providers._system() == providers.SYSTEM_PROMPT
 

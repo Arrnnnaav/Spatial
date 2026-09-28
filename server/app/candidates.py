@@ -9,16 +9,23 @@ STRUCTURED = {"dom", "pdf_text", "uia"}
 MAX_CANDIDATES = 64
 
 
-def ocr_candidates(blocks: list[dict], crop: CropInfo | None) -> list[CandidateObject]:
+def ocr_candidates(blocks: list[dict], crop: CropInfo | None, existing_ids: set[str] | None = None) -> list[CandidateObject]:
     """Map OCR boxes from crop px to surface px. Without crop geometry the boxes cannot be placed: no candidates."""
     if crop is None:
         return []
     out = []
-    for index, block in enumerate(blocks):
+    used = set(existing_ids or ())
+    index = 0
+    for block in blocks:
+        while f"ocr-{index}" in used:
+            index += 1
+        candidate_id = f"ocr-{index}"
+        used.add(candidate_id)
+        index += 1
         box, scale = block["bbox"], crop.scale
         out.append(
             CandidateObject(
-                candidate_id=f"ocr-{index}",
+                candidate_id=candidate_id,
                 source="ocr",
                 object_type="ocr",
                 text=str(block["text"])[:1500],

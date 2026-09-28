@@ -1,7 +1,7 @@
 # PRD — Spatial: Point & Ask
 
 *Living document. Change it when priorities change; note the change in `MEMORY.md`.*
-**Last updated:** 2026-09-23
+**Last updated:** 2026-09-26
 
 ## Problem
 
@@ -14,8 +14,8 @@ Screenshot-and-ask tools make the user crop, paste and describe, and the model t
 Press a hotkey, circle / box / point at anything, ask (type or speak). Spatial works out **which object** was
 meant, shows it (highlight), and answers about exactly that — optionally with cited sources and read aloud.
 
-- **Surfaces today:** web pages and PDFs in Chrome.
-- **Surfaces next:** any application on the desktop (Windows first, macOS next), via an OS-level app.
+- **Surfaces today:** web pages and PDFs in Chrome; a Windows desktop prototype over native applications.
+- **Surfaces next:** installable Windows release, browser/desktop candidate bridge, and macOS Accessibility support.
 
 ## Users (priority order)
 

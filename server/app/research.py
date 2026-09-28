@@ -252,7 +252,7 @@ def _ddg_sources(query: str, question: str, marked: str, k: int) -> list[dict[st
 
 
 def gather(question: str, anchors: list[dict[str, Any]], max_sources: int = 4,
-           mode: str | None = None) -> list[dict[str, Any]]:
+           mode: str | None = None, use_system_one: bool = True) -> list[dict[str, Any]]:
     """Search (Tavily, else DuckDuckGo) per query in parallel -> dedupe + credibility -> Jev ranking -> numbered
     sources [{id, url, title, passages, credibility}]."""
     marked = " ".join(str(a.get("text", "")) for a in anchors[:3])
@@ -268,7 +268,7 @@ def gather(question: str, anchors: list[dict[str, Any]], max_sources: int = 4,
     # Interleave per-query results so a comparison keeps sources from both sides.
     interleaved = [hit for group in zip_longest_nonnull(per_query) for hit in group]
     sources = dedupe_and_score(interleaved)
-    ranked = rank_passages(question, marked, sources)
+    ranked = rank_passages(question, marked, sources) if use_system_one else None
     if ranked is not None:
         sources = ranked
     sources = sources[:max_sources]

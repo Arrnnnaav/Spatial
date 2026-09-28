@@ -2,7 +2,7 @@
 
 *Live board. Update status when you start (`[~]`) or finish (`[x]`) a task; add new tasks as discovered.
 Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why).*
-**Last updated:** 2026-09-25
+**Last updated:** 2026-09-28
 
 ## Roadmap
 
@@ -12,7 +12,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 | 2 | System-One resolver (Jev now, Laya later; geometry fallback) + clarification UI | Done, merged | `docs/superpowers/specs/2026-09-23-system-one-resolver-design.md` |
 | 3 | Windows UIA spike (throwaway) | Done 2026-09-24 | `scripts/spikes/uia_region_probe.py` |
 | 4 | Desktop app (Tauri, Windows → macOS) | Done 2026-09-24 (4a server, 4b Tauri app; Windows) | `docs/superpowers/specs/2026-09-24-desktop-app-design.md` |
-| 5 | Desktop ↔ extension bridge, macOS AX | Next (unblocked) | — |
+| 5 | Desktop ↔ extension bridge, macOS AX | Bridge in progress; macOS next | `docs/superpowers/specs/2026-09-28-desktop-extension-bridge-design.md` |
 
 ## Now
 
@@ -42,7 +42,8 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 
 - [x] User adds `TYPESAFE_API_KEY` to `server/.env`
 - [x] Experiments E1 + E2 (results in `docs/TYPESAFE_OPPORTUNITIES.md`): hybrid 48/49; routing strong
-- [ ] E3 passage rerank (during integration) · E4 Laya (needs impossibl key)
+- [x] E3 passage rerank integrated with research
+- [ ] E4 Laya evaluation (needs hosted key or local Laya server, then correction data)
 - [x] Spec + plan for System-One integration
 - [x] `/v1/systemone` client with backend config (Jev / Laya / off)
 - [x] Resolver integration + fallback + eval vs baseline (hybrid 50/50 vs geometry 46/50 on recorded cassette)
@@ -69,10 +70,17 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 - [x] 4b Tauri app `desktop/`: Alt+Shift+S hotkey, frozen-frame overlay (geometry.js copied at build), hide overlay →
       candidates → `/api/ask/stream` with `capture_id`, panel beside the mark (sources ⚠, clarify chips, settings), tray.
       E2E on Windows 11 (simulated hotkey + drag over a self-opened Notepad): correct line previewed and answered.
-- [ ] Open source links in the browser (tauri-plugin-opener); markdown lists/headings in the panel
-- [ ] Release build + installer (`bundle.active`), autostart, server auto-launch from the tray
+- [x] Open source links in the browser (tauri-plugin-opener); markdown lists/headings in the panel
+- [~] Release build + installer, autostart, server auto-launch from the tray (NSIS installer built and installed silently; bundled resource matched; bundled server smoke test passed; fresh-profile launch and tray check pending)
+- [x] Bundled server requires a persistent random API token; desktop uses it automatically and extension pairs via Settings
 - [ ] Multi-monitor + mixed-DPI manual check (overlay sized in physical px per captured monitor)
-- [ ] Reuse one COM/UIA object per worker thread (cold first call ~1 s)
+- [x] Reuse one COM/UIA object per worker thread (cold first call ~1 s)
+
+## Sub-project 5 — Desktop ↔ extension bridge
+
+- [x] Use Chrome DOM candidates for desktop marks over a paired, safe Chrome tab; protect uncertain tabs and retain UIA/OCR fallback for an unpaired or verified safe tab
+- [~] Verify the bridge end to end (Chromium DOM, blocked page, wrong bounds and navigation checks passed; desktop overlay/manual disconnect pass pending)
+- [ ] macOS AX and screen capture on a Mac
 
 ## Speech v2 (2026-09-24, branch `feat/speech-nvidia`)
 
@@ -86,17 +94,18 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 
 ## Backlog / ideas
 
-- [ ] System One follow-ups (review minors): pass mode/level/system prompt explicitly instead of the shared
-      `_SYSTEM_OVERRIDE` (thread race under concurrent asks); popup/consent note + per-request opt-out for the
-      TypeSafe data flow (esp. when a local answer model is chosen); flag ambiguity when Jev's pick fails the gate;
-      extension: clear stale `pinTarget` on busy/errored asks; pinned re-ask should drop the wrong-target turn and not
-      show "circle tighter?"; multi-mark asks only judge the first mark; 429 retry backoff; trace `_scrub` only
-      catches a `data:` prefix at string start
+- [x] Pass mode/level/system prompt explicitly to answer providers (remove concurrent ask prompt race)
+- [x] Extension: clear stale `pinTarget` on busy/errored asks; pinned re-ask drops the wrong-target turn and
+      does not show "circle tighter?"
+- [x] Show TypeSafe data flow in extension and desktop settings; per-request System One opt-out also skips
+      Jev passage ranking and citation checks
+- [x] Flag ambiguity when Jev's pick fails the probability gate; honor 429 Retry-After within the hard budget
+- [ ] Multi-mark asks only judge the first mark
 
-- [ ] Trace log hardening (review minors): `status()` stat race on `/api/health`; `export()` reads outside lock;
-      OCR candidate ids can collide with client ids; 64-cap only when OCR ran; OCR runs even without crop geometry;
-      `run_trace` aborts on one malformed record; provider error text lands in traces
+- [x] Trace/OCR hardening: stat race, export lock, embedded data URLs, provider error detail, OCR ID collisions,
+      candidate cap after OCR, malformed trace replay
+- [x] Skip OCR without crop geometry when candidates already have readable text; keep it for text fallback
 
 - [ ] Split `extension/content.js` (560 lines: overlay + panel + anchors) when touching it
-- [ ] Clean `SPATIAL_PRODUCTION_CHECKLIST.md` of items no longer relevant
+- [x] Replace stale production checklist with current Chrome, server and Windows desktop release gates
 - [ ] Fine-tune Laya on correction data once ~1–2k labelled resolutions exist

@@ -13,6 +13,7 @@
   let stopRecording = () => {};
   let state = null; // { capture_id, monitor, mark, candidates, window, contextId }
   let ownPid = null;
+  let speechWhere = ' — speech provider unknown until the server connects';
 
   T.core.invoke('own_pid').then((pid) => { ownPid = pid; });
   setupMic($('mic'));
@@ -27,20 +28,42 @@
   function hidePanel() {
     stopRecording();
     if (player) { player.pause(); player = null; }
+    if (utterance) { window.speechSynthesis.cancel(); utterance = null; }
     win.hide();
   }
-  // Speech goes to the server's backend (NVIDIA hosted by default): say so where the user presses.
-  fetch(Spatial.server() + '/api/health').then((r) => r.json()).then((health) => {
-    const where = (health.audio && health.audio.backend) === 'nvidia' ? ' — sent to NVIDIA speech' : ' — on this computer';
-    $('mic').title += where;
+  // The bundled server starts after this WebView. Check again when the panel opens and before recording.
+  async function refreshSpeechWhere() {
+    let where = ' — speech provider unknown until the server connects';
+    try {
+      const headers = await Spatial.headers();
+      const response = await fetch(Spatial.server() + '/api/health', { headers });
+      if (response.ok) {
+        const health = await response.json();
+        where = (health.audio && health.audio.backend) === 'nvidia' ? ' — sent to NVIDIA speech' : ' — on this computer';
+      }
+    } catch (_) { /* bundled server may still be extracting */ }
     speechWhere = where;
-  }).catch(() => {});
+    $('mic').title = 'Speak your question' + where;
+  }
+  refreshSpeechWhere();
   $('ask').addEventListener('submit', (event) => { event.preventDefault(); ask(input.value.trim()); });
-  $('saveSettings').onclick = () => {
+  $('saveSettings').onclick = async () => {
     Spatial.save('spatial.server', $('server').value.trim());
     Spatial.save('spatial.apiToken', $('apiToken').value.trim());
     Spatial.save('spatial.research', $('research').checked ? '1' : '0');
+    Spatial.save('spatial.systemOne', $('systemOne').checked ? '1' : '0');
+    try {
+      if ($('autostart').checked) await T.autostart.enable();
+      else await T.autostart.disable();
+    } catch (err) { showError('Could not update autostart: ' + err.message); }
     closeSettings();
+  };
+  $('copyPairingToken').onclick = async () => {
+    try {
+      const token = await T.core.invoke('pairing_token');
+      await navigator.clipboard.writeText(token);
+      $('copyPairingToken').textContent = 'Copied — paste into the extension API token field';
+    } catch (err) { showError('Could not copy pairing token: ' + err.message); }
   };
 
   function el(tag, attrs, children) {
@@ -51,6 +74,7 @@
   }
 
   async function showWindow() {
+    refreshSpeechWhere();
     await win.show();
     await win.setFocus();
   }
@@ -59,6 +83,8 @@
     $('server').value = Spatial.server();
     $('apiToken').value = Spatial.load('spatial.apiToken', '');
     $('research').checked = Spatial.load('spatial.research', '1') === '1';
+    $('systemOne').checked = Spatial.load('spatial.systemOne', '0') === '1';
+    $('autostart').checked = await T.autostart.isEnabled().catch(() => false);
     document.body.classList.add('show-settings');
     await showWindow();
   }
@@ -128,18 +154,41 @@
   }
 
   function renderAnswer(node, text, unsupported) {
-    // Built from DOM nodes only (never innerHTML): **bold**, `code` and [n] citations; everything else stays text.
+    // Build DOM nodes only: model output is untrusted text.
     node.replaceChildren();
     const bad = new Set((unsupported || []).map(Number));
-    let last = 0;
-    for (const match of text.matchAll(/\*\*([^*\n]+)\*\*|`([^`\n]+)`|\[(\d{1,2})\]/g)) {
-      node.append(text.slice(last, match.index));
-      if (match[1]) node.append(el('strong', {}, [match[1]]));
-      else if (match[2]) node.append(el('code', {}, [match[2]]));
-      else node.append(el('sup', { class: bad.has(Number(match[3])) ? 'unsupported' : '' }, ['[' + match[3] + ']']));
-      last = match.index + match[0].length;
+    function inline(target, line) {
+      let last = 0;
+      for (const match of line.matchAll(/\*\*([^*\n]+)\*\*|`([^`\n]+)`|\[(\d{1,2})\]/g)) {
+        target.append(line.slice(last, match.index));
+        if (match[1]) target.append(el('strong', {}, [match[1]]));
+        else if (match[2]) target.append(el('code', {}, [match[2]]));
+        else target.append(el('sup', { class: bad.has(Number(match[3])) ? 'unsupported' : '' }, ['[' + match[3] + ']']));
+        last = match.index + match[0].length;
+      }
+      target.append(line.slice(last));
     }
-    node.append(text.slice(last));
+    let list = null;
+    for (const line of text.split('\n')) {
+      const heading = /^(#{1,3})\s+(.+)$/.exec(line);
+      const item = /^\s*(?:[-*]|\d+[.)])\s+(.+)$/.exec(line);
+      if (item) {
+        const ordered = /^\s*\d/.test(line);
+        const tag = ordered ? 'ol' : 'ul';
+        if (!list || list.tagName.toLowerCase() !== tag) {
+          list = el(tag);
+          node.append(list);
+        }
+        const li = el('li');
+        inline(li, item[1]);
+        list.append(li);
+      } else {
+        list = null;
+        const block = el(heading ? 'h' + Math.min(heading[1].length + 2, 6) : 'div');
+        inline(block, heading ? heading[2] : line);
+        node.append(block);
+      }
+    }
   }
 
   function requestBody(question, targetId) {
@@ -151,6 +200,7 @@
       context_id: state.contextId,
       target_id: targetId || null,
       research: Spatial.load('spatial.research', '1') === '1',
+      system_one: Spatial.load('spatial.systemOne', '0') === '1',
       context: {
         surface: {
           kind: 'desktop', app: w.app || null, process: w.process || null, window_title: w.title || null,
@@ -219,6 +269,7 @@
     stopRecording = () => { if (recorder) recorder.stop(); };
     button.onclick = async () => {
       if (recorder) { recorder.stop(); return; }
+      await refreshSpeechWhere();
       let stream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -263,9 +314,9 @@
     };
   }
 
-  /* 🔊 Speech out: /api/tts (NVIDIA Magpie, local pocket-tts fallback) -> WAV blob; click again to stop. */
+  /* 🔊 Speech out: server voice when available, otherwise the system voice in WebView2. */
   let player = null;
-  let speechWhere = '';
+  let utterance = null;
   function readAloudButton(text) {
     const button = el('button', { title: 'Read aloud' + speechWhere }, ['🔊']);
     button.onclick = async () => {
@@ -275,9 +326,14 @@
         button.textContent = '🔊';
         return;
       }
+      if (utterance) {
+        window.speechSynthesis.cancel(); utterance = null;
+        button.textContent = '🔊';
+        return;
+      }
       button.textContent = '…';
+      const spoken = text.replace(/\*\*|`/g, '').replace(/\[\d{1,2}\]/g, '');
       try {
-        const spoken = text.replace(/\*\*|`/g, '').replace(/\[\d{1,2}\]/g, '');
         const wav = await (await Spatial.send('/api/tts', JSON.stringify({ text: spoken.slice(0, 4000) }), 'application/json')).blob();
         const url = URL.createObjectURL(wav);
         player = new Audio(url);
@@ -286,8 +342,15 @@
         await player.play();
       } catch (err) {
         player = null;
-        button.textContent = '🔊';
-        showError('Could not read aloud: ' + err.message);
+        if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+          button.textContent = '🔊';
+          showError('Could not read aloud: ' + err.message);
+          return;
+        }
+        utterance = new SpeechSynthesisUtterance(spoken.slice(0, 4000));
+        utterance.onend = utterance.onerror = () => { utterance = null; button.textContent = '🔊'; };
+        button.textContent = '⏹';
+        window.speechSynthesis.speak(utterance);
       }
     };
     return button;
@@ -309,8 +372,23 @@
       const list = el('ul', { class: 'sources' });
       sources.forEach((s) => {
         let host = s.url || '';
-        try { host = new URL(s.url).hostname; } catch (_) { /* keep raw */ }
-        list.append(el('li', { class: bad.has(Number(s.id)) ? 'unsupported' : '', title: s.url || '' }, [`[${s.id}] ${s.title || host} — ${host}`]));
+        let url = null;
+        try {
+          url = new URL(s.url);
+          if (!['https:', 'http:'].includes(url.protocol)) url = null;
+          else host = url.hostname;
+        } catch (_) { /* display source without a link */ }
+        const row = el('li', { class: bad.has(Number(s.id)) ? 'unsupported' : '' });
+        const label = `[${s.id}] ${s.title || host} — ${host}`;
+        if (url) {
+          const link = el('a', { href: url.href, title: url.href }, [label]);
+          link.onclick = (event) => {
+            event.preventDefault();
+            T.opener.openUrl(url.href).catch((err) => showError('Could not open source: ' + err.message));
+          };
+          row.append(link);
+        } else row.append(label);
+        list.append(row);
       });
       turn.append(list);
     }

@@ -9,8 +9,8 @@ Circle / box / point at anything on screen, ask a question, get an answer about 
 Pointing is fast; describing location in words is slow and ambiguous. Spatial turns a human mark into a
 structured, inspectable reference (`SpatialContext`) and answers about it.
 
-- **Today:** Chrome MV3 extension (web pages + pdf.js viewer) → local FastAPI server → LLM providers.
-- **Next:** OS-level desktop app (Tauri, Windows first, macOS next) so it works over *any* application.
+- **Today:** Chrome MV3 extension and a Windows Tauri desktop prototype → local FastAPI server → LLM providers.
+- **Next:** installable Windows release, desktop–extension bridge, and macOS support.
 - **Core invariant:** the mark is a **reference, never authority**. Spatial explains, highlights, compares,
   researches. It never clicks, types, submits or deletes.
 
@@ -61,7 +61,7 @@ docs/          guides + superpowers/specs + superpowers/plans
 cd server && python -m venv .venv && .venv/Scripts/activate && pip install -r requirements.txt
 cp .env.example .env            # then fill keys
 uvicorn app.main:app --port 8787
-python -m pytest -q             # server tests (217 passing as of 2026-09-24)
+python -m pytest -q             # server tests (run for the current count)
 
 # extension
 cd extension && node --test tests/geometry.test.mjs
@@ -69,6 +69,7 @@ cd extension && node --test tests/geometry.test.mjs
 
 # desktop app (Rust in %USERPROFILE%\.cargo\bin; start the server first)
 cd desktop/src-tauri && cargo build && target/debug/spatial-desktop.exe   # Alt+Shift+S anywhere
+cd ../.. && powershell -File desktop/build-release.ps1                    # bundled Windows installer
 
 # resolver eval + schema (repo root)
 python scripts/eval.py cases [--resolver hybrid] [--record]   # hybrid replays server/tests/system_one_cassette.json

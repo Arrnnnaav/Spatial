@@ -64,13 +64,8 @@ ERR_TIMEOUT = "PROVIDER_TIMEOUT"
 ERR_UPSTREAM = "PROVIDER_ERROR"
 
 _THINK = re.compile(r"<think>.*?</think>\s*", re.S)
-_SYSTEM_OVERRIDE: dict[str, str] = {}
-
-
-def _system() -> str:
-    base = _SYSTEM_OVERRIDE.get("prompt", SYSTEM_PROMPT)
-    level = _SYSTEM_OVERRIDE.get("level")
-    mode_hint = MODE_HINTS.get(_SYSTEM_OVERRIDE.get("mode") or "", "")
+def _system(base: str = SYSTEM_PROMPT, level: str | None = None, mode: str | None = None) -> str:
+    mode_hint = MODE_HINTS.get(mode or "", "")
     parts = [base, LEVELS[level] if level in LEVELS else "", mode_hint]
     return " ".join(part for part in parts if part)
 
@@ -222,7 +217,7 @@ def _iter_sse(response: httpx.Response) -> Iterator[dict[str, Any]]:
 
 
 def _stream_ollama(
-    config: ProviderConfig, prompt: str, encoded: str | None, use_vision: bool
+    config: ProviderConfig, prompt: str, encoded: str | None, use_vision: bool, system_prompt: str
 ) -> Iterator[str | dict[str, Any]]:
     model = (
         config.vision_model
@@ -242,7 +237,7 @@ def _stream_ollama(
                 "stream": True,
                 "think": False,
                 "options": {"temperature": 0.2, "num_predict": 600},
-                "messages": [{"role": "system", "content": _system()}, message],
+                "messages": [{"role": "system", "content": system_prompt}, message],
             },
         ) as response:
             if response.status_code == 404:
@@ -282,6 +277,7 @@ def _stream_openai_compatible(
     encoded: str | None,
     media_type: str,
     use_vision: bool,
+    system_prompt: str,
     stream_options: bool = True,
 ) -> Iterator[str | dict[str, Any]]:
     vision = bool(use_vision and encoded and config.vision_model)
@@ -311,7 +307,7 @@ def _stream_openai_compatible(
         "max_tokens": 1500,
         "reasoning_effort": "low",
         "messages": [
-            {"role": "system", "content": _system()},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": content},
         ],
     }
@@ -367,6 +363,7 @@ def _call_anthropic(
     encoded: str | None,
     media_type: str,
     use_vision: bool,
+    system_prompt: str,
 ) -> Iterator[str | dict[str, Any]]:
     vision = bool(use_vision and encoded)
     model = config.vision_model if vision else config.model
@@ -391,7 +388,7 @@ def _call_anthropic(
                 "model": model,
                 "max_tokens": 700,
                 "temperature": 0.2,
-                "system": _system(),
+                "system": system_prompt,
                 "messages": [{"role": "user", "content": content}],
             },
         )
@@ -416,6 +413,7 @@ def _stream_bedrock(
     encoded: str | None,
     media_type: str,
     use_vision: bool,
+    system_prompt: str,
 ) -> Iterator[str | dict[str, Any]]:
     """Amazon Bedrock Converse API (streaming). Region in config.base_url; credentials from the AWS chain."""
     import base64
@@ -447,7 +445,7 @@ def _stream_bedrock(
     )
     response = client.converse_stream(
         modelId=model,
-        system=[{"text": _system()}],
+        system=[{"text": system_prompt}],
         messages=[{"role": "user", "content": content}],
         inferenceConfig={"maxTokens": 700, "temperature": 0.3},
     )
@@ -467,24 +465,26 @@ def _stream_bedrock(
 
 
 def stream_provider(
-    config: ProviderConfig, prompt: str, image_data: str | None, use_vision: bool = True
+    config: ProviderConfig, prompt: str, image_data: str | None, use_vision: bool = True,
+    system_prompt: str | None = None,
 ) -> Iterator[str | dict[str, Any]]:
     """Yield text deltas then one meta dict. Errors propagate to the caller (which tries the next provider)."""
     encoded, media_type = _split_image(image_data)
+    system_prompt = system_prompt or _system()
     if config.kind == "ollama":
-        yield from _stream_ollama(config, prompt, encoded, use_vision)
+        yield from _stream_ollama(config, prompt, encoded, use_vision, system_prompt)
     elif config.kind == "anthropic":
-        yield from _call_anthropic(config, prompt, encoded, media_type, use_vision)
+        yield from _call_anthropic(config, prompt, encoded, media_type, use_vision, system_prompt)
     elif config.kind == "bedrock":
-        yield from _stream_bedrock(config, prompt, encoded, media_type, use_vision)
+        yield from _stream_bedrock(config, prompt, encoded, media_type, use_vision, system_prompt)
     else:
         try:
             yield from _stream_openai_compatible(
-                config, prompt, encoded, media_type, use_vision
+                config, prompt, encoded, media_type, use_vision, system_prompt
             )
         except _RetryWithoutStreamOptions:
             yield from _stream_openai_compatible(
-                config, prompt, encoded, media_type, use_vision, stream_options=False
+                config, prompt, encoded, media_type, use_vision, system_prompt, stream_options=False
             )
 
 
@@ -534,9 +534,9 @@ def answer_stream(
     A provider that fails after producing text is not retried (the client already saw the partial text)."""
     history = history or []
     sources = sources or []
-    _SYSTEM_OVERRIDE["prompt"] = RESEARCH_SYSTEM if sources else SYSTEM_PROMPT
-    _SYSTEM_OVERRIDE["level"] = level if level in LEVELS else None
-    _SYSTEM_OVERRIDE["mode"] = mode if mode in MODE_HINTS else None
+    chosen_level = level if level in LEVELS else None
+    chosen_mode = mode if mode in MODE_HINTS else None
+    system_prompt = _system(RESEARCH_SYSTEM if sources else SYSTEM_PROMPT, chosen_level, chosen_mode)
     # Diagram mode: nothing readable under the mark but we have pixels -> vision first, then OCR, and say so.
     diagram = bool(image_data) and not any(
         str(a.get("text", "")).strip() for a in anchors
@@ -579,7 +579,8 @@ def answer_stream(
                 for attempt in range(PROVIDER_ATTEMPTS):
                     produced = False
                     try:
-                        for item in stream_provider(model_config, prompt, image_data if use_vision else None, use_vision):
+                        for item in stream_provider(model_config, prompt, image_data if use_vision else None,
+                                                    use_vision, system_prompt=system_prompt):
                             if isinstance(item, dict):
                                 if not produced:  # free-tier models sometimes stream nothing: treat as busy
                                     raise _EmptyAnswer()
@@ -587,8 +588,8 @@ def answer_stream(
                                     "status": "generated",
                                     "sources": sources,
                                     "diagram": diagram,
-                                    "level": _SYSTEM_OVERRIDE.get("level"),
-                                    "mode": _SYSTEM_OVERRIDE.get("mode"),
+                                    "level": chosen_level,
+                                    "mode": chosen_mode,
                                     "ocr": bool(ocr_text and not use_vision),
                                     "errors": errors,
                                     "attempts": attempt + 1,
@@ -629,8 +630,8 @@ def answer_stream(
         "status": "fallback",
         "sources": sources,
         "diagram": diagram,
-        "level": _SYSTEM_OVERRIDE.get("level"),
-        "mode": _SYSTEM_OVERRIDE.get("mode"),
+        "level": chosen_level,
+        "mode": chosen_mode,
         "vision": False,
         "ocr": bool(ocr_text),
         "errors": errors,

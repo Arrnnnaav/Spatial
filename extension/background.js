@@ -1,19 +1,22 @@
 /* Service worker: hotkey → inject the overlay; capture + crop the marked region; talk to the server.
    The page never sees the token or device id; only this worker holds them. */
-importScripts('config.js');
+importScripts('config.js', 'bridge-geometry.js');
 
 const CFG = self.SPATIAL_CONFIG;
 const VERSION = chrome.runtime.getManifest().version;
 const CONSENT_VERSION = 1;
 const DEFAULTS = {
   apiBase: CFG.apiBase, token: '', deviceId: '', consentVersion: 0, privacy: 'crop_only', provider: '', voice: '',
-  readAloud: false, powerMode: false, pdfViewer: false, blocklistExtra: '', research: true, level: 'student',
+  readAloud: false, powerMode: false, pdfViewer: false, blocklistExtra: '', research: true, level: 'student', systemOne: false,
 };
 /* Sites where the overlay never runs: money, health portals, government, browser internals. */
 const BLOCKLIST = [/(^|\.)(paypal|stripe|coinbase|binance|robinhood|chase|wellsfargo|bankofamerica|citi|hdfcbank|icicibank|sbi)\.(com|co\.in|in)$/i,
                    /\.gov(\.[a-z]{2})?$/i, /(^|\.)(mychart|patientportal)\./i];
 const PDF_URL = /^(https?|file):\/\/.*\.pdf($|[?#])/i;
 const sessionState = { health: null, healthAt: 0 };
+let bridgeSocket = null;
+let bridgeConnecting = false;
+const bridgeCaptures = new Map();
 
 async function settings() {
   return { ...DEFAULTS, ...(await chrome.storage.local.get(Object.keys(DEFAULTS))) };
@@ -31,6 +34,122 @@ chrome.runtime.onInstalled.addListener(async () => {
   await ensureDeviceId();
   chrome.contextMenus.create({ id: 'open-pdf-viewer', title: 'Open PDF in ' + CFG.productName + ' viewer', contexts: ['link', 'page'],
     targetUrlPatterns: ['*://*/*.pdf*', 'file:///*.pdf*'], documentUrlPatterns: ['*://*/*', 'file:///*'] });
+  connectBridge();
+});
+
+function bridgeWindowKey(window) { return JSON.stringify([window.title, ...(window.rect || [])]); }
+
+async function bindCapture(message) {
+  const { blocklistExtra } = await settings();
+  const tabs = await chrome.tabs.query({ active: true });
+  const bound = new Map();
+  const blockedWindows = [];
+  for (const [index, window] of (message.windows || []).entries()) {
+    const matches = self.SpatialBridgeGeometry.matchingTabs(window.title, tabs);
+    if (matches.some((tab) => blocked(tab.url || '', blocklistExtra) &&
+        !(tab.url || '').startsWith(chrome.runtime.getURL('viewer.html')))) {
+      blockedWindows.push(index);
+      continue;
+    }
+    if (matches.length !== 1) { blockedWindows.push(index); continue; }
+    const tab = matches[0];
+    try {
+      const browserWindow = await chrome.windows.get(tab.windowId);
+      const [{ result: dpr, documentId } = {}] = await chrome.scripting.executeScript({ target: { tabId: tab.id },
+        func: () => devicePixelRatio, injectImmediately: true });
+      if (documentId && self.SpatialBridgeGeometry.sameWindow(window.rect, browserWindow, dpr)) bound.set(bridgeWindowKey(window), {
+        tabId: tab.id, windowId: tab.windowId, url: tab.url, title: tab.title, documentId,
+      });
+      else blockedWindows.push(index);
+    } catch (_) { blockedWindows.push(index); }
+  }
+  bridgeCaptures.set(message.capture_id, bound);
+  while (bridgeCaptures.size > 3) bridgeCaptures.delete(bridgeCaptures.keys().next().value);
+  return blockedWindows;
+}
+
+async function bridgeCandidates(message) {
+  const bound = bridgeCaptures.get(message.capture_id)?.get(bridgeWindowKey(message.window));
+  if (!bound) return null;
+  const [tab] = await chrome.tabs.query({ active: true, windowId: bound.windowId });
+  if (!self.SpatialBridgeGeometry.sameTab(bound, tab)) return null;
+  try {
+    const target = { tabId: tab.id, documentIds: [bound.documentId] };
+    const [{ result: loaded, documentId } = {}] = await chrome.scripting.executeScript({ target,
+      func: () => Boolean(window.__spatialSpatialLoaded) });
+    if (documentId !== bound.documentId) return null;
+    if (!loaded) await chrome.scripting.executeScript({ target,
+      files: ['config.js', 'geometry.js', 'bridge-geometry.js', 'content.js'] });
+    const [current] = await chrome.tabs.query({ active: true, windowId: bound.windowId });
+    if (!self.SpatialBridgeGeometry.sameTab(bound, current) ||
+        bridgeCaptures.get(message.capture_id)?.get(bridgeWindowKey(message.window)) !== bound) return null;
+    const result = await chrome.tabs.sendMessage(tab.id, { type: 'spatial:bridge-collect',
+      region: message.region, monitor: message.monitor, window: message.window },
+    { documentId: bound.documentId });
+    return Array.isArray(result?.candidates) ? result.candidates : [];
+  } catch (_) { return null; }
+}
+
+async function connectBridge() {
+  if (bridgeSocket || bridgeConnecting) return;
+  bridgeConnecting = true;
+  try {
+    const config = await settings();
+    if (!config.token || config.consentVersion < CONSENT_VERSION) return;
+    const base = new URL(config.apiBase);
+    if (base.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(base.hostname)) return;
+    const socket = new WebSocket('ws://' + base.host + '/api/bridge');
+    bridgeSocket = socket;
+    let heartbeat = null;
+    socket.onopen = () => {
+      socket.send(JSON.stringify({ type: 'hello', token: config.token }));
+      heartbeat = setInterval(() => {
+        if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'ping' }));
+      }, 20000);
+    };
+    socket.onmessage = async (event) => {
+      let message;
+      try { message = JSON.parse(event.data); } catch (_) { return; }
+      if (message.type === 'snapshot') {
+        let blockedWindows = null;
+        try { blockedWindows = await bindCapture(message); }
+        catch (_) { bridgeCaptures.delete(message.capture_id); }
+        if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'snapshot-ready', id: message.id, blocked_windows: blockedWindows }));
+      } else if (message.type === 'collect') {
+        let candidates = null;
+        try { candidates = await bridgeCandidates(message); } catch (_) { /* capture no longer attested */ }
+        if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'candidates', id: message.id, candidates }));
+      }
+    };
+    socket.onerror = () => socket.close();
+    socket.onclose = (event) => {
+      clearInterval(heartbeat);
+      if (bridgeSocket === socket) {
+        bridgeSocket = null;
+        bridgeCaptures.clear();
+        if (event.code !== 1008) setTimeout(connectBridge, 5000);
+      }
+    };
+  } catch (_) { /* server or browser may not be ready; the alarm retries */ }
+  finally { bridgeConnecting = false; }
+}
+
+chrome.runtime.onStartup.addListener(connectBridge);
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local' || !['token', 'apiBase', 'consentVersion', 'blocklistExtra'].some((key) => key in changes)) return;
+  if (bridgeSocket) { bridgeSocket.close(); bridgeSocket = null; }
+  bridgeCaptures.clear();
+  connectBridge();
+});
+chrome.alarms.create('spatial-bridge', { periodInMinutes: 1 });
+chrome.alarms.onAlarm.addListener((alarm) => { if (alarm.name === 'spatial-bridge') connectBridge(); });
+connectBridge();
+
+chrome.webNavigation.onCommitted.addListener((details) => {
+  if (details.frameId !== 0) return;
+  for (const bound of bridgeCaptures.values()) {
+    for (const [key, tab] of bound) if (tab.tabId === details.tabId) bound.delete(key);
+  }
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
@@ -65,7 +184,7 @@ async function toggleOverlay(tab) {
   if (reason) return { ok: false, code: 'BLOCKED', error: 'Point & Ask stays off here (' + reason + ').' };
   const [{ result: alreadyLoaded } = {}] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: () => Boolean(window.__spatialSpatialLoaded) });
   if (!alreadyLoaded) {
-    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['config.js', 'geometry.js', 'content.js'] });
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['config.js', 'geometry.js', 'bridge-geometry.js', 'content.js'] });
   }
   await chrome.tabs.sendMessage(tab.id, { type: 'spatial:toggle', consent: config.consentVersion >= CONSENT_VERSION });
   return { ok: true };
@@ -222,7 +341,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         case 'spatial:ask-stream': return sendResponse({ ok: true, result: await askStream(message.payload, sender.tab.id, message.requestId) });
         case 'spatial:consent': {
-          await chrome.storage.local.set({ consentVersion: CONSENT_VERSION, privacy: message.privacy || 'crop_only' });
+          await chrome.storage.local.set({ consentVersion: CONSENT_VERSION, privacy: message.privacy || 'crop_only',
+                                           systemOne: message.systemOne === true });
           return sendResponse({ ok: true });
         }
         case 'spatial:set': { const { type, ...patch } = message; await chrome.storage.local.set(patch); return sendResponse({ ok: true }); }

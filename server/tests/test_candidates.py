@@ -52,6 +52,12 @@ def test_no_crop_means_no_ocr_candidates():
     assert candidates.ocr_candidates(BLOCKS, None) == []
 
 
+def test_ocr_ids_do_not_replace_client_candidate_ids():
+    crop = CropInfo(bbox=BBox(x=0, y=0, width=400, height=200), scale=1.0)
+    out = candidates.ocr_candidates(BLOCKS, crop, existing_ids={"ocr-0", "ocr-1"})
+    assert [c.candidate_id for c in out] == ["ocr-2", "ocr-3"]
+
+
 def test_merge_drops_ocr_duplicating_structured_text_and_keeps_unique():
     dom = cand("a1", "dom", "The Pectoralis major muscle", 100, 100, 300, 60)
     dup = cand(
@@ -83,3 +89,23 @@ def test_ask_uses_ocr_candidates_when_crop_given(monkeypatch):
         result = client.post("/api/ask", json=body).json()
     assert result["anchors_used"][0]["id"].startswith("ocr-")
     assert result["anchors_used"][0]["type"] == "ocr"
+
+
+def test_ask_skips_unplaced_ocr_when_candidate_text_exists(monkeypatch):
+    monkeypatch.setattr(main.settings, "ocr_enabled", True)
+    calls = []
+    monkeypatch.setattr(main, "ocr_blocks", lambda image: calls.append(image) or BLOCKS)
+    body = {**PAYLOAD, "image_data": "data:image/jpeg;base64,AAAA"}
+    with TestClient(main.app) as client:
+        assert client.post("/api/ask", json=body).status_code == 200
+    assert calls == []
+
+
+def test_ask_keeps_unplaced_ocr_for_text_fallback(monkeypatch):
+    monkeypatch.setattr(main.settings, "ocr_enabled", True)
+    calls = []
+    monkeypatch.setattr(main, "ocr_blocks", lambda image: calls.append(image) or BLOCKS)
+    body = {**PAYLOAD, "anchors": [], "image_data": "data:image/jpeg;base64,AAAA"}
+    with TestClient(main.app) as client:
+        assert client.post("/api/ask", json=body).status_code == 200
+    assert len(calls) == 1

@@ -294,7 +294,95 @@ def test_ocr_is_fallback_only_when_uia_finds_nothing(fake_os, monkeypatch):
     ]
 
 
+def test_chrome_bridge_prefers_dom_and_keeps_safe_fallback(fake_os, monkeypatch):
+    reads, set_windows = fake_os
+    chrome = {**CODE, "process": "chrome.exe", "title": "Example - Google Chrome"}
+    set_windows([OVERLAY, chrome])
+    seen = []
+    blocked_verdict = []
+
+    async def snapshot(capture_id, windows):
+        seen.append((capture_id, windows[0]["title"]))
+        return blocked_verdict
+
+    async def collect(capture_id, region, monitor, window):
+        seen.append(window["title"])
+        return [{"candidate_id": "dom-link", "source": "dom", "object_type": "a", "text": "Exact link",
+                 "bbox": {"x": 300, "y": 200, "width": 80, "height": 20},
+                 "provenance": {"extractor": "chrome-dom"}}]
+
+    monkeypatch.setattr(main.bridge.bridge, "snapshot", snapshot)
+    monkeypatch.setattr(main.bridge.bridge, "collect", collect)
+    monkeypatch.setattr(main.bridge.bridge, "socket", object())
+    with client() as c:
+        _, bridged = candidates(c)
+        assert [item["text"] for item in bridged["candidates"]] == ["Exact link"]
+        assert seen[0][1] == "Example - Google Chrome" and seen[1] == "Example - Google Chrome"
+        async def no_dom(*_):
+            return []
+
+        monkeypatch.setattr(main.bridge.bridge, "collect", no_dom)
+        _, fallback = candidates(c)
+        assert fallback["candidates"][0]["source"] == "uia"
+        async def unavailable(*_):
+            return None
+
+        monkeypatch.setattr(main.bridge.bridge, "collect", unavailable)
+        reads.clear()
+        cap, switched = candidates(c)
+        assert switched["window"]["sensitive"] is True and switched["candidates"] == []
+        assert reads == [] and desktop.crop_for_ask(cap["capture_id"], REGION) is None
+        blocked_verdict.append(0)
+        cap, blocked = candidates(c)
+        assert blocked["window"]["sensitive"] is True and blocked["candidates"] == []
+        assert desktop.crop_for_ask(cap["capture_id"], REGION) is None
+        blocked_verdict.clear()
+        monkeypatch.setattr(main.bridge.bridge, "snapshot", unavailable)
+        reads.clear()
+        cap, unknown = candidates(c)
+        assert unknown["window"]["sensitive"] is True and unknown["candidates"] == []
+        assert reads == []
+        assert desktop.crop_for_ask(cap["capture_id"], REGION) is None
+        set_windows([OVERLAY, KEEPASS, chrome])
+        _, protected = candidates(c)
+        assert protected["window"]["sensitive"] is True and protected["candidates"] == []
+
+
+def test_bridge_blocks_accumulate_for_one_frozen_capture(fake_os):
+    _, set_windows = fake_os
+    first = {**CODE, "process": "chrome.exe", "title": "Bank - Google Chrome"}
+    second = {**CODE, "process": "chrome.exe", "title": "Notes - Google Chrome", "rect": (700, 50, 1800, 900)}
+    set_windows([first, second])
+    cap, _ = desktop.capture()
+    desktop.block_windows(cap["capture_id"], [first])
+    desktop.block_windows(cap["capture_id"], [second])
+    item = desktop.get_capture(cap["capture_id"])
+    assert desktop.window_sensitive(item, first) and desktop.window_sensitive(item, second)
+
+
 def test_tauri_origin_allowed_by_cors():
     with TestClient(main.app) as c:
         r = c.get("/api/health", headers={"Origin": "http://tauri.localhost"})
     assert r.headers.get("access-control-allow-origin") == "http://tauri.localhost"
+
+
+def test_uia_client_is_reused_within_worker_thread(monkeypatch):
+    import threading
+    import types
+    calls = {"init": 0, "create": 0}
+    pythoncom = types.ModuleType("pythoncom")
+    pythoncom.CoInitialize = lambda: calls.__setitem__("init", calls["init"] + 1)
+    comtypes = types.ModuleType("comtypes")
+    client = types.ModuleType("comtypes.client")
+    client.GetModule = lambda name: None
+    client.CreateObject = lambda *args, **kwargs: calls.__setitem__("create", calls["create"] + 1) or object()
+    gen = types.ModuleType("comtypes.gen")
+    gen.UIAutomationClient = types.SimpleNamespace(CUIAutomation=object(), IUIAutomation=object())
+    comtypes.client = client
+    monkeypatch.setitem(sys.modules, "pythoncom", pythoncom)
+    monkeypatch.setitem(sys.modules, "comtypes", comtypes)
+    monkeypatch.setitem(sys.modules, "comtypes.client", client)
+    monkeypatch.setitem(sys.modules, "comtypes.gen", gen)
+    monkeypatch.setattr(desktop, "_uia_local", threading.local())
+    assert desktop._uia_client()[0] is desktop._uia_client()[0]
+    assert calls == {"init": 1, "create": 1}

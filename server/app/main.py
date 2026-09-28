@@ -5,17 +5,19 @@ from __future__ import annotations
 
 import json
 import re
+import secrets
 import threading
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from time import perf_counter
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile, WebSocket
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse, Response, StreamingResponse
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app import store
@@ -25,6 +27,7 @@ from app.candidates import merge, ocr_candidates
 from app.config import settings
 from app.contracts import (
     Alternative,
+    CandidateObject,
     CropInfo,
     SpatialContext,
     from_v2,
@@ -33,7 +36,7 @@ from app.contracts import (
     resolver_inputs,
     to_semantic_resolution,
 )
-from app import desktop, research, semantic, system_one, trace
+from app import bridge, desktop, research, semantic, system_one, trace
 from app.ocr import ocr_blocks
 from app.ocr import warm as ocr_blocks_warm
 from app.providers import answer_stream, clean_answer, provider_status
@@ -121,6 +124,7 @@ class Ask(BaseModel):
     research: bool = (
         False  # ground the answer in web sources (app/research.py) and cite them
     )
+    system_one: bool = False  # explicit opt-in; false skips remote Jev and its research judgments
     level: str | None = Field(default=None, max_length=10)  # eli5 | student | expert
 
 
@@ -133,7 +137,7 @@ def require_token(request: Request) -> None:
     if not settings.api_token:
         return
     authorization = request.headers.get("Authorization", "")
-    if authorization != f"Bearer {settings.api_token}":
+    if not secrets.compare_digest(authorization, f"Bearer {settings.api_token}"):
         raise HTTPException(
             401, {"code": "AUTH_REQUIRED", "message": "invalid or missing API token"}
         )
@@ -234,7 +238,11 @@ def to_context(payload: Ask) -> SpatialContext:
 
 
 @app.get("/api/health")
-def health():
+def health(request: Request):
+    if settings.api_token and not secrets.compare_digest(
+        request.headers.get("Authorization", ""), f"Bearer {settings.api_token}"
+    ):
+        return {"status": "ok", "protocol_version": PROTOCOL_VERSION, "auth_required": True}
     return {
         "status": "ok",
         "protocol_version": PROTOCOL_VERSION,
@@ -277,16 +285,16 @@ def prepare_ask(payload: Ask) -> dict:
             ctx = ctx.model_copy(update={"crop": crop})
     ocr_text = None
     timings: dict[str, int] = {}
-    if image_data and settings.ocr_enabled:
+    # Unplaced OCR boxes cannot affect resolution. Keep OCR for the text-only fallback when there is no
+    # readable candidate text; otherwise skip a model call that cannot add useful candidates.
+    need_ocr = ctx.crop is not None or not any(c.text.strip() for c in ctx.candidates)
+    if image_data and settings.ocr_enabled and need_ocr:
         ocr_started = perf_counter()
         blocks = ocr_blocks(image_data)
         timings["ocr"] = round((perf_counter() - ocr_started) * 1000)
         ocr_text = "\n".join(block["text"] for block in blocks)
-        extra = ocr_candidates(blocks, ctx.crop)
-        if extra:
-            ctx = ctx.model_copy(
-                update={"candidates": merge([*ctx.candidates, *extra])}
-            )
+        extra = ocr_candidates(blocks, ctx.crop, {c.candidate_id for c in ctx.candidates})
+        ctx = ctx.model_copy(update={"candidates": merge([*ctx.candidates, *extra])})
     marks, canvas, anchors = resolver_inputs(ctx)
     resolution = resolve_marks(marks, canvas, anchors)
     timings["resolve"] = resolution["latency_ms"]
@@ -303,8 +311,9 @@ def prepare_ask(payload: Ask) -> dict:
     known_ids = {a["id"] for a in anchors}
     pinned = payload.target_id if payload.target_id in known_ids else None
     judge_started = perf_counter()
-    judgment = semantic.judge(ctx, resolution, anchors,
-                              previous_question=history[-1]["question"] if history else None, pinned=pinned)
+    judgment = (semantic.judge(ctx, resolution, anchors,
+                               previous_question=history[-1]["question"] if history else None, pinned=pinned)
+                if payload.system_one else semantic.Judgment(status="off"))
     timings["system_one"] = round((perf_counter() - judge_started) * 1000)
     target_id = semantic.final_target(judgment, semantic.deterministic_top(resolution), pinned,
                                       previous_answer.get("target_id"), known_ids)
@@ -323,7 +332,12 @@ def prepare_ask(payload: Ask) -> dict:
     clarify = ([{"id": cid, "text": str(by_id[cid].get("text") or "")[:200], "bbox": by_id[cid].get("bbox")}
                 for cid in judgment.clarify_ids if cid in by_id] if judgment.ambiguous and not pinned else [])
     research_started = perf_counter()
-    sources = research.gather(ctx.question, used, mode=judgment.mode) if allow_research else []
+    if allow_research:
+        sources = (research.gather(ctx.question, used, mode=judgment.mode)
+                   if payload.system_one else research.gather(ctx.question, used, mode=judgment.mode,
+                                                              use_system_one=False))
+    else:
+        sources = []
     timings["research"] = round((perf_counter() - research_started) * 1000)
     return {
         "context": ctx,
@@ -353,7 +367,7 @@ def finish_ask(payload: Ask, prep: dict, text: str, meta: dict) -> dict:
     text = clean_answer(text)
     # Live citation judge (JudgeAgent of the Cited Multi-Agent Researcher): does each cited source support its sentence?
     citation_checks, unsupported = (semantic.check_citations(text, prep["sources"])
-                                    if settings.research_verify and prep["sources"] else ([], []))
+                                    if payload.system_one and settings.research_verify and prep["sources"] else ([], []))
     history = prep["history"] + [
         {
             "question": ctx.question,
@@ -602,18 +616,60 @@ def require_desktop(request: Request) -> None:
 
 
 @app.post("/api/desktop/capture", dependencies=[Depends(require_token), Depends(require_desktop)])
-def desktop_capture():
+async def desktop_capture():
     """Freeze the monitor under the cursor; the overlay draws on this frame."""
     _desktop_supported()
-    return desktop.capture()
+    result, windows = await run_in_threadpool(desktop.capture)
+    windows = windows or []
+    chrome = [{"title": w["title"], "rect": w["rect"]} for w in windows
+              if w.get("process", "").lower() == "chrome.exe" and not desktop.is_sensitive(w)]
+    if chrome:
+        paired = bridge.bridge.socket is not None
+        desktop.get_capture(result["capture_id"])["bridge_paired"] = paired
+        blocked = await bridge.bridge.snapshot(result["capture_id"], chrome)
+        if blocked is None and paired:
+            blocked = list(range(len(chrome)))  # paired extension did not attest the page; fail closed
+        if blocked:
+            desktop.block_windows(result["capture_id"], [chrome[i] for i in blocked
+                                                          if type(i) is int and 0 <= i < len(chrome)])
+    return result
+
+
+@app.websocket("/api/bridge")
+async def extension_bridge(socket: WebSocket):
+    await bridge.bridge.serve(socket)
 
 
 @app.post("/api/desktop/candidates", dependencies=[Depends(require_token), Depends(require_desktop)])
-def desktop_candidates(body: DesktopCandidatesRequest):
+async def desktop_candidates(body: DesktopCandidatesRequest):
     """UI Automation elements + editor lines + OCR blocks under the marked region of a frozen frame."""
     _desktop_supported()
     try:
-        return desktop.candidates(body.capture_id, body.region.model_dump(), body.exclude_pids)
+        region = body.region.model_dump()
+        item = desktop.get_capture(body.capture_id)
+        windows = desktop.visible_windows(item, region, body.exclude_pids) or []
+        window = windows[0] if windows else None
+        candidates = []
+        if (window and window.get("process", "").lower() == "chrome.exe"
+                and not desktop.window_sensitive(item, window) and item.get("bridge_paired")):
+            response = await bridge.bridge.collect(body.capture_id, region, item["monitor"], window)
+            if response is None:
+                desktop.block_windows(body.capture_id, [window])
+            for raw in (response or [])[:20]:
+                try:
+                    candidate = CandidateObject.model_validate(raw)
+                    box = candidate.bbox
+                    candidate_rect = (box.x, box.y, box.x + box.width, box.y + box.height)
+                    marked_rect = (region["x"], region["y"], region["x"] + region["width"],
+                                   region["y"] + region["height"])
+                    if candidate.source in {"dom", "pdf_text"} and desktop._intersects(candidate_rect, marked_rect):
+                        candidates.append(candidate.model_dump())
+                except (ValidationError, TypeError, ValueError):
+                    continue
+        found = await run_in_threadpool(desktop.candidates, body.capture_id, region, body.exclude_pids)
+        if candidates and not found["window"].get("sensitive"):
+            found["candidates"] = candidates
+        return found
     except desktop.CaptureNotFound:
         raise HTTPException(404, {"code": "CAPTURE_NOT_FOUND", "message": "capture expired or unknown"}) from None
 

@@ -147,6 +147,44 @@ def test_data_urls_in_any_v3_field_never_reach_the_trace(log_dir):
     assert raw and "data:image" not in raw and not BASE64_RUN.search(raw)
 
 
+def test_embedded_data_url_and_provider_error_details_are_not_traced(log_dir):
+    image = "data:image/png;base64," + "A" * 300
+    assert image not in trace._scrub("icon: " + image + " done")
+    from app.contracts import SpatialContext, SemanticResolution
+    from tests.test_protocol import V3
+    ctx = SpatialContext.model_validate(V3["context"])
+    resolution = SemanticResolution.model_validate({"selected_candidate_id": None, "geometric_confidence": 0,
+                                                    "confidence": 0, "abstained": True,
+                                                    "resolver": "geometry", "latency_ms": 0})
+    record = trace.build_record(request_id="r", context_id="c", client={}, ctx=ctx,
+                                image_attached=False, resolution=resolution, answer="ok",
+                                meta={"errors": {"nvidia": {"code": "PROVIDER_ERROR", "message": "secret upstream body"}}},
+                                timings={})
+    assert record["errors"] == {"nvidia": {"code": "PROVIDER_ERROR"}}
+
+
+def test_wrapped_data_url_is_removed_as_one_value(log_dir):
+    wrapped = "data:image/png;base64," + "A" * 120 + "\n" + "B" * 120
+    cleaned = trace._scrub("before " + wrapped + " after")
+    assert cleaned == "before [data URL removed] after"
+
+
+def test_direct_trace_write_still_scrubs_embedded_image(log_dir):
+    trace.set_enabled(True)
+    trace.write({"text": "icon=data:image/png;base64," + "Z" * 300,
+                 "data:image/png;base64," + "Y" * 300: "secret"})
+    raw = next(log_dir.glob("*.jsonl")).read_text(encoding="utf-8")
+    assert "data:image" not in raw and not BASE64_RUN.search(raw)
+
+
+def test_export_streams_bounded_chunks(log_dir):
+    path = log_dir / "2026-09-26.jsonl"
+    path.write_bytes(b"x" * 200_000)
+    chunks = list(trace.export())
+    assert b"".join(chunks) == b"x" * 200_000
+    assert max(map(len, chunks)) <= 64 * 1024
+
+
 def test_cors_only_allows_extension_origins():
     with TestClient(main.app) as client:
         evil = client.get("/api/traces/config", headers={"Origin": "https://evil.example"})

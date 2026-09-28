@@ -40,10 +40,15 @@ def main() -> int:
     else:
         if not args.directory:
             parser.error("traces mode needs a log directory")
-        results = [
-            evaluation.run_trace(r)
-            for r in evaluation.load_traces(Path(args.directory))
-        ]
+        results = []
+        skipped = 0
+        for record in evaluation.load_traces(Path(args.directory)):
+            try:
+                results.append(evaluation.run_trace(record))
+            except (KeyError, TypeError, ValueError):
+                skipped += 1
+        if skipped:
+            print(f"skipped {skipped} malformed trace record(s)", file=sys.stderr)
     summary = evaluation.summarize(results)
     if args.json:
         print(json.dumps(summary, indent=2))

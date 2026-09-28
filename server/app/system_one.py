@@ -104,6 +104,14 @@ def _evaluate(state: Any, questions: dict[str, Any]) -> Result:
             return _done(Result("auth_failed", latency_ms=elapsed()))
         if code == 429 or code >= 500:
             if attempt == 1:
+                retry_after = response.headers.get("Retry-After", "") if code == 429 else ""
+                try:
+                    delay = max(0.0, float(retry_after)) if retry_after else (0.2 if code == 429 else 0.1)
+                except ValueError:
+                    delay = 0.2
+                if delay >= deadline - time.perf_counter() - 0.05:
+                    return _done(Result("rate_limited" if code == 429 else "error", latency_ms=elapsed()))
+                time.sleep(delay)
                 continue
             return _done(
                 Result("rate_limited" if code == 429 else "error", latency_ms=elapsed())

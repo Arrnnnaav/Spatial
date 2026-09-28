@@ -8,3 +8,8 @@ server/tests/test_desktop.token
 desktop/ui/geometry.js
 desktop/src-tauri/target/
 desktop/src-tauri/gen/
+desktop/.build-venv/
+desktop/build/
+desktop/dist/
+desktop/spatial-server.spec
+desktop/src-tauri/resources/spatial-server.exe

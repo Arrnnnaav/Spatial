@@ -18,6 +18,8 @@ that region. Talks to the local server in `../server` (default `http://127.0.0.1
   if the server has no STT the browser's Web Speech API is used.
 - 🔊 *Read aloud* speaks the answer with pocket-tts on the server. Follow-ups reuse the same mark.
 - **Esc** closes, **Clear** starts a fresh context. PDFs open in the bundled pdf.js viewer automatically.
+- To use page DOM for desktop marks over Chrome, pair this extension with the desktop app using its Settings token.
+  Blocked or unidentifiable tabs stay protected while paired.
 
 ## What gets sent
 

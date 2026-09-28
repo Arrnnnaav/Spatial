@@ -179,6 +179,7 @@
   function showConsent() {
     if (consentCard) return;
     let privacy = 'crop_only';
+    let systemOne = false;
     const option = (value, title, text, checked) => el('label', {}, [
       el('input', { type: 'radio', name: 'privacy', value, ...(checked ? { checked: '' } : ''), onchange: () => { privacy = value; } }),
       el('span', {}, [el('b', {}, [title]), text])]);
@@ -188,10 +189,16 @@
       option('crop_only', 'Crop of the marked region + text', ' (default, best answers for diagrams and equations)', true),
       option('anchors_only', 'Text only, no pixels', ' (works on any page with text; diagrams get weaker answers)'),
       option('full_frame', 'Whole visible tab + text', ' (only if you want the model to see surrounding context)'),
+      el('label', {}, [el('input', { type: 'checkbox', onchange: e => { systemOne = e.target.checked; } }),
+        el('span', {}, [el('b', {}, ['Use TypeSafe Jev']), ' (optional: sends your question and shortlisted text to TypeSafe to choose the target; no pixels)'])]),
       el('p', {}, ['It never runs on banking, health or government sites. You can change this any time from the extension icon.']),
       el('div', { class: 'row' }, [
         el('button', { class: 'no', onclick: () => { consentCard.remove(); consentCard = null; close(); } }, ['Not now']),
-        el('button', { class: 'go', onclick: async () => { await send({ type: 'spatial:consent', privacy }); state.consent = true; consentCard.remove(); consentCard = null; } }, ['Continue']),
+        el('button', { class: 'go', onclick: async () => {
+          await send({ type: 'spatial:consent', privacy, systemOne });
+          state.settings.systemOne = systemOne;
+          state.consent = true; consentCard.remove(); consentCard = null;
+        } }, ['Continue']),
       ]),
     ])]);
     consentCard.addEventListener('pointerdown', e => e.stopPropagation());
@@ -273,7 +280,15 @@
       }
       const text = (choice.text || '').trim();
       const button = el('button', { title: text }, [n + '. ' + (text.length > 40 ? text.slice(0, 39) + '…' : text || 'this')]);
-      button.onclick = () => { state.pinTarget = choice.id; input.value = question; submit(input, thread, sendButton); };
+      button.onclick = () => {
+        if (state.busy) return;
+        state.pinTarget = choice.id;
+        state.contextId = null; // the rejected answer must not enter the correction's model history
+        if (answerNode.previousElementSibling?.classList.contains('q')) answerNode.previousElementSibling.remove();
+        answerNode.remove();
+        input.value = question;
+        submit(input, thread, sendButton);
+      };
       row.append(button);
     });
     answerNode.insertBefore(row, answerNode.querySelector('small'));
@@ -397,7 +412,13 @@
 
   function elementText(element) {
     if (element.matches('img,svg,canvas,video,picture')) return (element.getAttribute('alt') || element.getAttribute('aria-label') || element.getAttribute('title') || '').trim();
-    if (element.matches('input,textarea,select')) return (element.value || element.placeholder || '').trim();
+    if (element.matches('input,textarea,select')) {
+      const type = (element.getAttribute('type') || '').toLowerCase();
+      const autocomplete = (element.getAttribute('autocomplete') || '').toLowerCase();
+      if (['password', 'hidden', 'file'].includes(type) ||
+          /(?:^|\s)(?:current-password|new-password|one-time-code|cc-[^\s]+)(?:\s|$)/.test(autocomplete)) return '';
+      return (element.value || element.placeholder || '').trim();
+    }
     return (element.innerText || element.textContent || '').replace(/\s+/g, ' ').trim();
   }
 
@@ -406,7 +427,7 @@
   function collectAnchors(marks) {
     const viewport = { width: window.innerWidth, height: window.innerHeight };
     const seen = new Map();
-    host.style.pointerEvents = 'none';
+    if (host) host.style.pointerEvents = 'none';
     try {
       for (const mark of marks) {
         for (const [x, y] of G.samplePoints(mark, 6)) {
@@ -424,7 +445,7 @@
           }
         }
       }
-    } finally { host.style.pointerEvents = ''; }
+    } finally { if (host) host.style.pointerEvents = ''; }
     const box = unionBox(marks);
     const ranked = G.rankAnchors([...seen.values()], box).slice(0, 12);
     for (const block of pdfTextBlocks(marks)) ranked.unshift(block);
@@ -484,6 +505,8 @@
     const question = input.value.trim();
     if (!question || state.busy || !state.marks.length) return;
     state.busy = true; sendButton.disabled = true; input.value = '';
+    const pinnedTarget = state.pinTarget;
+    state.pinTarget = null;
     thread.append(el('div', { class: 'q' }, [question]));
     const answerNode = el('div', { class: 'a' }, ['Looking at what you marked…']);
     const textNode = document.createTextNode(''); const statusNode = el('small', {}, ['']);
@@ -502,14 +525,14 @@
       toolbar.style.visibility = ''; panel.style.visibility = '';
       const viewer = window.__spatialViewer || null;
       const payload = {
-        question, marks, anchors, context_id: state.contextId, research: state.settings.research !== false, level: state.settings.level || 'student',
+        question, marks, anchors, context_id: state.contextId, research: state.settings.research !== false,
+        system_one: state.settings.systemOne === true, level: state.settings.level || 'student',
         canvas: { width: window.innerWidth, height: window.innerHeight },
         page: { url: viewer ? viewer.fileUrl : location.href, title: (viewer ? viewer.title : document.title || location.hostname).slice(0, 500), surface: viewer ? 'pdf' : 'web' },
         image_data: capture.ok ? capture.image : null,
         crop: capture.ok ? capture.crop : null,
-        target_id: state.pinTarget,
+        target_id: pinnedTarget,
       };
-      state.pinTarget = null;
       const response = await send({ type: 'spatial:ask-stream', payload, requestId });
       if (!response.ok) throw response;
       const result = response.result;
@@ -527,7 +550,7 @@
       if (result.level && result.level !== 'student') note.push(result.level.toUpperCase());
       if (pages.size) note.push('page' + (pages.size > 1 ? 's ' : ' ') + Array.from(pages).sort((a,b)=>a-b).join(', '));
       if (result.note) note.push(result.note);
-      if (result.confirmation_required && !(result.clarify || []).length) note.push('low confidence – circle tighter?');
+      if (!pinnedTarget && result.confirmation_required && !(result.clarify || []).length) note.push('low confidence – circle tighter?');
       answerNode.append(el('small', {}, [note.join(' · ')]));
       const actions = el('div', { class: 'actions' });
       answerNode.append(actions);
@@ -555,7 +578,21 @@
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (!message || !message.type) return;
-    if (message.type === 'spatial:toggle') {
+    if (message.type === 'spatial:bridge-collect') {
+      const mapped = window.SpatialBridgeGeometry.map(message.region, message.monitor, message.window.rect, {
+        dpr: window.devicePixelRatio || 1, innerWidth: window.innerWidth, innerHeight: window.innerHeight,
+        outerWidth: window.outerWidth, outerHeight: window.outerHeight,
+      });
+      const candidates = mapped ? collectAnchors([mapped.mark]).filter((a) =>
+        G.anchorFilter(a.bbox, mapped.mark, { width: window.innerWidth, height: window.innerHeight })).slice(0, 12).map((a) => ({
+        candidate_id: 'dom-' + a.id, source: a.page ? 'pdf_text' : 'dom', object_type: a.type,
+        text: (a.text || '').slice(0, 800), bbox: mapped.toMonitor(a.bbox), page: a.page || null,
+        href: /^https?:\/\//.test(a.href || '') ? a.href.slice(0, 500) : null,
+        src: /^https?:\/\//.test(a.src || '') ? a.src.slice(0, 500) : null,
+        provenance: { extractor: 'chrome-dom', extractor_version: '1' },
+      })) : [];
+      sendResponse({ candidates });
+    } else if (message.type === 'spatial:toggle') {
       state.consent = message.consent !== false;
       if (state.open) close(); else open();
       sendResponse({ ok: true, open: state.open });

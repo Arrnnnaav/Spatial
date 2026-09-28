@@ -34,8 +34,8 @@ def run(monkeypatch, **kwargs):
     monkeypatch.setattr(providers.settings, "provider_order", ("p",), raising=False)
     calls = []
 
-    def fake_stream(config, prompt, image_data, use_vision=True):
-        calls.append((use_vision, providers._system()))
+    def fake_stream(config, prompt, image_data, use_vision=True, system_prompt=None):
+        calls.append((use_vision, system_prompt))
         yield "ok"
         yield {"provider": "p", "model": "m", "vision": use_vision}
 
@@ -65,6 +65,26 @@ def test_mode_adds_hint_to_system_prompt(monkeypatch):
     )
 
 
+def test_interleaved_asks_keep_their_own_system_prompts(monkeypatch):
+    fake = {"p": ProviderConfig("p", "https://example", "key", "m", None, "openai")}
+    monkeypatch.setattr(providers.settings, "providers", fake, raising=False)
+    monkeypatch.setattr(providers.settings, "provider_order", ("p",), raising=False)
+    sent = []
+
+    def fake_stream(config, prompt, image_data, use_vision=True, system_prompt=None):
+        sent.append(system_prompt)
+        yield "answer"
+        yield {"provider": "p", "model": "m", "vision": False}
+
+    monkeypatch.setattr(providers, "stream_provider", fake_stream)
+    first = providers.answer_stream("q1", {}, ANCHORS, None, level="eli5", mode="define")
+    second = providers.answer_stream("q2", {}, ANCHORS, None, level="expert", mode="compare")
+    next(first)
+    next(second)
+    assert "10 years old" in sent[0] and "meaning" in sent[0]
+    assert "expert" in sent[1] and "Compare" in sent[1]
+
+
 def test_diagram_keeps_vision_even_if_routing_says_not_visual(monkeypatch):
     global ANCHORS
     saved = ANCHORS
@@ -84,7 +104,7 @@ def run_flaky(monkeypatch, failures, error=503, fallbacks=()):
     monkeypatch.setattr(providers, "RETRY_DELAY", 0.0)
     calls = []
 
-    def fake_stream(config, prompt, image_data, use_vision=True):
+    def fake_stream(config, prompt, image_data, use_vision=True, system_prompt=None):
         calls.append(config.model)
         if len(calls) <= failures:
             request = httpx.Request("POST", "https://example/chat/completions")
@@ -131,7 +151,7 @@ def test_empty_answer_counts_as_busy_and_is_retried(monkeypatch):
     monkeypatch.setattr(providers, "RETRY_DELAY", 0.0)
     calls = []
 
-    def fake_stream(config, prompt, image_data, use_vision=True):
+    def fake_stream(config, prompt, image_data, use_vision=True, system_prompt=None):
         calls.append(config.model)
         if len(calls) <= 3:  # main model returns nothing three times
             yield {"provider": "p", "model": config.model, "vision": False}

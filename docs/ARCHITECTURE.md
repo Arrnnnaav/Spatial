@@ -37,11 +37,11 @@ tie-break longer text then smaller area). Golden cases in `server/tests/cases/` 
    research only when outside facts are needed (≥ 0.8), vision only when visual (≥ 0.5), follow-up same-target reuse.
    Any failure/timeout (1.5 s) → geometry-only, research as requested.
    **Data sent to TypeSafe per ask:** the question, previous question, page kind and up to 8 shortlisted element
-   texts (≤ 300 chars, `data:`/base64 scrubbed) — never pixels. Sent even when a local answer model is chosen;
-   opt out with `SPATIAL_SYSTEM_ONE=off`.
+   texts (≤ 300 chars, `data:`/base64 scrubbed) — never pixels. Each client asks for explicit consent before enabling
+   this; an ask with `system_one: false` skips all Jev calls, including passage ranking and citation checks.
 4. Optional research (`research.py`, after the Cited Multi-Agent Researcher): one query, or one per mark for a
    `compare` ask → **Tavily** `fast` search (ranked chunks; `TAVILY_API_KEY`) or DuckDuckGo + page fetch fallback →
-   dedupe + credibility → **Jev passage ranking** → numbered sources. After the answer, **Jev checks each citation**
+   dedupe + credibility → optional **Jev passage ranking** → numbered sources. After the answer, Jev can check citations
    (`citation_checks`, `unsupported_citations` → ⚠ in the extension). Gemini removed.
 5. Provider chain (`SPATIAL_PROVIDERS` order): vision model gets the crop; text models get OCR text. First
    provider that answers wins; if none, deterministic fallback quotes the marked text.
@@ -107,7 +107,9 @@ cursor (in memory, last 3, 5 min TTL); `POST /api/desktop/candidates` reads UIA 
 
 Known limits: canvas/game/video/remote-desktop apps expose no UIA → OCR/vision candidates; elevated (admin)
 windows are unreadable from a non-elevated process; Electron apps expose UIA only once accessibility is on.
-Optional bridge: when the window is Chrome with the extension installed, fetch DOM candidates from it.
+For a paired Chrome window, the extension checks title and focused window bounds, binds its active tab and document at capture time, then returns DOM
+candidates for the marked region. The server prefers valid DOM candidates and falls back to UIA/OCR on a verified
+safe page. Blocked, unmatched, or unreadable tabs are protected while paired; an unpaired desktop uses UIA/OCR.
 
 ## 3. Module reuse
 

@@ -43,6 +43,7 @@ BASE = {
         },
     ],
     "research": True,
+    "system_one": True,
 }
 
 
@@ -101,6 +102,18 @@ def test_hybrid_target_routing_and_research_gate(jev):
     assert (
         body["system_one"]["status"] == "ok" and gathered == []
     )  # research skipped: no outside facts needed
+
+
+def test_request_can_skip_system_one_even_when_research_is_on(monkeypatch):
+    from app import semantic
+    monkeypatch.setattr(semantic, "judge", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("Jev called")))
+    monkeypatch.setattr(semantic, "check_citations", lambda *args: (_ for _ in ()).throw(AssertionError("Jev called")))
+    called = []
+    monkeypatch.setattr(research, "gather", lambda *args, **kwargs: called.append(kwargs) or [])
+    with TestClient(main.app) as client:
+        result = client.post("/api/ask", json={**BASE, "system_one": False}).json()
+    assert result["system_one"]["status"] == "off"
+    assert called[0]["use_system_one"] is False
 
 
 def test_research_runs_when_facts_needed(jev):

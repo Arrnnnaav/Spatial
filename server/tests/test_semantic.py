@@ -138,7 +138,10 @@ def test_target_gate_uses_pick_probability_not_confidence():
     likely = semantic.decide(answers(conf=0.43, probs={"A": 0.62, "B": 0.37, "none": 0.01}), {"A": "a", "B": "b"}, "b")
     assert likely.target_id == "a"
     unsure = semantic.decide(answers(conf=0.1, probs={"A": 0.4, "B": 0.35, "none": 0.25}), {"A": "a", "B": "b"}, "b")
-    assert unsure.target_id == "b"
+    assert unsure.target_id == "b" and unsure.ambiguous and unsure.clarify_ids == ["a", "b"]
+    rejected = semantic.decide(answers(probs={"A": 0.4, "B": 0.05, "none": 0.55}),
+                               {"A": "a", "B": "b"}, "b")
+    assert rejected.target_id == "b" and rejected.ambiguous
 
 
 def test_decide_ambiguity_rules():
@@ -250,6 +253,11 @@ def test_request_never_carries_binary():
     raw = _json.dumps([state, questions])
     assert "data:image" not in raw and "QUJDQUJD" * 10 not in raw
     assert len(state["elements"]["A"]["kind"]) <= 40
+
+
+def test_wrapped_data_url_never_reaches_system_one():
+    wrapped = "data:image/png;base64," + "A" * 80 + "\n" + "B" * 80
+    assert semantic._clean("icon " + wrapped + " end", 500) == "icon [image] end"
 
 
 SOURCES = [

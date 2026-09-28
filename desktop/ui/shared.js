@@ -22,7 +22,7 @@
     // Per-launch token the server writes to a local file; only this app can read it (never a web page).
     const token = await window.__TAURI__.core.invoke('desktop_token');
     const out = { 'Content-Type': 'application/json', 'X-Spatial-Desktop': token };
-    const apiToken = load('spatial.apiToken', '');
+    const apiToken = load('spatial.apiToken', '') || await window.__TAURI__.core.invoke('pairing_token').catch(() => '');
     if (apiToken) out.Authorization = 'Bearer ' + apiToken;
     return out;
   }

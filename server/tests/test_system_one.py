@@ -80,6 +80,13 @@ def test_429_retried_once_then_ok(jev):
     assert system_one.evaluate({}, {}).status == "ok"
 
 
+def test_retry_after_longer_than_budget_does_not_hammer_endpoint(jev):
+    calls = []
+    install(lambda request: calls.append(1) or httpx.Response(429, headers={"Retry-After": "2"}))
+    assert system_one.evaluate({}, {}).status == "rate_limited"
+    assert calls == [1]
+
+
 def test_repeated_429_is_rate_limited_and_5xx_is_error(jev):
     install(lambda request: httpx.Response(429))
     assert system_one.evaluate({}, {}).status == "rate_limited"

@@ -56,6 +56,7 @@ TOKEN_HEADER = "X-Spatial-Desktop"
 _captures: "OrderedDict[str, dict]" = OrderedDict()
 _lock = threading.Lock()
 _token: str | None = None
+_uia_local = threading.local()
 
 
 def _token_path() -> Path:
@@ -179,18 +180,28 @@ def _windows_topdown() -> list[dict]:
     return out
 
 
+def _uia_client():
+    """COM interfaces belong to one worker thread; keep its warmed UIA client for subsequent asks."""
+    cached = getattr(_uia_local, "client", None)
+    if cached is not None:
+        return cached
+    import comtypes.client
+    import pythoncom
+    pythoncom.CoInitialize()
+    comtypes.client.GetModule("UIAutomationCore.dll")
+    from comtypes.gen import UIAutomationClient as UIA
+    automation = comtypes.client.CreateObject(UIA.CUIAutomation, interface=UIA.IUIAutomation)
+    _uia_local.client = (automation, UIA)
+    return _uia_local.client
+
+
 def _uia_read(hwnd: int, region: tuple[int, int, int, int], pid: int | None = None) -> list[dict]:
     """UIA elements under a grid of points in the screen-pixel region (plus a few ancestors each), from `pid` only,
     plus editor lines via TextPattern. Point probes are ~100x cheaper than walking a big window's whole tree and
     follow real z-order; the overlay must be hidden while this runs (the client does that after the mark)."""
     import ctypes.wintypes
 
-    import comtypes.client
-    import pythoncom
-    pythoncom.CoInitialize()  # FastAPI runs sync endpoints on worker threads
-    comtypes.client.GetModule("UIAutomationCore.dll")
-    from comtypes.gen import UIAutomationClient as UIA
-    automation = comtypes.client.CreateObject(UIA.CUIAutomation, interface=UIA.IUIAutomation)
+    automation, UIA = _uia_client()
     walker = automation.ControlViewWalker
     names = {getattr(UIA, n): n.replace("UIA_", "").replace("ControlTypeId", "") for n in dir(UIA)
              if n.startswith("UIA_") and n.endswith("ControlTypeId")}
@@ -304,7 +315,7 @@ def _safe_windows() -> list[dict] | None:
         return None
 
 
-def capture() -> dict:
+def capture() -> tuple[dict, list[dict] | None]:
     image, monitor = _grab_monitor()
     # z-order as it was when the frame froze (before the overlay shows): sensitivity is judged on what the user saw.
     windows = _safe_windows()
@@ -323,7 +334,7 @@ def capture() -> dict:
         "capture_id": capture_id,
         "monitor": monitor,
         "image_data": _data_url(image),
-    }
+    }, windows
 
 
 def get_capture(capture_id: str) -> dict:
@@ -355,6 +366,18 @@ def is_sensitive(window: dict) -> bool:
     return not process or process in SENSITIVE_PROCESSES or any(w in title for w in SENSITIVE_TITLE_WORDS)
 
 
+def block_windows(capture_id: str, windows: list[dict]) -> None:
+    """Apply the paired extension's URL blocklist verdict to this frozen frame."""
+    with _lock:
+        item = _captures.get(capture_id)
+        if item is not None:
+            item.setdefault("bridge_blocked", set()).update((w["title"], tuple(w["rect"])) for w in windows)
+
+
+def window_sensitive(item: dict, window: dict) -> bool:
+    return is_sensitive(window) or (window["title"], tuple(window["rect"])) in item.get("bridge_blocked", set())
+
+
 def _screen_rect(monitor: dict, region: dict) -> tuple:
     return (
         monitor["x"] + region["x"],
@@ -383,7 +406,7 @@ def visible_windows(item: dict, region: dict, exclude_pids=()) -> list[dict] | N
 
 def region_sensitive(item: dict, region: dict, exclude_pids=()) -> bool:
     windows = visible_windows(item, region, exclude_pids)
-    return windows is None or any(is_sensitive(w) for w in windows)
+    return windows is None or any(window_sensitive(item, w) for w in windows)
 
 
 def _app_name(window: dict) -> str:
@@ -430,7 +453,7 @@ def candidates(capture_id: str, region: dict, exclude_pids: list[int]) -> dict:
     screen = _screen_rect(monitor, region)
     windows = visible_windows(item, region, exclude_pids)
     window = windows[0] if windows else None
-    if windows is None or any(is_sensitive(w) for w in windows):
+    if windows is None or any(window_sensitive(item, w) for w in windows):
         # Never read, never OCR, never fall through; a sensitive title can name the vault or entry.
         info = {"app": "", "process": (window or {}).get("process", ""), "title": "", "sensitive": True}
         return {"candidates": [], "window": info}

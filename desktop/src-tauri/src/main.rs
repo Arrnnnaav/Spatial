@@ -3,11 +3,35 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::menu::{Menu, MenuItem};
+#[cfg(windows)]
+use tauri::path::BaseDirectory;
 use tauri::tray::TrayIconBuilder;
 use tauri::{Emitter, Manager, WindowEvent};
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 
 const HOTKEY_LABEL: &str = "Alt+Shift+S";
+
+#[cfg(windows)]
+fn start_server(app: &tauri::AppHandle) -> Result<(), String> {
+    use std::os::windows::process::CommandExt;
+    let state = app.state::<std::sync::Mutex<Option<std::process::Child>>>();
+    let mut child = state.lock().map_err(|_| "server process lock failed")?;
+    if let Some(process) = child.as_mut() {
+        if process.try_wait().map_err(|e| e.to_string())?.is_none() {
+            return Ok(());
+        }
+    }
+    let path = app.path().resolve("resources/spatial-server.exe", BaseDirectory::Resource)
+        .map_err(|e| e.to_string())?;
+    if !path.is_file() {
+        return Err("bundled server missing; start the development server manually".into());
+    }
+    let process = std::process::Command::new(path)
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+        .spawn().map_err(|e| e.to_string())?;
+    *child = Some(process);
+    Ok(())
+}
 
 /// The overlay passes this to /api/desktop/candidates so the server never reads Spatial's own windows.
 #[tauri::command]
@@ -24,6 +48,16 @@ fn desktop_token() -> Result<String, String> {
     std::fs::read_to_string(&path)
         .map(|s| s.trim().to_string())
         .map_err(|_| "Spatial server not started yet (no desktop token)".to_string())
+}
+
+/// Token for pairing the browser extension with the bundled loopback server.
+#[tauri::command]
+fn pairing_token() -> Result<String, String> {
+    let base = std::env::var("LOCALAPPDATA").map_err(|_| "LOCALAPPDATA not set".to_string())?;
+    let path = std::path::Path::new(&base).join("Spatial").join("api.token");
+    std::fs::read_to_string(&path)
+        .map(|s| s.trim().to_string())
+        .map_err(|_| "Bundled server has not created a pairing token yet".to_string())
 }
 
 /// WebView2 asks "tauri.localhost wants to use your microphones" on every launch and does not remember "Allow".
@@ -64,6 +98,8 @@ fn start_ask(app: &tauri::AppHandle) {
 fn main() {
     let hotkey = Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::KeyS);
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, None))
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(move |app, shortcut, event| {
@@ -73,9 +109,16 @@ fn main() {
                 })
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![own_pid, desktop_token])
+        .invoke_handler(tauri::generate_handler![own_pid, desktop_token, pairing_token])
         .setup(move |app| {
             use tauri_plugin_global_shortcut::GlobalShortcutExt;
+            #[cfg(windows)]
+            {
+                app.manage(std::sync::Mutex::new(None::<std::process::Child>));
+                if let Err(err) = start_server(app.handle()) {
+                    eprintln!("could not start the bundled server: {err}");
+                }
+            }
             #[cfg(windows)]
             if let Some(panel) = app.get_webview_window("panel") {
                 allow_own_microphone(&panel);
@@ -85,8 +128,9 @@ fn main() {
             }
             let ask = MenuItem::with_id(app, "ask", format!("Ask about the screen ({HOTKEY_LABEL})"), true, None::<&str>)?;
             let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
+            let server = MenuItem::with_id(app, "server", "Start server", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Quit Spatial", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&ask, &settings, &quit])?;
+            let menu = Menu::with_items(app, &[&ask, &settings, &server, &quit])?;
             TrayIconBuilder::new()
                 .icon(app.default_window_icon().cloned().expect("bundle icon"))
                 .tooltip(format!("Spatial — {HOTKEY_LABEL} to point & ask"))
@@ -95,6 +139,12 @@ fn main() {
                     "ask" => start_ask(app),
                     "settings" => {
                         let _ = app.emit_to("panel", "spatial://settings", ());
+                    }
+                    #[cfg(windows)]
+                    "server" => {
+                        if let Err(err) = start_server(app) {
+                            let _ = app.emit_to("panel", "spatial://error", serde_json::json!({"message": format!("Server: {err}")}));
+                        }
                     }
                     "quit" => app.exit(0),
                     _ => {}
@@ -109,6 +159,28 @@ fn main() {
                 let _ = window.hide();
             }
         })
-        .run(tauri::generate_context!())
-        .expect("error while running Spatial");
+        .build(tauri::generate_context!())
+        .expect("error while building Spatial")
+        .run(|app, event| {
+            #[cfg(windows)]
+            if let tauri::RunEvent::Exit = event {
+                if let Ok(mut child) = app.state::<std::sync::Mutex<Option<std::process::Child>>>().lock() {
+                    if let Some(mut process) = child.take() {
+                        // PyInstaller onefile launches a child after extraction. Stop that process tree too.
+                        if process.try_wait().ok().flatten().is_none() {
+                            use std::os::windows::process::CommandExt;
+                            let pid = process.id().to_string();
+                            let _ = std::process::Command::new("taskkill")
+                                .args(["/PID", pid.as_str(), "/T", "/F"])
+                                .creation_flags(0x08000000)
+                                .status();
+                            let _ = process.kill();
+                        }
+                        let _ = process.wait();
+                    }
+                }
+            }
+            #[cfg(not(windows))]
+            let _ = (app, event);
+        });
 }

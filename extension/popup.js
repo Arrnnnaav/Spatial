@@ -1,7 +1,7 @@
 const CFG = window.SPATIAL_CONFIG;
 const $ = id => document.getElementById(id);
 const status = (text, kind) => { $('status').textContent = text; $('status').className = 'status ' + (kind || ''); };
-const KEYS = ['apiBase', 'token', 'privacy', 'provider', 'voice', 'readAloud', 'research', 'powerMode', 'pdfViewer', 'blocklistExtra', 'deviceId'];
+const KEYS = ['apiBase', 'token', 'privacy', 'provider', 'voice', 'readAloud', 'research', 'powerMode', 'pdfViewer', 'blocklistExtra', 'deviceId', 'systemOne'];
 
 $('title').textContent = CFG.productName;
 
@@ -14,6 +14,7 @@ async function load() {
   $('blocklistExtra').value = config.blocklistExtra || '';
   $('readAloud').checked = Boolean(config.readAloud);
   $('research').checked = config.research !== false;
+  $('systemOne').checked = config.systemOne === true;
   $('powerMode').checked = Boolean(config.powerMode);
   $('pdfViewer').checked = Boolean(config.pdfViewer);
   $('providerLabel').hidden = !(CFG.features.providerPicker || config.powerMode);
@@ -29,6 +30,10 @@ async function health(selectedProvider) {
     return;
   }
   const data = response.health;
+  if (data.auth_required && !data.providers) {
+    status('Server connected. Paste the API token from Spatial desktop Settings (or your self-hosted server) and press Save.', 'err');
+    return;
+  }
   const select = $('provider');
   select.innerHTML = '<option value="">Auto (' + (data.provider_order || []).join(' → ') + ')</option>';
   for (const item of data.providers || []) {
@@ -61,6 +66,7 @@ $('privacy').onchange = () => chrome.storage.local.set({ privacy: $('privacy').v
 $('provider').onchange = () => chrome.storage.local.set({ provider: $('provider').value });
 $('readAloud').onchange = () => chrome.storage.local.set({ readAloud: $('readAloud').checked });
 $('research').onchange = () => chrome.storage.local.set({ research: $('research').checked });
+$('systemOne').onchange = () => chrome.storage.local.set({ systemOne: $('systemOne').checked });
 $('pdfViewer').onchange = () => chrome.storage.local.set({ pdfViewer: $('pdfViewer').checked });
 $('powerMode').onchange = async () => { await chrome.storage.local.set({ powerMode: $('powerMode').checked }); $('providerLabel').hidden = !(CFG.features.providerPicker || $('powerMode').checked); };
 $('traceLog').onchange = async () => {

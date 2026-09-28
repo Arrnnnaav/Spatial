@@ -69,15 +69,18 @@ def set_enabled(value: bool) -> None:
         _state["error"] = None
 
 
-_DATA_URL = re.compile(r"^\s*data:[\w.+-]+/[\w.+-]+[;,]", re.I)
+_DATA_URL = re.compile(r"data:[\w.+-]+/[\w.+-]+[;,][^\s<>\"']*", re.I)
+_WRAPPED_BASE64_URL = re.compile(r"data:[\w.+-]+/[\w.+-]+;base64,[A-Za-z0-9+/=]+(?:\r?\n[A-Za-z0-9+/=]+)*", re.I)
 
 
 def _scrub(value: Any) -> Any:
     """Drop every data: URL (inline images, icons) anywhere in the record, whichever client sent it."""
     if isinstance(value, str):
-        return None if _DATA_URL.match(value) else value
+        cleaned = _WRAPPED_BASE64_URL.sub("[data URL removed]", value)
+        cleaned = _DATA_URL.sub("[data URL removed]", cleaned)
+        return None if cleaned == "[data URL removed]" else cleaned
     if isinstance(value, dict):
-        return {key: _scrub(item) for key, item in value.items()}
+        return {(_scrub(str(key)) or "[data URL removed]"): _scrub(item) for key, item in value.items()}
     if isinstance(value, list):
         return [_scrub(item) for item in value]
     return value
@@ -115,7 +118,8 @@ def build_record(
             "provider": meta.get("provider"),
             "model": meta.get("model"),
             "timings_ms": timings,
-            "errors": meta.get("errors", {}),
+            "errors": {name: {"code": detail.get("code", "PROVIDER_ERROR")}
+                       for name, detail in (meta.get("errors") or {}).items() if isinstance(detail, dict)},
             "cost_usd": meta.get("cost_usd", 0.0),
             "system_one": system_one,
             "label": label,
@@ -155,7 +159,7 @@ def write(record: dict[str, Any]) -> None:
             path = directory / f"{datetime.now().strftime('%Y-%m-%d')}.jsonl"
             with path.open("a", encoding="utf-8") as handle:
                 # ASCII escapes keep lone surrogates (half an emoji cut by the client) writable.
-                handle.write(json.dumps(record, ensure_ascii=True) + "\n")
+                handle.write(json.dumps(_scrub(record), ensure_ascii=True) + "\n")
             _prune(directory)
     except (
         ValueError,
@@ -169,9 +173,27 @@ def write(record: dict[str, Any]) -> None:
 
 def export() -> Iterator[bytes]:
     with _lock:
-        paths = _files(log_dir()) if log_dir().is_dir() else []
-    for path in paths:
-        yield path.read_bytes()
+        directory = log_dir()
+        files = []
+        for path in _files(directory) if directory.is_dir() else []:
+            try:
+                files.append((path, path.stat().st_size))
+            except FileNotFoundError:
+                continue
+    for path, size in files:
+        offset = 0
+        while offset < size:
+            with _lock:
+                try:
+                    with path.open("rb") as handle:
+                        handle.seek(offset)
+                        chunk = handle.read(min(64 * 1024, size - offset))
+                except FileNotFoundError:
+                    break
+            if not chunk:
+                break
+            offset += len(chunk)
+            yield chunk
 
 
 def delete_all() -> int:
@@ -184,8 +206,15 @@ def delete_all() -> int:
 
 
 def status() -> dict[str, Any]:
-    directory = log_dir()
-    size = sum(p.stat().st_size for p in _files(directory)) if directory.is_dir() else 0
+    with _lock:
+        directory = log_dir()
+        size = 0
+        if directory.is_dir():
+            for path in _files(directory):
+                try:
+                    size += path.stat().st_size
+                except FileNotFoundError:
+                    pass
     return {
         "enabled": enabled(),
         "dir": str(directory),

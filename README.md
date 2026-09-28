@@ -1,14 +1,16 @@
 # Spatial — Point & Ask
 
-Circle anything you are reading in the browser or a PDF, ask a question, get an answer about exactly
-that region. Local-first: runs on Ollama with a CPU OCR fallback, or on OpenRouter / NVIDIA NIM /
-OpenAI / Anthropic when a key is set. Speech in and out runs on CPU (faster-whisper, Kyutai pocket-tts).
+Circle anything you are reading in the browser, a PDF, or a Windows application, ask a question,
+and get an answer about exactly that region. The local server supports Ollama and CPU OCR, or
+OpenRouter / NVIDIA NIM / OpenAI / Anthropic when configured. Speech uses NVIDIA hosted ASR/TTS
+when configured and local faster-whisper / pocket-tts as a fallback.
 
 The interaction is the "spatial context" idea from HeyClicky: natural language is bad at spatial intent,
 pointing is fast. Instead of "the second equation under the grey box", circle it and say "why this step?".
 
 ```
 extension/   Chrome MV3 extension: overlay (pen/circle/box), ask panel, mic, read-aloud, pdf.js viewer
+desktop/     Tauri Windows app: global hotkey, freeze-frame overlay, ask panel, tray
 server/      FastAPI: /api/ask (providers + OCR + SQLite history), /api/stt, /api/tts, /api/health
 scripts/     try_providers.py (live smoke test), fetch_models.sh (curl the speech models if HF stalls)
 docs/        HOW_TO_RUN_AND_USE.md, LEARNING_PATH.md, PROVIDERS.md, AUDIO.md, TYPESAFE_OPPORTUNITIES.md
@@ -29,6 +31,11 @@ uvicorn app.main:app --port 8787
 Then load `extension/` unpacked in Chrome (`chrome://extensions` → Developer mode → Load unpacked),
 press **Alt+Shift+A** on any page, circle, ask. Open `http://127.0.0.1:8787/api/health` to see which
 providers and speech engines are ready.
+
+For the Windows desktop app, see [desktop/README.md](desktop/README.md). A development build needs the server
+started separately; the release installer bundles and starts it.
+The installed server creates a local API token. To use the extension with it, copy the pairing token from desktop
+Settings into the extension popup's API token field.
 
 ### Local, free, private (default)
 
@@ -63,10 +70,10 @@ Marks are a reference, never authority: nothing here acts on the page.
 ## Research mode (precise, cited answers)
 
 `"research": true` on `/api/ask` (the extension's **🔎 Verify with sources** toggle, on by default) runs
-`server/app/research.py`: question + marked text → DuckDuckGo search → fetch top pages → pick the passages
-that overlap the question → provider answers in ≤3 sentences citing `[n]`; the response carries `sources`
-and `cited`. No key needed; set `GOOGLE_API_KEY` (+ `pip install google-generativeai`) to add Gemini
-grounding, the same search step as `D:/PROJECTS/Cited Multi-Agent Researcher`. Adds ~5 s.
+`server/app/research.py`: question + marked text → Tavily search when configured (DuckDuckGo and page-fetch
+fallback) → select passages → provider answers in ≤3 sentences citing `[n]`; the response carries `sources`
+and `cited`. Set `TAVILY_API_KEY` in the server environment for faster search. TypeSafe Jev can rerank passages
+and check citations when the ask opts into System One.
 
 ## Bedrock, explain levels, diagram mode
 

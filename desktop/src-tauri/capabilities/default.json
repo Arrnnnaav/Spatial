@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Overlay + panel: window placement and events only. No shell, fs or http plugins: the UI talks to the local server with fetch.",
+  "description": "Overlay + panel: window placement, events and opening cited HTTP(S) sources. The UI talks to the local server with fetch.",
   "windows": ["overlay", "panel"],
   "permissions": [
     "core:default",
@@ -12,6 +12,10 @@
     "core:window:allow-set-size",
     "core:window:allow-set-always-on-top",
     "core:window:allow-start-dragging",
-    "core:event:default"
+    "core:event:default",
+    "opener:allow-default-urls",
+    "autostart:allow-enable",
+    "autostart:allow-disable",
+    "autostart:allow-is-enabled"
   ]
 }

@@ -65,7 +65,7 @@ def test_provider_chain_uses_first_working_provider(monkeypatch):
     monkeypatch.setattr(providers.settings, "provider_order", ("ollama", "openrouter"), raising=False)
     calls = []
 
-    def fake_stream(config, prompt, image_data, use_vision=True):
+    def fake_stream(config, prompt, image_data, use_vision=True, system_prompt=None):
         calls.append((config.name, use_vision))
         if config.name == "ollama":
             raise RuntimeError("connection refused")
@@ -89,7 +89,7 @@ def test_partial_stream_failure_keeps_partial_text(monkeypatch):
     monkeypatch.setattr(providers.settings, "providers", {"openrouter": ProviderConfig("openrouter", "https://example", "key", "m2", None, "openai")}, raising=False)
     monkeypatch.setattr(providers.settings, "provider_order", ("openrouter",), raising=False)
 
-    def fake_stream(config, prompt, image_data, use_vision=True):
+    def fake_stream(config, prompt, image_data, use_vision=True, system_prompt=None):
         yield "Half an answer"
         raise RuntimeError("socket closed")
 
@@ -137,6 +137,9 @@ def test_token_required_when_configured(monkeypatch):
     with TestClient(app) as client:
         assert client.get("/api/contexts").status_code == 401
         assert client.get("/api/contexts", headers={"Authorization": "Bearer secret"}).status_code == 200
+        anonymous = client.get("/api/health").json()
+        assert anonymous == {"status": "ok", "protocol_version": 3, "auth_required": True}
+        assert "providers" in client.get("/api/health", headers={"Authorization": "Bearer secret"}).json()
 
 
 def test_clean_answer_strips_leaked_thinking():

@@ -23,7 +23,8 @@
     "storage",
     "offscreen",
     "contextMenus",
-    "webNavigation"
+    "webNavigation",
+    "alarms"
   ],
   "host_permissions": [
     "<all_urls>"
