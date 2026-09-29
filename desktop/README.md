@@ -1,9 +1,21 @@
 # Spatial desktop (Tauri v2, Windows first)
 
 Press **Alt+Shift+S** anywhere → the screen freezes → circle / box (**B**) / point (**P**) what you mean → ask in the
-panel that opens beside it. **Esc** cancels. The tray icon has Ask, Settings and Quit.
+panel that opens beside it. **Esc** cancels. The tray has Ask, Open Spatial, Snooze Ask shortcut, Settings, Start server,
+Dictate, and Quit. Snooze applies until Spatial restarts; tray Ask remains available.
 
-The app only draws and asks. The local server (`server/`, `uvicorn app.main:app --port 8787`) owns screen capture,
+**Dictate** uses **Alt+Shift+D** (hold and release to finish, tap to toggle; **Esc** cancels) or the composer button.
+It places editable text in Spatial's Ask composer; Ask remains a separate explicit action. Dictation uses `/api/stt`;
+spoken punctuation, list/restart cleanup and the personal dictionary run locally. Optional polish is off by default and
+sends transcript text only to the configured answer provider. An on-demand `.docx` download is available from the
+composer. No dictation audio or transcript history is saved. This beta does not include SayStride models or meeting
+capture.
+
+The panel's **Status** view reports server, configured answer provider, speech backend and shortcut state. Recent
+activity keeps up to 40 event categories and timestamps locally; it never stores prompts, answers, screenshots,
+transcripts, credentials or URLs. Clear activity removes the list. Copy diagnostics copies status and event categories.
+
+Ask only explains marked content. Dictate is a separate explicit text-insertion action. The local server (`server/`, `uvicorn app.main:app --port 8787`) owns screen capture,
 UI Automation reading and answering (`server/app/desktop.py`, spec `docs/superpowers/specs/2026-09-24-desktop-app-design.md`).
 
 ## Build and run

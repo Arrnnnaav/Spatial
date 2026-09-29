@@ -2,7 +2,7 @@
 
 *Live board. Update status when you start (`[~]`) or finish (`[x]`) a task; add new tasks as discovered.
 Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why).*
-**Last updated:** 2026-09-28
+**Last updated:** 2026-09-29
 
 ## Roadmap
 
@@ -11,8 +11,9 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 | 1 | Core foundation: independence, contract v3, OCR candidates, trace log, eval harness | Done, merged | `docs/superpowers/specs/2026-09-23-spatial-core-foundation-design.md` |
 | 2 | System-One resolver (Jev now, Laya later; geometry fallback) + clarification UI | Done, merged | `docs/superpowers/specs/2026-09-23-system-one-resolver-design.md` |
 | 3 | Windows UIA spike (throwaway) | Done 2026-09-24 | `scripts/spikes/uia_region_probe.py` |
-| 4 | Desktop app (Tauri, Windows → macOS) | Done 2026-09-24 (4a server, 4b Tauri app; Windows) | `docs/superpowers/specs/2026-09-24-desktop-app-design.md` |
+| 4 | Desktop app (Tauri, Windows → macOS) | Windows MVP hardening in progress | `docs/superpowers/specs/2026-09-24-desktop-app-design.md` |
 | 5 | Desktop ↔ extension bridge, macOS AX | Bridge in progress; macOS next | `docs/superpowers/specs/2026-09-28-desktop-extension-bridge-design.md` |
+| 6 | Windows dictation beta | Implementation in progress; microphone/native UI E2E pending | SayStride-informed behavior in desktop app; no source copied |
 
 ## Now
 
@@ -71,7 +72,9 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
       candidates → `/api/ask/stream` with `capture_id`, panel beside the mark (sources ⚠, clarify chips, settings), tray.
       E2E on Windows 11 (simulated hotkey + drag over a self-opened Notepad): correct line previewed and answered.
 - [x] Open source links in the browser (tauri-plugin-opener); markdown lists/headings in the panel
-- [~] Release build + installer, autostart, server auto-launch from the tray (NSIS installer built and installed silently; bundled resource matched; bundled server smoke test passed; fresh-profile launch and tray check pending)
+- [~] Windows MVP hardening: status/activity home, run-scoped shortcut Snooze, startup error visibility, and single-instance recovery; x64 installer built and bundled server smoke-tested; fresh-profile launch, Ask active pill, and manual release checks remain
+- [~] Dictation beta: Alt+Shift+D hold/toggle, Esc cancel, authenticated live composer previews (bounded overlapping windows because current hosted Parakeet deployment is offline-only) + full-clip final recognition, local list/punctuation/restart cleanup + dictionary, optional text-only polish, authenticated .docx download, safe final-only external insertion with Copy fallback; native microphone E2E and same-corpus WER evaluation remain pending
+- [x] Speech eval loop: local consented-fixture manifest, weighted WER, fallback/error accounting, p50/p95 latency, real-time factor; compare `auto`, `nvidia`, and `local` on the same corpus
 - [x] Bundled server requires a persistent random API token; desktop uses it automatically and extension pairs via Settings
 - [ ] Multi-monitor + mixed-DPI manual check (overlay sized in physical px per captured monitor)
 - [x] Reuse one COM/UIA object per worker thread (cold first call ~1 s)

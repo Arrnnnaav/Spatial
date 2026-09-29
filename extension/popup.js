@@ -14,7 +14,7 @@ async function load() {
   $('blocklistExtra').value = config.blocklistExtra || '';
   $('readAloud').checked = Boolean(config.readAloud);
   $('research').checked = config.research !== false;
-  $('systemOne').checked = config.systemOne === true;
+  $('systemOne').checked = config.systemOne !== false;
   $('powerMode').checked = Boolean(config.powerMode);
   $('pdfViewer').checked = Boolean(config.pdfViewer);
   $('providerLabel').hidden = !(CFG.features.providerPicker || config.powerMode);

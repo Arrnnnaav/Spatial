@@ -111,6 +111,29 @@ For a paired Chrome window, the extension checks title and focused window bounds
 candidates for the marked region. The server prefers valid DOM candidates and falls back to UIA/OCR on a verified
 safe page. Blocked, unmatched, or unreadable tabs are protected while paired; an unpaired desktop uses UIA/OCR.
 
+The desktop panel also has a Status & Activity view. It reads the existing authenticated `/api/health` response and
+stores at most 40 local event categories with timestamps in app localStorage; event records contain no prompt,
+answer, candidate, screenshot, transcript, credential or URL content. Ask is always available from the tray; Snooze
+only disables the global shortcut for the current process and resets at next launch.
+
+Desktop Dictate (`Alt+Shift+D`, or the composer button) records in the non-focusable pill window. The composer streams
+16 kHz mono PCM over an authenticated, Tauri-origin-only `/api/stt/live` WebSocket for revisable interim text; because
+the configured NVIDIA Parakeet function currently has offline recognition only, that route uses separate 3-second
+windows with 0.5-second overlap when provider streaming is rejected. On stop, the complete recording still goes through
+the existing `/api/stt` for the final transcript. Dictation applies punctuation, list/restart cleanup and the personal dictionary locally.
+It places the final editable transcript into the Ask composer; Ask remains a separate explicit action. The hotkey
+supports hold-to-finish and tap-to-toggle; Escape cancels. Optional `/api/dictate/polish` accepts only bounded transcript
+text and a constrained tone; it stores nothing and returns the original text if the provider fails. `.docx` export is
+an authenticated on-demand download and is not persisted by Spatial. Before optional insertion into another app,
+`/api/desktop/dictation-safe` checks that the captured foreground window still owns focus and the focused UIA element
+is an enabled, keyboard-focusable Edit or Document field, not a password field. The client checks the foreground HWND
+again immediately before Unicode input. Any failed or uncertain check leaves the transcript in Spatial with Copy.
+Audio, transcripts, focus details and the personal dictionary are not persisted.
+
+`scripts/eval_speech.py` compares the configured `auto`, `nvidia`, or `local` path on the same user-supplied audio
+manifest. It reports weighted WER (failed clips count as deletions), fallback use, p50/p95 request latency and
+real-time factor without transcript output by default. Do not compare backends using different clips or conditions.
+
 ## 3. Module reuse
 
 `server/app/resolver.py`, `providers.py`, `ocr.py`, `audio.py` have no FastAPI dependency.

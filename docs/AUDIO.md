@@ -23,6 +23,52 @@ A100-class GPU on Linux and has no hosted API. Worth revisiting for a future liv
 The desktop panel has the same 🎤 / 🔊 buttons; its Rust shell grants the microphone to its own bundled pages so
 WebView2 does not ask on every launch.
 
+## Dictation quality and latency evaluation
+
+Use a consented, representative set of recordings with human-checked references; keep that set under user control.
+Create a JSON manifest with relative audio paths, reference text, optional language, and a non-sensitive clip id:
+
+```json
+[{"id":"short-list-01","audio":"clips/short-list-01.wav","reference":"Create a todo list first call Sam then send the notes","language":"en"}]
+```
+
+Run each configured path against the identical manifest, preferably in the same session and machine state:
+
+```powershell
+py -3.12 scripts/eval_speech.py path/to/manifest.json --backend auto --runs 3
+py -3.12 scripts/eval_speech.py path/to/manifest.json --backend nvidia --runs 3
+py -3.12 scripts/eval_speech.py path/to/manifest.json --backend local --runs 3
+```
+
+The report includes weighted word error rate, failure-penalized WER, fallback use, p50/p95 request latency and real-time
+factor. Transcript/reference text is omitted unless `--include-transcripts` is explicitly used. Keep privacy and latency
+conditions comparable: hosted NVIDIA sends recordings to NVIDIA; local mode does not. Existing measurements above are
+historical and were not measured on a shared evaluation corpus, so they do not establish which backend is more accurate.
+
+SayStride behavior informed hold/toggle interaction, Escape cancellation, spoken punctuation, restart cleanup,
+numbered/list formatting and dictionary replacements. Spatial keeps the current Parakeet/Whisper and faster-whisper
+pipeline; Jev remains a mark/research judge and is not used to rewrite transcripts. No SayStride source or local model
+bundle was copied. Spatial dictation writes an editable draft into its composer and only sends transcript text to the
+optional configured-provider polish route.
+
+| Layer | Spatial | SayStride (source inspected locally) |
+|---|---|---|
+| Primary ASR | Hosted NVIDIA Parakeet for English; Whisper large-v3 for multilingual | Local sherpa-onnx Parakeet int8 for English |
+| Fallback / optional ASR | Local faster-whisper `base`; NVIDIA failure falls back locally | faster-whisper fallback; optional Groq Whisper large-v3-turbo, including long clips |
+| Text cleanup | Local deterministic commands + user dictionary; optional configured answer provider | Deterministic cleanup/dictionary + optional local Qwen 3.5 4B or cloud polisher |
+| Current interaction | Hold/toggle, Escape, final editable draft in Spatial composer | Hold/toggle, Escape, interim replacement into foreground field, final cleanup and safe replace |
+| Known measured latency | Historical Spatial run: hosted ~0.48 s after warm-up; local ~5 s warm / 25–30 s cold | No same-device/same-clip benchmark available |
+
+These are architecture observations, not an accuracy ranking: no shared reference corpus/WER results exist yet.
+SayStride's Windows implementation has local interim recognition or a Deepgram stream, followed by full-clip
+recognition and cleanup. Spatial sends 16 kHz PCM from the composer Dictate action to an authenticated speech worker;
+interim text revises the composer draft in place, then the complete recording still goes through `/api/stt` for the
+final transcript. The configured NVIDIA Parakeet function currently rejects online recognition, so Spatial falls
+back to separate 3-second windows with 0.5-second overlap rather than repeatedly uploading an ever-growing buffer.
+If cloud streaming or chunk recognition fails, final transcription still works through the existing offline/fallback
+path. Live recognition is currently English; external-app insertion remains final-only so live revisions cannot
+overwrite intervening keystrokes or text in a changed focus target.
+
 ## Local engines (fallback) — details
 
 ### Speech → text (the 🎤 button)

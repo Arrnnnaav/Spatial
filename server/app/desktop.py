@@ -366,6 +366,40 @@ def is_sensitive(window: dict) -> bool:
     return not process or process in SENSITIVE_PROCESSES or any(w in title for w in SENSITIVE_TITLE_WORDS)
 
 
+def dictation_target_safe(target_hwnd: int) -> tuple[bool, str]:
+    """Fail closed unless the recorded top-level window still owns a non-password focused UIA field."""
+    if not SUPPORTED:
+        return False, "unsupported"
+    try:
+        import win32gui
+        import win32process
+
+        hwnd = int(target_hwnd)
+        if hwnd <= 0 or win32gui.GetForegroundWindow() != hwnd:
+            return False, "focus_changed"
+        target = next((window for window in _windows_topdown() if window["hwnd"] == hwnd), None)
+        if target is None or is_sensitive(target):
+            return False, "protected_window"
+        automation, UIA = _uia_client()
+        focused = automation.GetFocusedElement()
+        if focused is None or focused.CurrentIsPassword or not focused.CurrentIsEnabled or not focused.CurrentIsKeyboardFocusable:
+            return False, "protected_field"
+        _, target_pid = win32process.GetWindowThreadProcessId(hwnd)
+        if focused.CurrentProcessId != target_pid or focused.CurrentNativeWindowHandle != hwnd:
+            return False, "focus_changed"
+        if focused.CurrentControlType not in (UIA.UIA_EditControlTypeId, UIA.UIA_DocumentControlTypeId):
+            return False, "unsupported_field"
+        if focused.CurrentControlType == UIA.UIA_EditControlTypeId:
+            value = focused.GetCurrentPattern(UIA.UIA_ValuePatternId)
+            if value.CurrentIsReadOnly:
+                return False, "readonly_field"
+        else:
+            focused.GetCurrentPattern(UIA.UIA_TextPatternId)
+        return True, "safe"
+    except Exception:
+        return False, "unavailable"
+
+
 def block_windows(capture_id: str, windows: list[dict]) -> None:
     """Apply the paired extension's URL blocklist verdict to this frozen frame."""
     with _lock:

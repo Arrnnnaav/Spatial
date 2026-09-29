@@ -7,7 +7,7 @@ const VERSION = chrome.runtime.getManifest().version;
 const CONSENT_VERSION = 1;
 const DEFAULTS = {
   apiBase: CFG.apiBase, token: '', deviceId: '', consentVersion: 0, privacy: 'crop_only', provider: '', voice: '',
-  readAloud: false, powerMode: false, pdfViewer: false, blocklistExtra: '', research: true, level: 'student', systemOne: false,
+  readAloud: false, powerMode: false, pdfViewer: false, blocklistExtra: '', research: true, level: 'student', systemOne: true,
 };
 /* Sites where the overlay never runs: money, health portals, government, browser internals. */
 const BLOCKLIST = [/(^|\.)(paypal|stripe|coinbase|binance|robinhood|chase|wellsfargo|bankofamerica|citi|hdfcbank|icicibank|sbi)\.(com|co\.in|in)$/i,

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import io
+import queue
 import re
 import time
 import wave
@@ -159,6 +160,88 @@ def transcribe(audio_bytes: bytes, language: str | None = None) -> dict:
         "model": model,
         "backend": "nvidia",
     }
+
+
+def stream_transcribe(chunks: queue.Queue, publish) -> None:
+    """Consume 16 kHz mono PCM and publish Riva partials, with short offline chunks if streaming is disabled.
+
+    `chunks` is terminated by None. Kept synchronous because the Riva client exposes a
+    blocking gRPC iterator; the WebSocket route runs this on a worker thread.
+    """
+    import riva.client
+
+    config = riva.client.RecognitionConfig(
+        encoding=riva.client.AudioEncoding.LINEAR_PCM,
+        sample_rate_hertz=16000,
+        audio_channel_count=1,
+        language_code="en-US",
+        max_alternatives=1,
+        enable_automatic_punctuation=True,
+    )
+    streaming = riva.client.StreamingRecognitionConfig(config=config, interim_results=True)
+
+    consumed = []
+    stream_finished = False
+
+    def audio_chunks():
+        nonlocal stream_finished
+        while True:
+            chunk = chunks.get()
+            if chunk is None:
+                stream_finished = True
+                return
+            consumed.append(chunk)
+            yield chunk
+
+    service = _service("asr", settings.nvidia_asr_function)
+    try:
+        requests = riva.client.asr.streaming_request_generator(audio_chunks(), streaming)
+        responses = service.stub.StreamingRecognize(
+            requests, metadata=service.auth.get_auth_metadata(), timeout=75
+        )
+        for response in responses:
+            results = response.results
+            if results and results[0].alternatives:
+                publish({"type": "transcript", "text": results[0].alternatives[0].transcript.strip(),
+                         "final": bool(results[0].is_final)})
+    except Exception:
+        # NVCF's configured Parakeet function currently exposes offline recognition only. Transcribe
+        # bounded 3-second windows with 0.5-second overlap instead of retrying the growing recording.
+        from app.audio import transcribe as offline_transcribe
+
+        pending = bytearray(b"".join(consumed))
+        committed = ""
+
+        def flush(size: int):
+            nonlocal committed, pending
+            raw = bytes(pending[:size])
+            result = offline_transcribe(pcm16_wav(raw, 16000), "en")
+            pending = pending[size - 16000 :] if size > 16000 else bytearray()
+            words = (result.get("text") or "").split()
+            previous = committed.split()
+            overlap = 0
+            for count in range(min(8, len(previous), len(words)), 0, -1):
+                norm = lambda word: re.sub(r"\W", "", word).casefold()
+                if [norm(x) for x in previous[-count:]] == [norm(x) for x in words[:count]]:
+                    overlap = count
+                    break
+            committed = " ".join([committed, *words[overlap:]]).strip()
+            if committed:
+                publish({"type": "transcript", "text": committed, "final": False})
+
+        while True:
+            while len(pending) >= 96000:  # 3 seconds at 16 kHz, PCM16 mono
+                flush(96000)
+            if stream_finished:
+                if len(pending) >= 32000:
+                    flush(len(pending))
+                return
+            chunk = chunks.get()
+            if chunk is None:
+                if len(pending) >= 32000:  # skip sub-second tail noise
+                    flush(len(pending))
+                return
+            pending.extend(chunk)
 
 
 def _chunks(text: str) -> list[str]:

@@ -18,6 +18,17 @@ code or git log. Newest first within each section. Remove entries that become wr
 
 ## Facts learned
 
+- **2026-09-29** — SayStride comparison: useful behaviors are hold/toggle, Escape, spoken punctuation, list and restart
+  cleanup, dictionary replacement and a repeatable WER/latency loop. Keep Spatial's existing STT models and authenticated
+  `/api/stt`; Jev judges marked targets/research and should not add latency to transcript rewriting. Desktop dictation
+  defaults into Spatial's editable composer (Alt+Shift+D or button); the browser extension remains standalone. The
+  eval harness uses the same user-supplied clips for `auto`/`nvidia`/`local`, scores failures as deletions, and never
+  emits transcripts by default. No SayStride code or model bundle was reused.
+- **2026-09-29** — Release smoke testing left six `desktop/install-smoke/spatial-desktop.exe` copies and two bundled
+  server processes alive, competing for shortcuts. Close processes by their exact smoke-test executable path after
+  manual app checks; do not terminate a user's installed copy.
+
+- **2026-09-29** — Multiple desktop processes from one install compete for global hotkeys and can produce “HotKey already registered”; Tauri single-instance must be the first plugin and focus the existing panel on a second launch.
 - **Jev (TypeSafe, launched 2026-09-15):** `POST https://api.typesafe.ai/v1/systemone`; model `jev-latest`
   (= `jev-1.13.0`); primitives Choice / Score / Noul; text-only; 64k per request, 32k state + longest
   question; $0.042/M input tokens, output free; 1,200 req/min. Weak at math, counting, literal reading,
@@ -115,6 +126,8 @@ code or git log. Newest first within each section. Remove entries that become wr
   and bogus "only metadata stub found for `core`" errors; build with `-j 4`. Release build: 12m44s cold, 8.5 MB exe.
 
 ## Gotchas
+
+- **2026-09-29** — Current NVIDIA NVCF Parakeet function returns `INVALID_ARGUMENT: Unavailable model ... type=online` for Riva `StreamingRecognize`; offline recognition is available. Desktop composer live previews therefore use bounded 3-second offline requests with 0.5-second overlap after the stream attempt fails, and the final full-clip request remains authoritative. Synthetic input confirmed the unsupported-stream fallback path; no human-checked speech corpus was available to measure live WER.
 
 - **2026-09-28** — The desktop Chrome bridge checks focused Chrome window bounds, then binds the active tab and document when the screen freezes. While paired,
   a blocked, unmatched, or unreadable tab is protected across UIA, OCR, and model crops; a verified safe tab may use
