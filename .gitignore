@@ -12,4 +12,6 @@ desktop/.build-venv/
 desktop/build/
 desktop/dist/
 desktop/spatial-server.spec
+.security-venv/
+.security/
 desktop/src-tauri/resources/spatial-server.exe

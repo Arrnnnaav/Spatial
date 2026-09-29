@@ -2,21 +2,25 @@
 
 Official project: https://github.com/usestrix/strix
 
-Setup is prepared but not verified or executed: terminal process creation currently fails with Windows
-Access is denied. No Strix vulnerability result has been produced.
+The isolated runner is in place, but no Spatial vulnerability assessment has been completed yet. Strix
+1.6.2 is installed in `.security-venv`, and Docker is responding. The current Strix profile is not signed
+in, and neither `STRIX_LLM` nor `LLM_API_KEY` is set in the current shell. The source snapshot can be
+prepared without those credentials.
 
 Local prerequisites: Python 3.12+, Docker with Linux containers running, and a configured LLM. The upstream
 headless workflow uses `strix -n`, a scan mode, and a maximum budget. Local targets are writable, so the
 wrapper stages a source copy and excludes secrets, user data, and build output.
 
-After terminal access is restored:
+Install and run the scoped local assessment:
 
 ```powershell
+# One-time local setup (Windows x64)
 python -m venv .security-venv
-.security-venv/Scripts/python.exe -m pip install strix-agent==1.6.2
+.security-venv/Scripts/python.exe -m pip install --only-binary=:all: strix-agent==1.6.2
 docker info
 .security-venv/Scripts/strix.exe --version
-# Set STRIX_LLM and LLM_API_KEY in the environment; do not put keys in this repository.
+# Set STRIX_LLM and LLM_API_KEY in this PowerShell session; never commit the values.
+# The configured model provider receives source text during a scan.
 python scripts/strix_scan.py --prepare-only
 python scripts/strix_scan.py --mode standard --max-budget 5
 ```
