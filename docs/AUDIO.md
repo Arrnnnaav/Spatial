@@ -44,7 +44,7 @@ DEEPGRAM_API_KEY=your-trial-key
 ```
 
 The key is never logged, returned by an endpoint, or shown in the UI. Streaming (live transcript) through Deepgram is
-**not built**: only add it if the evaluation below shows it beats the current path (see sub-project 7 phase F).
+built (`deepgram_speech.stream_transcribe`, used by the live-transcript socket whenever cloud speech is on; a failed stream continues with local windows without losing audio). Measured on a real service call: first words 1.9 s into a 9.4 s clip, final transcript 0.5 s after the audio ended.
 
 ### Result on a synthetic set (2026-10-01, indicative only)
 
@@ -61,7 +61,7 @@ over the network from India with a kept-alive connection.
 
 Deepgram was clearly better under noise and on names and tech terms; both fail the same way on spoken numbers. Caveat:
 synthetic voices are cleaner than people, so absolute numbers are optimistic. Confirm on real recordings
-(`scripts/record_clips.py`) before treating this as final. Streaming (live transcript) through Deepgram is still not built.
+(`scripts/record_clips.py`) before treating this as final. Live streaming through Deepgram is built and verified against the real service.
 
 ### Recording a consented test set
 

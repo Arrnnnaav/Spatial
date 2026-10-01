@@ -169,6 +169,18 @@ def stream_transcribe(chunks: queue.Queue, publish) -> None:
     blocking gRPC iterator; the WebSocket route runs this on a worker thread.
     """
     from app.audio import backend as selected_backend
+    from app.audio import cloud_speech_enabled
+
+    if cloud_speech_enabled():
+        from app import deepgram_speech
+
+        state: dict = {}
+        try:
+            deepgram_speech.stream_transcribe(chunks, publish, state)
+            return
+        except Exception:  # connect/auth/network: continue with bounded local windows, keeping the audio so far
+            _local_stream_transcribe(chunks, publish, state.get("consumed", ()), state.get("finished", False))
+            return
     if selected_backend() != "nvidia":
         _local_stream_transcribe(chunks, publish)
         return
