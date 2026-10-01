@@ -113,3 +113,11 @@ test('recall filter matches every word anywhere, case-insensitively, and empty q
 test('plain text drops markdown, citation markers and list bullets but keeps wording', () => {
   assert.equal(D.plainText('## Title\n- **bold** and `code` [2]\n1. next'), 'Title\nbold and code\nnext');
 });
+
+test('speech destination wording never claims on-device when audio goes to a cloud provider', () => {
+  assert.equal(D.speechDestination({ backend: 'nvidia' }), ' — sent to NVIDIA speech');
+  assert.equal(D.speechDestination({ backend: 'deepgram' }), ' — sent to Deepgram');
+  assert.equal(D.speechDestination({ backend: 'local' }), ' — on this computer');
+  assert.equal(D.speechDestination(undefined), ' — on this computer');
+  assert.equal(D.speechDestination({ backend: 'something-new' }), ' — speech provider unknown');
+});

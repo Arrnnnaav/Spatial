@@ -56,6 +56,7 @@ from app import (
     desktop,
     dictations,
     personal,
+    prefs,
     retention,
     research,
     semantic,
@@ -1304,6 +1305,32 @@ def remove_reminder(reminder_id: str):
             404, {"code": "REMINDER_NOT_FOUND", "message": "reminder not found"}
         )
     return {"deleted": reminder_id}
+
+
+class CloudSpeechBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool
+
+
+def _cloud_speech_state() -> dict:
+    from app import deepgram_speech
+
+    return {"enabled": prefs.get("speech_cloud") == "1", "key_configured": deepgram_speech.available(), "provider": "Deepgram"}
+
+
+@app.get("/api/speech/cloud", dependencies=_PERSONAL)
+def get_cloud_speech():
+    return _cloud_speech_state()  # never includes the key
+
+
+@app.put("/api/speech/cloud", dependencies=_PERSONAL)
+def put_cloud_speech(payload: CloudSpeechBody):
+    from app import deepgram_speech
+
+    if payload.enabled and not deepgram_speech.available():
+        raise HTTPException(409, {"code": "NO_KEY", "message": "add DEEPGRAM_API_KEY to the per-user server.env first"})
+    prefs.set("speech_cloud", "1" if payload.enabled else "")
+    return _cloud_speech_state()
 
 
 class RetentionBody(BaseModel):

@@ -48,7 +48,7 @@
       const response = await fetch(Spatial.server() + '/api/health', { headers });
       if (response.ok) {
         const health = await response.json();
-        where = (health.audio && health.audio.backend) === 'nvidia' ? ' — sent to NVIDIA speech' : ' — on this computer';
+        where = SpatialDashboard.speechDestination(health.audio);
       }
     } catch (_) { /* bundled server may still be extracting */ }
     speechWhere = where;

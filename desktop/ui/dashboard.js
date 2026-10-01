@@ -248,6 +248,7 @@
   }
 
   let savedRetention = '';
+  let savedCloud = false;
 
   async function loadSettings() {
     $('saved').textContent = '';
@@ -260,6 +261,17 @@
     $('autostart').checked = await T.autostart.isEnabled().catch(() => false);
     try { savedRetention = String((await api('/api/retention')).days || ''); $('retention').value = savedRetention; }
     catch (_) { $('retention').disabled = true; }
+    try {
+      const cloud = await api('/api/speech/cloud');
+      savedCloud = cloud.enabled;
+      $('cloudSpeech').checked = cloud.enabled;
+      $('cloudSpeech').disabled = !cloud.key_configured && !cloud.enabled;
+      $('cloudSpeechHint').textContent = cloud.key_configured
+        ? (cloud.enabled
+          ? 'On: voice recordings are sent to Deepgram for transcription. If it fails, Spatial transcribes on this computer.'
+          : 'Off: transcription runs on this computer. Turning it on is faster and more accurate in noise.')
+        : 'To use it, add DEEPGRAM_API_KEY=… to %LOCALAPPDATA%\Spatial\server.env and restart Spatial. Until then transcription stays on this computer.';
+    } catch (_) { $('cloudSpeech').disabled = true; }
     renderNotices();
   }
 
@@ -270,6 +282,13 @@
     Spatial.save('spatial.systemOne', $('systemOne').checked ? '1' : '0');
     Spatial.save('spatial.dictatePolish', $('dictatePolish').checked ? '1' : '0');
     Spatial.save('spatial.dictionary', $('dictionary').value.slice(0, 4000));
+    if (!$('cloudSpeech').disabled && $('cloudSpeech').checked !== savedCloud) {
+      const want = $('cloudSpeech').checked;
+      if (!want || window.confirm('Send your voice recordings to Deepgram for transcription? Audio leaves this computer; Spatial falls back to on-device speech if Deepgram fails.')) {
+        try { await api('/api/speech/cloud', 'PUT', { enabled: want }); savedCloud = want; activity('Cloud speech ' + (want ? 'enabled' : 'disabled')); }
+        catch (_) { addNotice('Could not change cloud speech.'); $('cloudSpeech').checked = savedCloud; }
+      } else { $('cloudSpeech').checked = savedCloud; }
+    }
     const days = $('retention').value;
     if (!$('retention').disabled && days !== savedRetention) {
       const label = $('retention').selectedOptions[0].textContent;

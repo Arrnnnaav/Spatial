@@ -23,7 +23,16 @@ A100-class GPU on Linux and has no hosted API. Worth revisiting for a future liv
 The desktop panel has the same 🎤 / 🔊 buttons; its Rust shell grants the microphone to its own bundled pages so
 WebView2 does not ask on every launch.
 
-## Deepgram (opt-in, evaluation first)
+## Deepgram (opt-in)
+
+**Settings → Dictation → "Use Deepgram cloud speech recognition"** turns it on (off by default; enabling asks for
+confirmation because your voice recordings leave the computer). It needs `DEEPGRAM_API_KEY` in the per-user file below;
+without a key the checkbox is disabled and nothing changes. Live-preview windows and the final clip both go through
+Deepgram while it is on (about 2× the recorded audio is sent). Any failure falls back to on-device speech.
+`SPATIAL_SPEECH_BACKEND=local` or `nvidia` (environment) always overrides the toggle. The mic tooltip and the Home card
+show the real destination ("sent to Deepgram" / "on this computer").
+
+### Details
 
 Batch speech-to-text through Deepgram (`nova-3`) exists as an **opt-in** backend: `SPATIAL_SPEECH_BACKEND=deepgram`.
 `auto` never picks it. On any failure the local model answers and the response carries `fallback_reason: deepgram: ...`.

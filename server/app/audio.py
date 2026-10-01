@@ -189,8 +189,18 @@ def backend() -> str:
     return "local"
 
 
+def cloud_speech_enabled() -> bool:
+    """Deepgram is used when forced by SPATIAL_SPEECH_BACKEND=deepgram, or when the user turned on cloud speech in
+    Settings (and a key exists) while the backend is `auto`. `local`/`nvidia` forced by environment always win."""
+    from app import deepgram_speech, prefs
+
+    if settings.speech_backend == "deepgram":
+        return True
+    return settings.speech_backend == "auto" and prefs.get("speech_cloud") == "1" and deepgram_speech.available()
+
+
 def transcribe(audio_bytes: bytes, language: str | None = None) -> dict:
-    if settings.speech_backend == "deepgram":  # explicit opt-in only; `auto` never picks it
+    if cloud_speech_enabled():
         from app import deepgram_speech
 
         try:
@@ -253,13 +263,14 @@ def audio_status() -> dict:
     from importlib.util import find_spec
 
     active = backend()
+    cloud = cloud_speech_enabled()
     pocket_tts_installed = find_spec("pocket_tts") is not None
     return {
-        "backend": active,
+        "backend": "deepgram" if cloud else active,
         "stt": {
-            "model": "parakeet-tdt-0.6b-v2 (NVIDIA hosted)" if active == "nvidia" else settings.stt_model,
-            "device": "cloud" if active == "nvidia" else settings.stt_device,
-            "installed": active == "nvidia" or find_spec("faster_whisper") is not None,
+            "model": settings.deepgram_model + " (Deepgram hosted)" if cloud else "parakeet-tdt-0.6b-v2 (NVIDIA hosted)" if active == "nvidia" else settings.stt_model,
+            "device": "cloud" if cloud or active == "nvidia" else settings.stt_device,
+            "installed": cloud or active == "nvidia" or find_spec("faster_whisper") is not None,
             "fallback": settings.stt_model if find_spec("faster_whisper") else None,
         },
         "tts": {

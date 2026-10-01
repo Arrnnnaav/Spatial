@@ -67,7 +67,8 @@
     <label class="check"><input type="checkbox" id="dictatePolish"> Polish dictation with the configured answer provider (sends transcript text only)</label>
     <label for="dictionary">Personal dictionary (one “heard phrase|preferred spelling” per line; stays on this device)</label>
     <textarea id="dictionary" rows="4" maxlength="4000" spellcheck="false"></textarea>
-    <p class="muted">Microphone audio goes to NVIDIA speech when configured; otherwise transcription runs on this computer.</p>
+    <label class="check"><input type="checkbox" id="cloudSpeech"> Use Deepgram cloud speech recognition (your voice recordings are sent to Deepgram; on any failure Spatial falls back to this computer)</label>
+    <p class="muted" id="cloudSpeechHint">Off by default: transcription runs on this computer. Faster and more accurate in noise when on.</p>
     <h3>History</h3>
     <label for="retention">Keep Ask logs and saved dictations for</label>
     <select id="retention" aria-label="History retention">

@@ -119,6 +119,15 @@
       .replace(/\s*\[\d{1,2}\]/g, '');
   }
 
-  root.SpatialDashboard = { ACTIVITY_KEY, MAX_ACTIVITY, readActivity, recordActivity, statusCards, historyCard, dictationCard, quickDue, localInputToIso, taskCard, reminderCard, recallItems, filterRecall, plainText };
+  /* Where microphone audio goes, for tooltips: must never say "on this computer" for a cloud backend. */
+  function speechDestination(audio) {
+    const backend = audio && audio.backend;
+    if (!backend || backend === 'local') return ' — on this computer';
+    if (backend === 'nvidia') return ' — sent to NVIDIA speech';
+    if (backend === 'deepgram') return ' — sent to Deepgram';
+    return ' — speech provider unknown';
+  }
+
+  root.SpatialDashboard = { ACTIVITY_KEY, MAX_ACTIVITY, readActivity, recordActivity, statusCards, historyCard, dictationCard, quickDue, localInputToIso, taskCard, reminderCard, recallItems, filterRecall, plainText, speechDestination };
   if (typeof module !== 'undefined') module.exports = root.SpatialDashboard;
 })(typeof window === 'undefined' ? globalThis : window);

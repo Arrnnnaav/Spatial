@@ -213,6 +213,16 @@ def main() -> None:
             if put.get("days") != 90 or json.load(urlopen(Request(retention_url, headers=desktop_headers), timeout=10)).get("days") != 90:
                 raise SystemExit("Bundled retention setting did not persist")
             urlopen(Request(retention_url, data=json.dumps({"days": None}).encode(), headers=desktop_headers, method="PUT"), timeout=10).close()
+            cloud_url = "http://127.0.0.1:18787/api/speech/cloud"
+            cloud = json.load(urlopen(Request(cloud_url, headers=desktop_headers), timeout=10))
+            if cloud != {"enabled": False, "key_configured": False, "provider": "Deepgram"}:
+                raise SystemExit("Bundled cloud-speech state is wrong on a fresh profile")
+            try:
+                urlopen(Request(cloud_url, data=json.dumps({"enabled": True}).encode(), headers=desktop_headers, method="PUT"), timeout=10)
+                raise SystemExit("Bundled server enabled cloud speech without a key")
+            except HTTPError as error:
+                if error.code != 409:
+                    raise SystemExit(f"Bundled cloud-speech enable returned {error.code}, expected 409") from None
             soon = (datetime.now(timezone.utc) - timedelta(seconds=5)).isoformat()
             task = json.load(urlopen(Request("http://127.0.0.1:18787/api/tasks", data=json.dumps({"text": "Smoke task"}).encode(),
                                              headers=desktop_headers, method="POST"), timeout=10))
@@ -261,7 +271,7 @@ def main() -> None:
             print(
                 "bundled server ready; authenticated health OK; "
                 f"protocol={health['protocol_version']}; speech={health['audio']['backend']}; "
-                f"history clear OK; dictation entries OK; tasks+reminders OK; retention OK; TTS={tts_backend}; live WER={live_wer:.0%}; final WER={wer:.0%}"
+                f"history clear OK; dictation entries OK; tasks+reminders OK; retention OK; cloud-speech guard OK; TTS={tts_backend}; live WER={live_wer:.0%}; final WER={wer:.0%}"
             )
         finally:
             if process.poll() is None:
