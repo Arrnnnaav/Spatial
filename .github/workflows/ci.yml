@@ -1,0 +1,59 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Windows: the desktop modules, Tauri crate and tests are developed and run on Windows.
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: server/requirements.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+
+      - name: Install server dependencies
+        run: pip install -r server/requirements.txt pytest pillow numpy mss pywin32 comtypes
+
+      - name: Server tests
+        working-directory: server
+        run: python -m pytest -q
+
+      - name: Extension geometry tests
+        working-directory: extension
+        run: node --test tests/geometry.test.mjs
+
+      - name: Desktop JS tests
+        working-directory: desktop
+        run: node --test tests/dashboard-model.test.cjs tests/dictation.test.cjs
+
+      - name: Desktop Rust tests
+        working-directory: desktop/src-tauri
+        run: cargo test --bin spatial-desktop
+
+      - name: Resolver eval vs baseline
+        run: python scripts/eval.py cases --baseline server/tests/eval_baseline.json
+
+      - name: Schema drift
+        run: |
+          python scripts/export_schema.py
+          git diff --exit-code -- schema

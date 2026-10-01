@@ -19,8 +19,8 @@
           {
             "type": "command",
             "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/post_edit_checks.py\"",
-            "timeout": 120,
-            "statusMessage": "Checking geometry parity / schema drift"
+            "timeout": 300,
+            "statusMessage": "Checking invariants (geometry parity, schema, desktop JS/Rust, Tauri config)"
           }
         ]
       }

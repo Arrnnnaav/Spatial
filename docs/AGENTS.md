@@ -96,9 +96,16 @@ Never put keys in extension code. Relevant keys:
   https://docs.typesafe.ai/llms.txt (append `.md` to page paths).
 - Superpowers skills: brainstorming → writing-plans → executing-plans / TDD / verification.
 - Project automations (`.claude/`, `.mcp.json`):
-  - Hooks: `guard_secrets.py` blocks Read/Edit/Write of `server/.env` and edits of `*.db`;
-    `post_edit_checks.py` runs the geometry parity tests after editing `geometry.js`/`resolver.py`, and regenerates +
-    checks the schema after editing `contracts.py`.
-  - Skills: `/eval` (resolver eval vs baseline, logs to MEMORY), `/sync-docs` (update the living docs).
-  - Subagent: `privacy-reviewer` — run after changes to traces, contracts, routes/CORS, capture or UIA code.
+  - Hooks: `guard_secrets.py` blocks Read/Edit/Write of `server/.env`, the per-user `api.token` / `desktop.token` /
+    `server.env`, and edits of `*.db`; `post_edit_checks.py` runs the geometry parity tests after editing
+    `geometry.js`/`resolver.py`, regenerates + checks the schema after editing `contracts.py`, syntax-checks and runs the
+    desktop node tests after editing `desktop/ui/*.js`, runs `cargo test` after editing `src-tauri/src/*.rs`, and checks
+    Tauri config/capability JSON parses.
+  - Skills: `/eval` (resolver eval vs baseline, logs to MEMORY), `/sync-docs` (update the living docs),
+    `/release-check` (every suite + eval + schema drift in one table; `--build` adds release build + packaged smoke),
+    `/native-e2e` (drive the built Windows app: hotkeys, window capture, local API, exact-path cleanup).
+  - Subagents: `privacy-reviewer` — run after changes to traces, contracts, routes/CORS, capture or UIA code;
+    `desktop-capability-reviewer` — run after changes to Tauri config, capabilities, windows, commands or shortcuts.
+  - CI: `.github/workflows/ci.yml` (Windows): pytest, extension + desktop JS tests, `cargo test`, eval, schema drift.
+    Untested until the first push; adjust the pip install line if a dependency is missing.
   - MCP: `context7` (current docs: Tauri, FastAPI, pydantic), `playwright` (drive Chromium with the unpacked extension).

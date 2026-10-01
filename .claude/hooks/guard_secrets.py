@@ -12,6 +12,14 @@ path = (
     .lower()
 )
 
+PROTECTED_USER_FILES = ("/spatial/api.token", "/spatial/desktop.token", "/spatial/server.env")
+if path.endswith(PROTECTED_USER_FILES):
+    print(
+        "Blocked: per-user Spatial token/key files (api.token, desktop.token, server.env) hold secrets. "
+        "Never read or edit them through a tool.",
+        file=sys.stderr,
+    )
+    sys.exit(2)
 if path.endswith("server/.env"):
     print(
         "Blocked: server/.env holds API keys. Use server/.env.example, or check key presence without printing values.",
