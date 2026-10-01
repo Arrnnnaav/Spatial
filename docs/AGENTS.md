@@ -48,7 +48,7 @@ extension/     Chrome MV3: content.js (overlay, ask panel, anchor collection), b
 server/app/    FastAPI: main.py (routes), resolver.py (deterministic geometry ranking), providers.py (LLM chain,
                prompt), ocr.py (RapidOCR), research.py (search + cited answers), audio.py + nvidia_speech.py (STT/TTS), store.py
                (SQLite history), config.py (.env settings)
-desktop/       Tauri v2 app (Windows): src-tauri/ (Rust: hotkey, tray, token), ui/ (overlay + ask panel)
+desktop/       Tauri v2 app (Windows): src-tauri/ (Rust: hotkey, tray, token), ui/ (overlay + ask panel + dashboard)
 server/tests/  pytest + golden resolver cases (tests/cases/*.json, shared with extension geometry tests)
 scripts/       try_providers.py (live smoke test), fetch_models.sh, probe_nvidia.py
 docs/          guides + superpowers/specs + superpowers/plans

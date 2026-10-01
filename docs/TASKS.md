@@ -14,6 +14,17 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 | 4 | Desktop app (Tauri, Windows → macOS) | Windows MVP hardening in progress | `docs/superpowers/specs/2026-09-24-desktop-app-design.md` |
 | 5 | Desktop ↔ extension bridge, macOS AX | Bridge in progress; macOS next | `docs/superpowers/specs/2026-09-28-desktop-extension-bridge-design.md` |
 | 6 | Windows dictation beta | Implementation in progress; microphone/native UI E2E pending | SayStride-informed behavior in desktop app; no source copied |
+| 7 | Desktop dashboard + personal history (phases A–F) | A–D built 2026-10-01; native E2E pending | `docs/superpowers/specs/2026-10-01-desktop-dashboard-design.md`, plan `…/plans/2026-10-01-dashboard-shell.md` |
+
+### Sub-project 7 phases
+- [x] A Dashboard shell (Home/Ask logs/Dictation logs/Settings), panel stripped, notices to Settings, `DELETE /api/contexts`
+- [ ] A follow-ups (minor): clear `Server:` notices after a healthy check + fix action; pause Home polling while the dashboard is hidden; activity log has a benign two-writer race
+- [x] A/B native E2E 2026-10-01 (release exe): dashboard opens, second launch focuses it, `--autostart` stays hidden, Alt+Shift+S opens overlay, Alt+Shift+D shows only the pill, hotkey conflict → Settings badge + Home card. Not run: real speech insertion into another app, tray menu clicks
+- [x] B `Alt+Shift+S` mark-first → compact panel (Ask/Dictate; already so); `Alt+Shift+D`/tray dictate straight into the foreground app (Copy fallback); native E2E pending. Live preview for external dictation not yet shown (pill only)
+- [x] C Dictation entries: `dictations` table + `/api/dictations` CRUD, title/summary (provider, local fallback), source app via window handle (sensitive → empty), live transcript in the pill, dashboard Dictation logs (edit/delete/.docx); native E2E pending
+- [x] D Home tasks/notes + reminders: `tasks`/`reminders` tables + `/api/tasks*`/`/api/reminders*`, hidden `reminder` window polls every 15 s and pops up in the corner (no new Rust dependency); native check 2026-10-01: with the dashboard hidden (`--autostart`) a due reminder popped up within ~2 s, fired once, Snooze created a +10 min reminder, Dismiss hid it
+- [ ] E Quick recall popup (Ditto-style, Spatial history only)
+- [ ] F Deepgram — only if speech eval shows NVIDIA is worse
 
 ## Now
 
@@ -72,8 +83,8 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
       candidates → `/api/ask/stream` with `capture_id`, panel beside the mark (sources ⚠, clarify chips, settings), tray.
       E2E on Windows 11 (simulated hotkey + drag over a self-opened Notepad): correct line previewed and answered.
 - [x] Open source links in the browser (tauri-plugin-opener); markdown lists/headings in the panel
-- [~] Windows MVP hardening: status/activity home, run-scoped shortcut Snooze, startup error visibility, and single-instance recovery; x64 installer built and bundled server smoke-tested; fresh-profile launch, Ask active pill, and manual release checks remain
-- [~] Dictation beta: Alt+Shift+D hold/toggle, Esc cancel, authenticated live composer previews (bounded overlapping windows because current hosted Parakeet deployment is offline-only) + full-clip final recognition, local list/punctuation/restart cleanup + dictionary, optional text-only polish, authenticated .docx download, safe final-only external insertion with Copy fallback; native microphone E2E and same-corpus WER evaluation remain pending
+- [~] Windows MVP hardening: dashboard status, Ask history, and local-only activity; run-scoped Snooze/startup visibility/single-instance recovery; x64 installer built; clean-profile install and manual visual/tray checks remain
+- [~] Dictation beta: Alt+Shift+D hold/toggle, Esc cancel, hosted or local bounded-window live composer previews + full-clip final recognition, local cleanup/dictionary, optional text-only polish, .docx download, safe final-only insertion with Copy fallback; native microphone UI E2E and same-corpus WER evaluation remain pending
 - [x] Speech eval loop: local consented-fixture manifest, weighted WER, fallback/error accounting, p50/p95 latency, real-time factor; compare `auto`, `nvidia`, and `local` on the same corpus
 - [x] Bundled server requires a persistent random API token; desktop uses it automatically and extension pairs via Settings
 - [ ] Multi-monitor + mixed-DPI manual check (overlay sized in physical px per captured monitor)

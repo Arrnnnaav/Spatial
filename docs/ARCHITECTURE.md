@@ -111,16 +111,26 @@ For a paired Chrome window, the extension checks title and focused window bounds
 candidates for the marked region. The server prefers valid DOM candidates and falls back to UIA/OCR on a verified
 safe page. Blocked, unmatched, or unreadable tabs are protected while paired; an unpaired desktop uses UIA/OCR.
 
-The desktop panel also has a Status & Activity view. It reads the existing authenticated `/api/health` response and
-stores at most 40 local event categories with timestamps in app localStorage; event records contain no prompt,
-answer, candidate, screenshot, transcript, credential or URL content. Ask is always available from the tray; Snooze
-only disables the global shortcut for the current process and resets at next launch.
+The desktop app has a separate `dashboard` window (Home, Ask logs, Dictation logs, Settings) opened from a normal
+launch, the tray or a second launch; sign-in autostart passes `--autostart` and stays in the tray. App-level
+problems (server start, hotkey ownership, autostart) are routed by Rust `notify()` to the dashboard's Settings, never
+to the compact Ask panel. Hotkey dictation saves an entry (`POST /api/dictations`: final text, generated title/summary, source app/title resolved server-side from the window handle — empty for sensitive windows — and provider names; never audio) into the same SQLite DB; the Dictation logs view edits, deletes and exports it. Home also holds simple tasks/notes and reminders (`personal.py`, `/api/tasks*`, `/api/reminders*`, both tokens required). A hidden, always-loaded `reminder` window polls `/api/reminders/due` every 15 s and shows a non-focusable corner popup, so reminders fire with the dashboard closed while the tray process runs; ones missed while Spatial was closed fire on the next start. It shows service status, saved Ask history (`DELETE /api/contexts` clears it), and local operational activity. Ask
+history comes from the authenticated `/api/contexts` endpoints and stays in the user's SQLite database; the user can
+review or delete it. Activity stores at most 40 event categories with timestamps in app localStorage; records contain
+no prompt, answer, candidate, screenshot, transcript, credential or URL content. Diagnostics copied by the user
+contain service status and event categories only. No telemetry is sent to Spatial developers. Ask is always available
+from the tray; Snooze only disables the global shortcut for the current process and resets at next launch.
+
+Windows text-to-speech uses the configured hosted/local backend when available and falls back to the operating
+system's SAPI voice if the optional pocket-tts package or model is missing. Speech health reports whether input and
+output are available so the dashboard does not describe an absent TTS package as ready.
 
 Desktop Dictate (`Alt+Shift+D`, or the composer button) records in the non-focusable pill window. The composer streams
-16 kHz mono PCM over an authenticated, Tauri-origin-only `/api/stt/live` WebSocket for revisable interim text; because
-the configured NVIDIA Parakeet function currently has offline recognition only, that route uses separate 3-second
-windows with 0.5-second overlap when provider streaming is rejected. On stop, the complete recording still goes through
-the existing `/api/stt` for the final transcript. Dictation applies punctuation, list/restart cleanup and the personal dictionary locally.
+16 kHz mono PCM over an authenticated, Tauri-origin-only `/api/stt/live` WebSocket for revisable interim text. When
+the hosted backend is unavailable or selected local, it transcribes separate 3-second windows with 0.5-second overlap;
+the configured NVIDIA Parakeet function currently uses the same fallback because it rejects online recognition. On
+stop, the complete recording still goes through the existing `/api/stt` for the final transcript. Dictation applies
+punctuation, list/restart cleanup and the personal dictionary locally.
 It places the final editable transcript into the Ask composer; Ask remains a separate explicit action. The hotkey
 supports hold-to-finish and tap-to-toggle; Escape cancels. Optional `/api/dictate/polish` accepts only bounded transcript
 text and a constrained tone; it stores nothing and returns the original text if the provider fails. `.docx` export is

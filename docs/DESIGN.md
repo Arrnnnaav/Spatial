@@ -32,6 +32,8 @@ hotkey ─▶ overlay (dim + tools) ─▶ draw mark(s) ─▶ ask panel opens n
   (dimmed), user draws on it. Nothing moves mid-mark; the overlay can't appear in its own capture.
 - **Ask panel:** small floating always-on-top window placed beside the mark (right, else left, else below), shown
   only after candidates are read so it never covers the marked region; Esc/✕ hides it.
+- **Dashboard (desktop):** regular window from the app icon/tray: Home (status, activity), Ask logs, Dictation
+  logs, Settings. The Ask panel holds only the thread and composer; no status or settings.
 - **Tray icon:** status (server up, provider), settings, trace-log toggle, quit.
 
 ## 4. Visual language

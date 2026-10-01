@@ -63,11 +63,11 @@ These are architecture observations, not an accuracy ranking: no shared referenc
 SayStride's Windows implementation has local interim recognition or a Deepgram stream, followed by full-clip
 recognition and cleanup. Spatial sends 16 kHz PCM from the composer Dictate action to an authenticated speech worker;
 interim text revises the composer draft in place, then the complete recording still goes through `/api/stt` for the
-final transcript. The configured NVIDIA Parakeet function currently rejects online recognition, so Spatial falls
-back to separate 3-second windows with 0.5-second overlap rather than repeatedly uploading an ever-growing buffer.
-If cloud streaming or chunk recognition fails, final transcription still works through the existing offline/fallback
-path. Live recognition is currently English; external-app insertion remains final-only so live revisions cannot
-overwrite intervening keystrokes or text in a changed focus target.
+final transcript. When hosted streaming is unavailable or disabled, Spatial recognizes bounded 3-second windows
+locally with 0.5-second overlap; it does not repeatedly send an ever-growing recording. The configured NVIDIA
+Parakeet function currently rejects online recognition, so it uses the same local-window fallback. Live recognition
+is currently English; external-app insertion remains final-only so live revisions cannot overwrite intervening
+keystrokes or text in a changed focus target.
 
 ## Local engines (fallback) — details
 
@@ -92,6 +92,8 @@ Server: **Kyutai pocket-tts** (https://github.com/kyutai-labs/pocket-tts) — 10
 ~200 ms to first audio, faster than real-time on 2 cores, English + fr/de/es/it/pt, voice cloning from a
 short WAV. Model weights and the voice embedding download from Hugging Face on first use.
 `SPATIAL_TTS_VOICE` picks a bundled voice (`alba`, `jane`, `paul`, …) or a path to your own `.wav`.
+On Windows, if that optional package/model is absent or fails to load, the desktop server uses the built-in SAPI
+system voice and returns a WAV. This fallback adds no model download and is reported in `/api/health`.
 
 Alternatives, all CPU:
 - **Piper** — ONNX VITS voices, ~20 MB each, extremely fast, robotic-but-clear; best for very low-end CPUs.

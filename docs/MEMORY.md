@@ -18,6 +18,19 @@ code or git log. Newest first within each section. Remove entries that become wr
 
 ## Facts learned
 
+- **2026-10-01** — Autostart now registers with `--autostart` so sign-in launches stay in the tray; a normal launch
+  opens the dashboard. Existing installs keep the old registry entry (no arg) until Settings is saved once.
+- **2026-09-30** — `/api/stt/live` never sent `done` and could drop the last transcript when the worker finished
+  before the drain loop flushed the queue. Fixed (flush + `done`), regression test added; packaged E2E
+  (`desktop/tests/bundled_server_smoke.py`) passes again after rebuild (live/final WER 0%). Server 251 tests pass.
+
+- **2026-09-29** — Installed speech failure reproduced with a synthetic WAV. The bundled server returned `TTS_UNAVAILABLE`
+  because `pocket_tts` is optional and absent from the release builder; the same packaged `/api/stt` returned
+  `NoSuchFile` although faster-whisper and its base model were present. CTranslate2/PyAV runtime assets were not
+  collected by PyInstaller. The release now collects those packages; packaged SAPI → faster-whisper synthetic speech
+  E2E passes. Local live previews now use the same bounded-window pipeline when NVIDIA is unconfigured or explicitly
+  disabled. Windows SAPI is the no-download TTS fallback. The dashboard separates editable Ask history in SQLite
+  from bounded content-free local activity; no developer telemetry is sent.
 - **2026-09-29** — SayStride comparison: useful behaviors are hold/toggle, Escape, spoken punctuation, list and restart
   cleanup, dictionary replacement and a repeatable WER/latency loop. Keep Spatial's existing STT models and authenticated
   `/api/stt`; Jev judges marked targets/research and should not add latency to transcript rewriting. Desktop dictation
