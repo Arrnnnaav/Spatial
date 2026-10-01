@@ -49,8 +49,11 @@
       const response = await fetch(Spatial.server() + '/api/health', { headers: await Spatial.headers() });
       if (!response.ok) throw new Error('health check failed');
       const next = await response.json();
-      if (health === null && timer !== null) activity('Server reconnected');
+      const wasDown = health === null;
+      if (wasDown && timer !== null) activity('Server reconnected');
       health = next;
+      // The bundled server starts after this window loads: fill lists that failed while it was down.
+      if (wasDown && view === 'home') { refreshTasks(); refreshReminders(); }
     } catch (_) { health = null; }
     $('statusCards').replaceChildren(...D.statusCards(health, snoozed(), shortcutIssues()).map(([title, value]) =>
       el('div', { class: 'status-card' }, [el('small', {}, [title]), el('strong', {}, [value])])));

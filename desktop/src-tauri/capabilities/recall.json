@@ -2,11 +2,15 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "recall",
   "description": "Quick recall popup: shows, hides and focuses itself. Reads history from the local server and copies to the clipboard; it never types into other apps.",
-  "windows": ["recall"],
+  "windows": [
+    "recall"
+  ],
   "permissions": [
     "core:default",
     "core:window:allow-show",
     "core:window:allow-hide",
-    "core:window:allow-set-focus"
+    "core:window:allow-set-focus",
+    "allow-desktop-token",
+    "allow-pairing-token"
   ]
 }

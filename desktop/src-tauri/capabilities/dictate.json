@@ -1,15 +1,17 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
-  "identifier": "reminder",
-  "description": "Reminder popup: may only show/hide itself and position itself in the screen corner. It cannot take focus.",
+  "identifier": "dictate",
+  "description": "Dictation pill: non-focusable; may position/show/hide itself, insert dictated text into the recorded target and arm Esc.",
   "windows": [
-    "reminder"
+    "dictate"
   ],
   "permissions": [
     "core:default",
     "core:window:allow-show",
     "core:window:allow-hide",
     "core:window:allow-set-position",
+    "allow-paste-dictation",
+    "allow-set-dictation-active",
     "allow-desktop-token",
     "allow-pairing-token"
   ]
