@@ -22,7 +22,7 @@ from app.speech_eval import summarize, word_errors, words  # noqa: E402
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("manifest", type=Path)
-    parser.add_argument("--backend", choices=("auto", "nvidia", "local"), default="auto")
+    parser.add_argument("--backend", choices=("auto", "nvidia", "local", "deepgram"), default="auto")
     parser.add_argument("--runs", type=int, default=1, help="repeat each clip for a more stable latency sample")
     parser.add_argument("--include-transcripts", action="store_true", help="include recognized and reference text in output")
     args = parser.parse_args()

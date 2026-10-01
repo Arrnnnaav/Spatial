@@ -23,6 +23,27 @@ A100-class GPU on Linux and has no hosted API. Worth revisiting for a future liv
 The desktop panel has the same 🎤 / 🔊 buttons; its Rust shell grants the microphone to its own bundled pages so
 WebView2 does not ask on every launch.
 
+## Deepgram (opt-in, evaluation first)
+
+Batch speech-to-text through Deepgram (`nova-3`) exists as an **opt-in** backend: `SPATIAL_SPEECH_BACKEND=deepgram`.
+`auto` never picks it. On any failure the local model answers and the response carries `fallback_reason: deepgram: ...`.
+Put the key only in the per-user file `%LOCALAPPDATA%\Spatial\server.env` (the server now reads it; it never overrides a
+real environment variable or `server/.env`):
+
+```
+DEEPGRAM_API_KEY=your-trial-key
+```
+
+The key is never logged, returned by an endpoint, or shown in the UI. Streaming (live transcript) through Deepgram is
+**not built**: only add it if the evaluation below shows it beats the current path (see sub-project 7 phase F).
+
+### Recording a consented test set
+
+```powershell
+pip install sounddevice                      # one-time, server venv
+python scripts/record_clips.py               # reads 12 prompts aloud -> ~/spatial-speech-clips/{clips,manifest.json}
+```
+
 ## Dictation quality and latency evaluation
 
 Use a consented, representative set of recordings with human-checked references; keep that set under user control.
@@ -38,6 +59,7 @@ Run each configured path against the identical manifest, preferably in the same 
 py -3.12 scripts/eval_speech.py path/to/manifest.json --backend auto --runs 3
 py -3.12 scripts/eval_speech.py path/to/manifest.json --backend nvidia --runs 3
 py -3.12 scripts/eval_speech.py path/to/manifest.json --backend local --runs 3
+py -3.12 scripts/eval_speech.py path/to/manifest.json --backend deepgram --runs 3   # needs DEEPGRAM_API_KEY
 ```
 
 The report includes weighted word error rate, failure-penalized WER, fallback use, p50/p95 request latency and real-time

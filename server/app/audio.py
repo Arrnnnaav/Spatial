@@ -1,6 +1,6 @@
 """Speech in/out. Primary: NVIDIA hosted models (app/nvidia_speech.py, ~1 s, no model load). Fallback: local CPU
 faster-whisper (STT) and Kyutai pocket-tts (TTS), lazy-loaded and optional; the endpoints report 'unavailable'
-instead of failing the server. `SPATIAL_SPEECH_BACKEND=auto|nvidia|local`."""
+instead of failing the server. `SPATIAL_SPEECH_BACKEND=auto|nvidia|local|deepgram` (deepgram is opt-in)."""
 from __future__ import annotations
 
 import gc
@@ -189,6 +189,17 @@ def backend() -> str:
 
 
 def transcribe(audio_bytes: bytes, language: str | None = None) -> dict:
+    if settings.speech_backend == "deepgram":  # explicit opt-in only; `auto` never picks it
+        from app import deepgram_speech
+
+        try:
+            return deepgram_speech.transcribe(audio_bytes, language)
+        except Exception as exc:  # network, auth, bad audio: the local model still answers
+            fallback = _local_transcribe(audio_bytes, language)
+            fallback["fallback_reason"] = "deepgram: " + (
+                str(exc)[:40] if isinstance(exc, deepgram_speech.SpeechError) else type(exc).__name__
+            )
+            return fallback
     if backend() == "nvidia":
         from app import nvidia_speech
 

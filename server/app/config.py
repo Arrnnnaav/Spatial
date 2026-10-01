@@ -12,7 +12,22 @@ try:  # .env is a convenience, not a requirement
 
     load_dotenv(Path(os.environ.get("SPATIAL_ENV_FILE") or Path(__file__).resolve().parents[1] / ".env"))
 except ImportError:  # pragma: no cover
-    pass
+    load_dotenv = None
+
+
+def load_user_env(path: Path | None = None) -> None:
+    """Per-user key file for the installed app (%LOCALAPPDATA%/Spatial/server.env). Never overrides the real
+    environment or `server/.env`; a missing file is fine. Keys here are never logged or shown in the UI."""
+    if load_dotenv is None:
+        return
+    if path is None:
+        base = os.environ.get("LOCALAPPDATA")
+        path = Path(base) / "Spatial" / "server.env" if base else None
+    if path is not None and path.is_file():
+        load_dotenv(path, override=False)
+
+
+load_user_env()
 
 
 def _env(name: str, default: str | None = None) -> str | None:
@@ -75,6 +90,9 @@ class Settings:
     # present, local CPU models (faster-whisper, pocket-tts) as fallback; nvidia | local force one side.
     speech_backend: str = _env("SPATIAL_SPEECH_BACKEND", "auto").lower()
     speech_timeout: float = float(_env("SPATIAL_SPEECH_TIMEOUT", "12"))
+    # Deepgram (batch REST) is opt-in only: SPATIAL_SPEECH_BACKEND=deepgram. Never chosen by `auto`.
+    deepgram_api_key: str | None = _env("DEEPGRAM_API_KEY")
+    deepgram_model: str = _env("DEEPGRAM_MODEL", "nova-3")
     audio_warm: bool = _env("SPATIAL_AUDIO_WARM", "1") not in {"0", "false", "no"}  # load speech at startup
     nvidia_asr_function: str = _env("NVIDIA_ASR_FUNCTION", "d3fe9151-442b-4204-a70d-5fcc597fd610")  # parakeet-tdt-0.6b-v2
     nvidia_asr_multilingual_function: str = _env("NVIDIA_ASR_MULTI_FUNCTION", "b702f636-f60c-4a3d-a6f4-f3568c13bd7d")  # whisper-large-v3
