@@ -349,3 +349,20 @@ def test_tts_has_one_overall_budget(monkeypatch):
     monkeypatch.setattr(nvidia_speech, "_service", lambda kind, fid: SlowTTS())
     with pytest.raises(nvidia_speech.SpeechError, match="timeout"):
         nvidia_speech.synthesize("One. " * 900)
+
+
+def test_local_stt_accepts_region_language_codes(monkeypatch):
+    """/api/stt allows codes like en-US / en-GB; faster-whisper only knows the primary subtag."""
+    seen = []
+
+    class FakeModel:
+        def transcribe(self, _audio, language=None, **_kwargs):
+            seen.append(language)
+            if language and "-" in language:
+                raise ValueError("unsupported language")
+            return iter([SimpleNamespace(text=" hello ")]), SimpleNamespace(language="en", duration=1.0)
+
+    monkeypatch.setattr(audio, "_whisper", lambda: FakeModel())
+    for code in ("en-GB", "en-US", "EN", None, "pt-BR"):
+        assert audio._local_transcribe(b"x", code)["status"] == "ok", code
+    assert seen == ["en", "en", "en", None, "pt"]

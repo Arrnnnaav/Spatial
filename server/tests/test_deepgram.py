@@ -4,6 +4,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1]))
 
+from types import SimpleNamespace
+
 import pytest
 
 from app import audio, config, deepgram_speech
@@ -47,7 +49,7 @@ def test_transcribe_parses_response_and_sends_token_header_and_language(
         seen.update(url=url, headers=headers, size=len(content), timeout=timeout)
         return FakeResponse()
 
-    monkeypatch.setattr(deepgram_speech.httpx, "post", fake_post)
+    monkeypatch.setattr(deepgram_speech, "_client", lambda: SimpleNamespace(post=fake_post))
     result = deepgram_speech.transcribe(b"\x00" * 10, "en-GB")
     assert result == {
         "status": "ok",
@@ -78,12 +80,10 @@ def test_auth_failure_raises_a_safe_error_without_the_key(key, monkeypatch):
 
 def test_audio_uses_deepgram_when_selected_and_falls_back_to_local(key, monkeypatch):
     monkeypatch.setattr(settings, "speech_backend", "deepgram")
-    monkeypatch.setattr(deepgram_speech.httpx, "post", lambda *a, **k: FakeResponse())
+    monkeypatch.setattr(deepgram_speech, "_client", lambda: SimpleNamespace(post=lambda *a, **k: FakeResponse()))
     assert audio.transcribe(b"x")["backend"] == "deepgram"
 
-    monkeypatch.setattr(
-        deepgram_speech.httpx, "post", lambda *a, **k: FakeResponse(500, {})
-    )
+    monkeypatch.setattr(deepgram_speech, "_client", lambda: SimpleNamespace(post=lambda *a, **k: FakeResponse(500, {})))
     monkeypatch.setattr(
         audio,
         "_local_transcribe",
@@ -118,3 +118,13 @@ def test_user_env_file_is_loaded_without_overriding_real_environment(
     assert os.environ["SPATIAL_TEST_KEEP"] == "real"
     config.load_user_env(tmp_path / "missing.env")  # absent file is fine
     monkeypatch.delenv("DEEPGRAM_API_KEY", raising=False)
+
+
+def test_one_keep_alive_client_is_reused_across_calls(monkeypatch):
+    """A fresh client per call pays a TLS handshake each time (about a second from far away)."""
+    monkeypatch.setattr(deepgram_speech, "_http", None)
+    first = deepgram_speech._client()
+    assert deepgram_speech._client() is first
+    assert isinstance(first, deepgram_speech.httpx.Client)
+    first.close()
+    monkeypatch.setattr(deepgram_speech, "_http", None)

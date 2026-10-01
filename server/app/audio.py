@@ -73,6 +73,7 @@ def _cached_whisper_dir(size: str) -> str:
 
 def _local_transcribe(audio_bytes: bytes, language: str | None = None) -> dict:
     _touch()
+    language = language.split("-")[0].lower() if language else None  # faster-whisper knows 'en', not 'en-GB'
     try:
         model = _whisper()
     except Exception as exc:

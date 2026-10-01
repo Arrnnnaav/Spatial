@@ -37,6 +37,23 @@ DEEPGRAM_API_KEY=your-trial-key
 The key is never logged, returned by an endpoint, or shown in the UI. Streaming (live transcript) through Deepgram is
 **not built**: only add it if the evaluation below shows it beats the current path (see sub-project 7 phase F).
 
+### Result on a synthetic set (2026-10-01, indicative only)
+
+`scripts/make_synthetic_clips.py` speaks the 12 prompts with 3 Windows voices under clean / fast / noisy (10 dB) / quiet
+conditions (144 clips, identical audio for both engines). Local = faster-whisper `base` on this CPU; Deepgram = `nova-3`
+over the network from India with a kept-alive connection.
+
+| | local | Deepgram |
+|---|---|---|
+| WER, all prompts | 15.8 % | 11.6 % |
+| WER without the numbers prompt ("$4,280" vs words inflates both) | 11.8 % | **7.1 %** |
+| clean / fast / noisy / quiet | 8.6 / 10.8 / **14.0** / 9.5 | 6.9 / 6.7 / **6.0** / 5.8 |
+| latency p50 / p95 | 870 / 968 ms | **347 / 845 ms** |
+
+Deepgram was clearly better under noise and on names and tech terms; both fail the same way on spoken numbers. Caveat:
+synthetic voices are cleaner than people, so absolute numbers are optimistic. Confirm on real recordings
+(`scripts/record_clips.py`) before treating this as final. Streaming (live transcript) through Deepgram is still not built.
+
 ### Recording a consented test set
 
 ```powershell

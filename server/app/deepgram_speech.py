@@ -13,6 +13,17 @@ class SpeechError(Exception):
     pass
 
 
+_http: httpx.Client | None = None
+
+
+def _client() -> httpx.Client:
+    """One kept-alive connection pool: a fresh client per call re-pays the TLS handshake (about a second from far away)."""
+    global _http
+    if _http is None:
+        _http = httpx.Client(timeout=settings.speech_timeout)
+    return _http
+
+
 def available() -> bool:
     return bool(settings.deepgram_api_key)
 
@@ -23,8 +34,8 @@ def transcribe(audio_bytes: bytes, language: str | None = None) -> dict:
     params = f"model={settings.deepgram_model}&smart_format=true&punctuate=true"
     params += f"&language={language}" if language else "&language=en"
     try:
-        response = httpx.post(
-            f"{URL}?{params}", content=audio_bytes, timeout=settings.speech_timeout,
+        response = _client().post(
+            f"{URL}?{params}", content=audio_bytes,
             headers={"Authorization": f"Token {settings.deepgram_api_key}", "Content-Type": "application/octet-stream"},
         )
     except httpx.HTTPError as exc:
