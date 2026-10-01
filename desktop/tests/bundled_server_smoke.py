@@ -208,6 +208,11 @@ def main() -> None:
             urlopen(Request(f"http://127.0.0.1:18787/api/dictations/{created['id']}", headers=desktop_headers, method="DELETE"), timeout=10).close()
             if json.load(urlopen(Request("http://127.0.0.1:18787/api/dictations", headers=desktop_headers), timeout=10)) != []:
                 raise SystemExit("Bundled dictation entry was not deleted")
+            retention_url = "http://127.0.0.1:18787/api/retention"
+            put = json.load(urlopen(Request(retention_url, data=json.dumps({"days": 90}).encode(), headers=desktop_headers, method="PUT"), timeout=10))
+            if put.get("days") != 90 or json.load(urlopen(Request(retention_url, headers=desktop_headers), timeout=10)).get("days") != 90:
+                raise SystemExit("Bundled retention setting did not persist")
+            urlopen(Request(retention_url, data=json.dumps({"days": None}).encode(), headers=desktop_headers, method="PUT"), timeout=10).close()
             soon = (datetime.now(timezone.utc) - timedelta(seconds=5)).isoformat()
             task = json.load(urlopen(Request("http://127.0.0.1:18787/api/tasks", data=json.dumps({"text": "Smoke task"}).encode(),
                                              headers=desktop_headers, method="POST"), timeout=10))
@@ -256,7 +261,7 @@ def main() -> None:
             print(
                 "bundled server ready; authenticated health OK; "
                 f"protocol={health['protocol_version']}; speech={health['audio']['backend']}; "
-                f"history clear OK; dictation entries OK; tasks+reminders OK; TTS={tts_backend}; live WER={live_wer:.0%}; final WER={wer:.0%}"
+                f"history clear OK; dictation entries OK; tasks+reminders OK; retention OK; TTS={tts_backend}; live WER={live_wer:.0%}; final WER={wer:.0%}"
             )
         finally:
             if process.poll() is None:

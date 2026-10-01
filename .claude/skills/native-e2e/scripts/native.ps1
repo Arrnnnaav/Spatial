@@ -23,6 +23,7 @@ public static class SpatialWin {
   public static bool PrintTo(IntPtr h, IntPtr dc) { return PrintWindow(h, dc, 2); }
 }
 '@
+Add-Type -MemberDefinition '[DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y); [DllImport("user32.dll")] public static extern void mouse_event(uint f, uint dx, uint dy, uint d, UIntPtr e); [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);' -Name Mouse -Namespace SpatialE2E
 [void][SpatialWin]::SetProcessDPIAware()
 
 function Start-SpatialTest([switch]$Visible) {
@@ -50,6 +51,30 @@ function Save-SpatialWindow($ProcessId, [string]$Title, [string]$Path) {
   $ok = [SpatialWin]::PrintTo($h, $dc); $g.ReleaseHdc($dc); $g.Dispose()
   if ($ok) { $bmp.Save($Path) }
   $bmp.Dispose(); return $ok
+}
+
+function Click-SpatialWindow($ProcessId, [string]$Title, [int]$X, [int]$Y) {
+  # X,Y are pixels inside the window as seen in a Save-SpatialWindow capture (DPI-aware, window top-left = 0,0).
+  $h = [SpatialWin]::Find([uint32]$ProcessId, $Title)
+  if ($h -eq [IntPtr]::Zero) { return $false }
+  [void][SpatialE2E.Mouse]::SetForegroundWindow($h); Start-Sleep -Milliseconds 300
+  $r = [SpatialWin]::Rect($h)
+  [void][SpatialE2E.Mouse]::SetCursorPos($r.L + $X, $r.T + $Y); Start-Sleep -Milliseconds 150
+  [SpatialE2E.Mouse]::mouse_event(0x0002, 0, 0, 0, [UIntPtr]::Zero); Start-Sleep -Milliseconds 80   # left down
+  [SpatialE2E.Mouse]::mouse_event(0x0004, 0, 0, 0, [UIntPtr]::Zero)                                 # left up
+  return $true
+}
+
+function Scroll-SpatialWindow($ProcessId, [string]$Title, [int]$X, [int]$Y, [int]$Notches = -5) {
+  # Mouse wheel over capture coordinates X,Y; negative notches scroll down.
+  $h = [SpatialWin]::Find([uint32]$ProcessId, $Title)
+  if ($h -eq [IntPtr]::Zero) { return $false }
+  $r = [SpatialWin]::Rect($h)
+  [void][SpatialE2E.Mouse]::SetCursorPos($r.L + $X, $r.T + $Y); Start-Sleep -Milliseconds 150
+  $delta = [BitConverter]::ToUInt32([BitConverter]::GetBytes([int]($Notches * 120)), 0)
+  [SpatialE2E.Mouse]::mouse_event(0x0800, 0, 0, $delta, [UIntPtr]::Zero)
+  Start-Sleep -Milliseconds 400
+  return $true
 }
 
 function Get-SpatialHeaders {  # auth headers for the local server; values are never printed

@@ -56,6 +56,7 @@ from app import (
     desktop,
     dictations,
     personal,
+    retention,
     research,
     semantic,
     system_one,
@@ -85,7 +86,17 @@ async def lifespan(_: FastAPI):
         settings.ocr_enabled
     ):  # RapidOCR model load takes ~4 s; pay it before the first ask
         threading.Thread(target=ocr_blocks_warm, daemon=True).start()
+    async def prune_loop():
+        while True:  # retention is enforced here so it works with the dashboard closed
+            try:
+                await asyncio.to_thread(retention.prune)
+            except Exception:
+                pass
+            await asyncio.sleep(6 * 3600)
+
+    pruner = asyncio.create_task(prune_loop())
     yield
+    pruner.cancel()
 
 
 app = FastAPI(title="Spatial — Point & Ask", version="0.2.0", lifespan=lifespan)
@@ -1293,6 +1304,24 @@ def remove_reminder(reminder_id: str):
             404, {"code": "REMINDER_NOT_FOUND", "message": "reminder not found"}
         )
     return {"deleted": reminder_id}
+
+
+class RetentionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    days: int | None = None
+
+
+@app.get("/api/retention", dependencies=_PERSONAL)
+def get_retention():
+    return {"days": retention.get_days()}
+
+
+@app.put("/api/retention", dependencies=_PERSONAL)
+def put_retention(payload: RetentionBody):
+    if payload.days not in retention.ALLOWED_DAYS:
+        raise HTTPException(422, {"code": "BAD_RETENTION", "message": "choose forever, 7, 30, 90 or 365 days"})
+    retention.set_days(payload.days)
+    return {"days": payload.days, "pruned": retention.prune()}
 
 
 class DictationCreate(BaseModel):

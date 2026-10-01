@@ -247,6 +247,8 @@
     } catch (error) { addNotice('Could not clear dictations: ' + error.message); }
   }
 
+  let savedRetention = '';
+
   async function loadSettings() {
     $('saved').textContent = '';
     $('server').value = Spatial.server();
@@ -256,6 +258,8 @@
     $('dictatePolish').checked = Spatial.load('spatial.dictatePolish', '0') === '1';
     $('dictionary').value = Spatial.load('spatial.dictionary', '');
     $('autostart').checked = await T.autostart.isEnabled().catch(() => false);
+    try { savedRetention = String((await api('/api/retention')).days || ''); $('retention').value = savedRetention; }
+    catch (_) { $('retention').disabled = true; }
     renderNotices();
   }
 
@@ -266,6 +270,14 @@
     Spatial.save('spatial.systemOne', $('systemOne').checked ? '1' : '0');
     Spatial.save('spatial.dictatePolish', $('dictatePolish').checked ? '1' : '0');
     Spatial.save('spatial.dictionary', $('dictionary').value.slice(0, 4000));
+    const days = $('retention').value;
+    if (!$('retention').disabled && days !== savedRetention) {
+      const label = $('retention').selectedOptions[0].textContent;
+      if (!days || window.confirm('Delete Ask logs and dictations older than ' + label + ' now, and keep deleting automatically?')) {
+        try { await api('/api/retention', 'PUT', { days: days ? Number(days) : null }); savedRetention = days; activity('History retention changed'); }
+        catch (_) { addNotice('Could not change history retention.'); $('retention').value = savedRetention; }
+      } else { $('retention').value = savedRetention; }
+    }
     try {
       if ($('autostart').checked) await T.autostart.enable(); else await T.autostart.disable();
       $('saved').textContent = 'Saved.';

@@ -26,7 +26,7 @@ main button:hover { background:var(--chip-hover); } main button.danger { color:v
 .history-card p { margin:4px 0 0; color:var(--muted); font-size:12px; overflow-wrap:anywhere; }
 .history-detail { white-space:pre-wrap; overflow-wrap:anywhere; padding:10px; border:1px solid var(--line); border-radius:9px; margin:8px 0; }
 label { display:block; font-size:12px; color:var(--muted); margin:10px 0 4px; } label.check { color:var(--fg); }
-input[type=text], input[type=password], input[type=url], textarea { width:100%; padding:7px 9px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--fg); font:inherit; }
+input[type=text], input[type=password], input[type=url], textarea, select { width:100%; padding:7px 9px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--fg); font:inherit; }
 input:focus, textarea:focus { outline:2px solid var(--accent); outline-offset:-1px; }
 #noticeList { padding-left:18px; } #noticeList li.err { color:var(--err); } ul { padding-left:18px; }
 

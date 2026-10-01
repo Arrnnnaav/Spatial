@@ -14,7 +14,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 | 4 | Desktop app (Tauri, Windows → macOS) | Windows MVP hardening in progress | `docs/superpowers/specs/2026-09-24-desktop-app-design.md` |
 | 5 | Desktop ↔ extension bridge, macOS AX | Bridge in progress; macOS next | `docs/superpowers/specs/2026-09-28-desktop-extension-bridge-design.md` |
 | 6 | Windows dictation beta | Implementation in progress; microphone/native UI E2E pending | SayStride-informed behavior in desktop app; no source copied |
-| 7 | Desktop dashboard + personal history (phases A–F) | A–E built 2026-10-01; native E2E pending | `docs/superpowers/specs/2026-10-01-desktop-dashboard-design.md`, plan `…/plans/2026-10-01-dashboard-shell.md` |
+| 7 | Desktop dashboard + personal history (phases A–F) | A–E built 2026-10-01 (+ retention); native E2E pending | `docs/superpowers/specs/2026-10-01-desktop-dashboard-design.md`, plan `…/plans/2026-10-01-dashboard-shell.md` |
 
 ### Sub-project 7 phases
 - [x] A Dashboard shell (Home/Ask logs/Dictation logs/Settings), panel stripped, notices to Settings, `DELETE /api/contexts`
@@ -23,7 +23,7 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 - [x] B `Alt+Shift+S` mark-first → compact panel (Ask/Dictate; already so); `Alt+Shift+D`/tray dictate straight into the foreground app (Copy fallback); native E2E pending. Live preview for external dictation not yet shown (pill only)
 - [x] C Dictation entries: `dictations` table + `/api/dictations` CRUD, title/summary (provider, local fallback), source app via window handle (sensitive → empty), live transcript in the pill, dashboard Dictation logs (edit/delete/.docx); native E2E pending
 - [x] D Home tasks/notes + reminders: `tasks`/`reminders` tables + `/api/tasks*`/`/api/reminders*`, hidden `reminder` window polls every 15 s and pops up in the corner (no new Rust dependency); native check 2026-10-01: with the dashboard hidden (`--autostart`) a due reminder popped up within ~2 s, fired once, Snooze created a +10 min reminder, Dismiss hid it
-- [x] E Quick recall popup `Alt+Shift+H` (Ditto-style, Spatial Ask + dictation history only; copy only, never types): search, ↑↓, Enter copy, Shift+Enter plain text, F3 preview, Esc; native check 2026-10-01: Alt+Shift+H opens it, Enter copied the entry text exactly and closed it. Retention/auto-delete setting not done
+- [x] E Quick recall popup `Alt+Shift+H` (Ditto-style, Spatial Ask + dictation history only; copy only, never types): search, ↑↓, Enter copy, Shift+Enter plain text, F3 preview, Esc; native check 2026-10-01: Alt+Shift+H opens it, Enter copied the entry text exactly and closed it. Retention: Settings → History (forever/1y/90d/30d/7d), enforced server-side (`retention.py`, hourly-ish prune loop + on change), confirm before deleting
 - [ ] F Deepgram — only if speech eval shows NVIDIA is worse
 
 ## Now

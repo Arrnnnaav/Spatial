@@ -14,6 +14,8 @@ $app = Start-SpatialTest                                  # tray-only like sign-
 Get-SpatialWindows $app.Id                                # VISIBLE/hidden per window
 Send-Keys 0x12,0x10,0x48                                  # Alt+Shift+H (S=0x53 ask, D=0x44 dictate, Esc=0x1B, Enter=0x0D)
 Save-SpatialWindow $app.Id 'Spatial Recall' "$env:TEMP\recall.png"   # then Read the PNG to look at it
+Click-SpatialWindow $app.Id 'Spatial' 74 294              # click at capture coordinates (here: dashboard "Settings" nav)
+Scroll-SpatialWindow $app.Id 'Spatial' 700 500 -8         # mouse wheel at capture coordinates; negative scrolls down
 $h = Get-SpatialHeaders                                   # for Invoke-RestMethod against http://127.0.0.1:8787
 Stop-SpatialTest                                          # ALWAYS finish with this
 ```
