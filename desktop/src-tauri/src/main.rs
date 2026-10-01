@@ -11,6 +11,7 @@ use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 
 const HOTKEY_LABEL: &str = "Alt+Shift+S";
 const DICTATION_HOTKEY_LABEL: &str = "Alt+Shift+D";
+const RECALL_HOTKEY_LABEL: &str = "Alt+Shift+H";
 static ASK_SNOOZED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 static DICTATION_ACTIVE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 const MAX_NOTICES: usize = 5;
@@ -203,6 +204,7 @@ fn start_dictation(app: &tauri::AppHandle) {
 fn main() {
     let hotkey = Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::KeyS);
     let dictate_hotkey = Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::KeyD);
+    let recall_hotkey = Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::KeyH);
     let escape_hotkey = Shortcut::new(None, Code::Escape);
     tauri::Builder::default()
         // Must be first: prevent duplicate processes from competing for global hotkeys/server ownership.
@@ -217,6 +219,9 @@ fn main() {
                     if shortcut == &hotkey && event.state() == ShortcutState::Pressed
                         && !ASK_SNOOZED.load(std::sync::atomic::Ordering::Relaxed) {
                         start_ask(app);
+                    }
+                    if shortcut == &recall_hotkey && event.state() == ShortcutState::Pressed {
+                        let _ = app.emit_to("recall", "spatial://recall-open", ());
                     }
                     if shortcut == &dictate_hotkey {
                         if event.state() == ShortcutState::Pressed { start_dictation(app); }
@@ -254,14 +259,18 @@ fn main() {
             if let Err(err) = app.global_shortcut().register(dictate_hotkey) {
                 notify(app.handle(), format!("Dictate shortcut {DICTATION_HOTKEY_LABEL} unavailable. Use the Dictate button or tray. {err}"));
             }
+            if let Err(err) = app.global_shortcut().register(recall_hotkey) {
+                notify(app.handle(), format!("Recall shortcut {RECALL_HOTKEY_LABEL} unavailable. Use Recall history from the tray. {err}"));
+            }
             let ask = MenuItem::with_id(app, "ask", format!("Ask about the screen ({HOTKEY_LABEL})"), true, None::<&str>)?;
             let dictate = MenuItem::with_id(app, "dictate", format!("Dictate ({DICTATION_HOTKEY_LABEL})"), true, None::<&str>)?;
+            let recall = MenuItem::with_id(app, "recall", format!("Recall history ({RECALL_HOTKEY_LABEL})"), true, None::<&str>)?;
             let open = MenuItem::with_id(app, "open", "Open Spatial", true, None::<&str>)?;
             let snooze = MenuItem::with_id(app, "snooze", "Snooze Ask shortcut", true, None::<&str>)?;
             let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
             let server = MenuItem::with_id(app, "server", "Start server", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Quit Spatial", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&ask, &dictate, &open, &snooze, &settings, &server, &quit])?;
+            let menu = Menu::with_items(app, &[&ask, &dictate, &recall, &open, &snooze, &settings, &server, &quit])?;
             TrayIconBuilder::new()
                 .icon(app.default_window_icon().cloned().expect("bundle icon"))
                 .tooltip(format!("Spatial — {HOTKEY_LABEL} to point & ask"))
@@ -269,6 +278,7 @@ fn main() {
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "ask" => start_ask(app),
                     "dictate" => start_dictation(app),
+                    "recall" => { let _ = app.emit_to("recall", "spatial://recall-open", ()); },
                     "open" => show_dashboard(app, "home"),
                     "snooze" => { ASK_SNOOZED.store(true, std::sync::atomic::Ordering::Relaxed); let _ = app.emit_to("dashboard", "spatial://snooze", ()); },
                     "settings" => show_dashboard(app, "settings"),

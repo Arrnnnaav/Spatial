@@ -86,6 +86,39 @@
     return { id: String(reminder.id), text: String(reminder.text), when: due.toLocaleString(), state };
   }
 
-  root.SpatialDashboard = { ACTIVITY_KEY, MAX_ACTIVITY, readActivity, recordActivity, statusCards, historyCard, dictationCard, quickDue, localInputToIso, taskCard, reminderCard };
+  /* Quick recall: Spatial's own Ask + dictation history as one searchable list. Plain strings only. */
+  function recallItems(contexts, dictations) {
+    const asks = (contexts || []).map((context) => {
+      const turns = (context.answer && context.answer.history) || [];
+      const latest = turns[turns.length - 1] || {};
+      const page = context.page || {};
+      return { kind: 'ask', id: String(context.id), title: String(latest.question || context.question || 'Spatial Ask'),
+        subtitle: String(page.title || page.surface || ''), text: String(latest.answer || (context.answer && context.answer.text) || ''),
+        ts: new Date(context.updated_at).getTime() };
+    });
+    const notes = (dictations || []).map((entry) => ({ kind: 'dictation', id: String(entry.id), title: String(entry.title || 'Dictation'),
+      subtitle: String(entry.summary || ''), text: String(entry.text || ''), ts: new Date(entry.created_at).getTime() }));
+    return asks.concat(notes).sort((a, b) => b.ts - a.ts).map((item) => ({ ...item, when: new Date(item.ts).toLocaleString() }));
+  }
+
+  function filterRecall(items, query) {
+    const words = String(query || '').toLowerCase().split(/\s+/).filter(Boolean);
+    if (!words.length) return items;
+    return items.filter((item) => {
+      const haystack = (item.title + ' ' + item.subtitle + ' ' + item.text).toLowerCase();
+      return words.every((word) => haystack.includes(word));
+    });
+  }
+
+  function plainText(text) {
+    return String(text || '')
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/^\s*(?:[-*]|\d+[.)])\s+/gm, '')
+      .replace(/\*\*([^*\n]+)\*\*/g, '$1')
+      .replace(/`([^`\n]+)`/g, '$1')
+      .replace(/\s*\[\d{1,2}\]/g, '');
+  }
+
+  root.SpatialDashboard = { ACTIVITY_KEY, MAX_ACTIVITY, readActivity, recordActivity, statusCards, historyCard, dictationCard, quickDue, localInputToIso, taskCard, reminderCard, recallItems, filterRecall, plainText };
   if (typeof module !== 'undefined') module.exports = root.SpatialDashboard;
 })(typeof window === 'undefined' ? globalThis : window);

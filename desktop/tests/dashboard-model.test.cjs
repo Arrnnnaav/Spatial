@@ -88,3 +88,28 @@ test('reminder and task cards keep text plain and label state', () => {
   assert.equal(D.reminderCard({ id: 'r', text: 'x', due_at: '2026-10-01T09:00:00+00:00', fired_at: '2026-10-01T09:00:05+00:00' }, now).state, 'Done');
   assert.deepEqual(D.taskCard({ id: 't', text: 'Milk', note: 'n', done: true }), { id: 't', text: 'Milk', note: 'n', done: true });
 });
+
+const ctx = (id, q, a, when, title) => ({ id, updated_at: when, question: q, page: { title }, answer: { history: [{ question: q, answer: a }] } });
+
+test('recall merges Ask history and dictations newest first with plain-string fields', () => {
+  const items = D.recallItems(
+    [ctx('c1', 'What is this?', 'It is **a** `thing` [1].', '2026-10-01T08:00:00+00:00', 'Page A')],
+    [{ id: 'd1', created_at: '2026-10-01T09:00:00+00:00', title: '<b>Note</b>', summary: 's', text: 'Call Sam' }],
+  );
+  assert.deepEqual(items.map((i) => [i.kind, i.id]), [['dictation', 'd1'], ['ask', 'c1']]);
+  assert.equal(items[0].title, '<b>Note</b>');
+  assert.equal(items[1].title, 'What is this?');
+  assert.equal(items[1].text, 'It is **a** `thing` [1].');
+});
+
+test('recall filter matches every word anywhere, case-insensitively, and empty query keeps all', () => {
+  const items = D.recallItems([ctx('c1', 'Budget review', 'Numbers look fine', '2026-10-01T08:00:00+00:00', 'Sheet')],
+    [{ id: 'd1', created_at: '2026-10-01T09:00:00+00:00', title: 'Call Sam', summary: '', text: 'about the budget' }]);
+  assert.equal(D.filterRecall(items, '').length, 2);
+  assert.deepEqual(D.filterRecall(items, 'BUDGET sam').map((i) => i.id), ['d1']);
+  assert.equal(D.filterRecall(items, 'zzz').length, 0);
+});
+
+test('plain text drops markdown, citation markers and list bullets but keeps wording', () => {
+  assert.equal(D.plainText('## Title\n- **bold** and `code` [2]\n1. next'), 'Title\nbold and code\nnext');
+});
