@@ -121,3 +121,56 @@ test('speech destination wording never claims on-device when audio goes to a clo
   assert.equal(D.speechDestination(undefined), ' — on this computer');
   assert.equal(D.speechDestination({ backend: 'something-new' }), ' — speech provider unknown');
 });
+
+test('onboarding steps reflect provider key and first Ask, and finish only when both are done', () => {
+  const none = D.onboardingSteps({ providerConfigured: false, hasAsked: false });
+  assert.deepEqual(none.map((s) => [s.id, s.done]), [['key', false], ['ask', false]]);
+  assert.equal(D.onboardingComplete(none), false);
+  const keyOnly = D.onboardingSteps({ providerConfigured: true, hasAsked: false });
+  assert.deepEqual(keyOnly.map((s) => s.done), [true, false]);
+  const all = D.onboardingSteps({ providerConfigured: true, hasAsked: true });
+  assert.equal(D.onboardingComplete(all), true);
+  assert.ok(all.every((s) => typeof s.label === 'string' && s.label.length > 5));
+});
+
+test('key rows are ordered with friendly labels and carry only a configured flag', () => {
+  const rows = D.keyRows({ OPENAI_API_KEY: true, DEEPGRAM_API_KEY: false, OPENROUTER_API_KEY: false });
+  assert.equal(rows[0].name, 'OPENROUTER_API_KEY');
+  assert.match(rows[0].label, /OpenRouter/);
+  assert.equal(rows.find((r) => r.name === 'OPENAI_API_KEY').configured, true);
+  assert.equal(rows.find((r) => r.name === 'ANTHROPIC_API_KEY').configured, false);  // missing from the map = not set
+  assert.deepEqual(Object.keys(rows[0]).sort(), ['configured', 'label', 'name']);
+  assert.equal(rows.length, 7);
+});
+
+test('answer provider readiness needs a real key (or Bedrock); Ollama alone is labelled, never "ready"', () => {
+  const ollamaOnly = { providers: [{ name: 'ollama', configured: true }, { name: 'openrouter', configured: false }] };
+  assert.equal(D.answerProviderReady(ollamaOnly, { OPENROUTER_API_KEY: false }), false);
+  assert.equal(D.answerProviderReady(ollamaOnly, { OPENROUTER_API_KEY: true }), true);
+  assert.equal(D.answerProviderReady(ollamaOnly, { NVIDIA_API_KEY: true }), true);
+  assert.equal(D.answerProviderReady({ providers: [{ name: 'bedrock', configured: true }] }, {}), true);
+  assert.equal(D.answerProviderReady(null, null), false);
+  // TypeSafe/Tavily/Deepgram keys are not answer providers
+  assert.equal(D.answerProviderReady(ollamaOnly, { TYPESAFE_API_KEY: true, DEEPGRAM_API_KEY: true }), false);
+});
+
+test('Home card says Local only when just Ollama is configured', () => {
+  const cards = (health) => Object.fromEntries(D.statusCards(health, false));
+  assert.equal(cards({ providers: [{ name: 'ollama', configured: true }] })['Answer provider'], 'Local only · Ollama must be running');
+  assert.equal(cards({ providers: [{ name: 'ollama', configured: true }, { name: 'openai', configured: true }] })['Answer provider'], 'Configured');
+  assert.equal(cards({ providers: [{ name: 'openai', configured: false }] })['Answer provider'], 'Not configured');
+});
+
+test('autostart is only touched when the checkbox actually changed', () => {
+  assert.equal(D.autostartAction(false, false), null);   // unchecked and never enabled: do nothing (disable() would error)
+  assert.equal(D.autostartAction(true, true), null);
+  assert.equal(D.autostartAction(false, true), 'enable');
+  assert.equal(D.autostartAction(true, false), 'disable');
+});
+
+test('error text works for Error objects, plain strings (Tauri rejections) and nothing', () => {
+  assert.equal(D.errorText(new Error('boom')), 'boom');
+  assert.equal(D.errorText('The system cannot find the file specified.'), 'The system cannot find the file specified.');
+  assert.equal(D.errorText(undefined), 'unknown error');
+  assert.equal(D.errorText({ message: '' }), 'unknown error');
+});

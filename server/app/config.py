@@ -15,14 +15,18 @@ except ImportError:  # pragma: no cover
     load_dotenv = None
 
 
+def user_env_path() -> Path | None:
+    """Per-user key file for the installed app: %LOCALAPPDATA%/Spatial/server.env (None when LOCALAPPDATA is unset)."""
+    base = os.environ.get("LOCALAPPDATA")
+    return Path(base) / "Spatial" / "server.env" if base else None
+
+
 def load_user_env(path: Path | None = None) -> None:
-    """Per-user key file for the installed app (%LOCALAPPDATA%/Spatial/server.env). Never overrides the real
-    environment or `server/.env`; a missing file is fine. Keys here are never logged or shown in the UI."""
+    """Load the per-user key file. Never overrides the real environment or `server/.env`; a missing file is fine.
+    Keys here are never logged or shown in the UI."""
     if load_dotenv is None:
         return
-    if path is None:
-        base = os.environ.get("LOCALAPPDATA")
-        path = Path(base) / "Spatial" / "server.env" if base else None
+    path = path if path is not None else user_env_path()
     if path is not None and path.is_file():
         load_dotenv(path, override=False)
 

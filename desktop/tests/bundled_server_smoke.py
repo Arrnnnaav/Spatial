@@ -223,6 +223,24 @@ def main() -> None:
             except HTTPError as error:
                 if error.code != 409:
                     raise SystemExit(f"Bundled cloud-speech enable returned {error.code}, expected 409") from None
+            keys_url = "http://127.0.0.1:18787/api/keys"
+            state = json.load(urlopen(Request(keys_url, headers=desktop_headers), timeout=10))
+            if "OPENROUTER_API_KEY" not in state or any(not isinstance(v, bool) for v in state.values()):
+                raise SystemExit("Bundled key status is not a map of booleans")
+            fake_key = "smoke-test-key-0123456789"
+            wrote = json.load(urlopen(Request(keys_url, data=json.dumps({"name": "TAVILY_API_KEY", "value": fake_key}).encode(), headers=desktop_headers, method="PUT"), timeout=10))
+            env_text = (Path(data) / "Spatial" / "server.env").read_text(encoding="utf-8")
+            if wrote != {"name": "TAVILY_API_KEY", "configured": True, "restart_required": True} or f"TAVILY_API_KEY={fake_key}" not in env_text:
+                raise SystemExit("Bundled key write did not reach the per-user file")
+            if fake_key in json.dumps(wrote) or fake_key in json.dumps(json.load(urlopen(Request(keys_url, headers=desktop_headers), timeout=10))):
+                raise SystemExit("Bundled key routes echoed a key value")
+            try:
+                urlopen(Request(keys_url, data=json.dumps({"name": "PATH", "value": fake_key}).encode(), headers=desktop_headers, method="PUT"), timeout=10)
+                raise SystemExit("Bundled server accepted a non-provider key name")
+            except HTTPError as error:
+                if error.code != 422:
+                    raise SystemExit(f"Bundled key name check returned {error.code}, expected 422") from None
+            urlopen(Request(keys_url, data=json.dumps({"name": "TAVILY_API_KEY", "value": ""}).encode(), headers=desktop_headers, method="PUT"), timeout=10).close()
             soon = (datetime.now(timezone.utc) - timedelta(seconds=5)).isoformat()
             task = json.load(urlopen(Request("http://127.0.0.1:18787/api/tasks", data=json.dumps({"text": "Smoke task"}).encode(),
                                              headers=desktop_headers, method="POST"), timeout=10))
@@ -271,7 +289,7 @@ def main() -> None:
             print(
                 "bundled server ready; authenticated health OK; "
                 f"protocol={health['protocol_version']}; speech={health['audio']['backend']}; "
-                f"history clear OK; dictation entries OK; tasks+reminders OK; retention OK; cloud-speech guard OK; TTS={tts_backend}; live WER={live_wer:.0%}; final WER={wer:.0%}"
+                f"history clear OK; dictation entries OK; tasks+reminders OK; retention OK; cloud-speech guard OK; api keys OK; TTS={tts_backend}; live WER={live_wer:.0%}; final WER={wer:.0%}"
             )
         finally:
             if process.poll() is None:

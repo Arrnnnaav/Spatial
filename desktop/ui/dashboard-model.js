@@ -17,6 +17,20 @@
     storage.save(ACTIVITY_KEY, JSON.stringify(events.slice(0, MAX_ACTIVITY)));
   }
 
+  function providerLabel(providers) {
+    const configured = providers.filter((p) => p.configured);
+    if (configured.some((p) => p.name !== 'ollama')) return 'Configured';
+    return configured.length ? 'Local only · Ollama must be running' : 'Not configured';
+  }
+
+  const ANSWER_KEYS = ['OPENROUTER_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'NVIDIA_API_KEY'];
+
+  /* Ollama needs no key, so it always reports configured: only a real key (or Bedrock via the AWS chain) counts as ready. */
+  function answerProviderReady(health, keys) {
+    if (ANSWER_KEYS.some((name) => keys && keys[name])) return true;
+    return Boolean(health && (health.providers || []).some((p) => p.name === 'bedrock' && p.configured));
+  }
+
   function statusCards(health, snoozed, issues) {
     const problem = issues || {};
     const audio = (health && health.audio) || {};
@@ -26,7 +40,7 @@
     const voice = audio.backend === 'nvidia' ? 'NVIDIA' : audio.tts && audio.tts.voice === 'system' ? 'Windows voice' : 'local voice';
     return [
       ['Server', health ? 'Ready' : 'Needs attention'],
-      ['Answer provider', providers.some((p) => p.configured) ? 'Configured' : 'Not configured'],
+      ['Answer provider', providerLabel(providers)],
       ['Speech to text', stt ? 'Ready · ' + (audio.backend || 'local') : 'Needs attention'],
       ['Text to speech', tts ? 'Ready · ' + voice : 'Needs attention'],
       ['Ask shortcut', problem.ask ? 'Unavailable · see Settings' : snoozed ? 'Snoozed' : 'Alt+Shift+S enabled'],
@@ -128,6 +142,42 @@
     return ' — speech provider unknown';
   }
 
-  root.SpatialDashboard = { ACTIVITY_KEY, MAX_ACTIVITY, readActivity, recordActivity, statusCards, historyCard, dictationCard, quickDue, localInputToIso, taskCard, reminderCard, recallItems, filterRecall, plainText, speechDestination };
+  /* First-run checklist. Both steps are derived from real state, so it can never claim progress that did not happen. */
+  function onboardingSteps(state) {
+    return [
+      { id: 'key', done: Boolean(state.providerConfigured), label: 'Add an answer provider key (Settings → API keys) so Spatial can answer' },
+      { id: 'ask', done: Boolean(state.hasAsked), label: 'Try it: press Alt+Shift+S, circle something on screen, and ask a question' },
+    ];
+  }
+
+  function onboardingComplete(steps) { return steps.every((step) => step.done); }
+
+  const KEY_LABELS = [
+    ['OPENROUTER_API_KEY', 'OpenRouter (many models with one key — easiest start)'],
+    ['OPENAI_API_KEY', 'OpenAI'],
+    ['ANTHROPIC_API_KEY', 'Anthropic'],
+    ['NVIDIA_API_KEY', 'NVIDIA (answers and speech)'],
+    ['TYPESAFE_API_KEY', 'TypeSafe Jev (decides which element you meant)'],
+    ['TAVILY_API_KEY', 'Tavily (web research)'],
+    ['DEEPGRAM_API_KEY', 'Deepgram (cloud speech recognition)'],
+  ];
+
+  function keyRows(status) {
+    return KEY_LABELS.map(([name, label]) => ({ name, label, configured: Boolean(status && status[name]) }));
+  }
+
+  /* Disabling autostart that was never enabled errors on Windows, so only act on a real change. */
+  function autostartAction(saved, wanted) {
+    if (Boolean(saved) === Boolean(wanted)) return null;
+    return wanted ? 'enable' : 'disable';
+  }
+
+  /* Tauri rejects with plain strings, not Error objects, so `err.message` alone prints "undefined". */
+  function errorText(err) {
+    const text = typeof err === 'string' ? err : err && err.message;
+    return text ? String(text) : 'unknown error';
+  }
+
+  root.SpatialDashboard = { ACTIVITY_KEY, MAX_ACTIVITY, readActivity, recordActivity, statusCards, historyCard, dictationCard, quickDue, localInputToIso, taskCard, reminderCard, recallItems, filterRecall, plainText, speechDestination, onboardingSteps, onboardingComplete, keyRows, answerProviderReady, autostartAction, errorText };
   if (typeof module !== 'undefined') module.exports = root.SpatialDashboard;
 })(typeof window === 'undefined' ? globalThis : window);

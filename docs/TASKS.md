@@ -16,6 +16,13 @@ Status: `[ ]` todo · `[~]` in progress · `[x]` done · `[-]` dropped (say why)
 | 6 | Windows dictation beta | Implementation in progress; microphone/native UI E2E pending | SayStride-informed behavior in desktop app; no source copied |
 | 7 | Desktop dashboard + personal history (phases A–F) | A–E built 2026-10-01 (+ retention); native E2E pending | `docs/superpowers/specs/2026-10-01-desktop-dashboard-design.md`, plan `…/plans/2026-10-01-dashboard-shell.md` |
 
+### Product readiness (2026-10-01)
+- [x] First-run: Home welcome card (derived checklist + plain data statement), Settings → API keys (per-user `server.env`, never echoed, restarts the bundled server)
+- [x] Signing pipeline (`sign.ps1`, `sign-one.ps1`, Tauri `signCommand`, `docs/SIGNING.md`) — tested with a self-signed cert; **a real certificate is still needed**
+- [x] User-test kit (`docs/USER_TEST.md`) — **recruiting and running the 8-10 sessions is up to you**
+- [ ] Obtain a code-signing certificate; first signed build check (`Get-AuthenticodeSignature` on installer and installed exe)
+- [ ] Run the user test; record results in MEMORY
+
 ### Sub-project 7 phases
 - [x] A Dashboard shell (Home/Ask logs/Dictation logs/Settings), panel stripped, notices to Settings, `DELETE /api/contexts`
 - [ ] A follow-ups (minor): clear `Server:` notices after a healthy check + fix action; pause Home polling while the dashboard is hidden; activity log has a benign two-writer race

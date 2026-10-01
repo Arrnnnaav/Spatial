@@ -29,6 +29,14 @@ Window titles: `Spatial` (dashboard), `Spatial overlay`, `Spatial Dictation`, `S
 - Reminder: POST `/api/reminders` due in about 20 s (`due_at` as ISO with timezone); the popup appears within about 15 s with the dashboard hidden.
 - Recall: POST `/api/dictations`, press `Alt+Shift+H`, press Enter; the clipboard equals the text and the window hides.
 
+## Gotchas learned the hard way
+- The dashboard scrolls **smoothly**: after `Scroll-SpatialWindow` wait about 3 s before capturing or clicking, or coordinates
+  from a capture will be stale and clicks land on the wrong control.
+- Capture, read the PNG, then act with coordinates from *that* capture; confirm typed text landed (capture again) before Save.
+- `Scroll-SpatialWindow` does not focus the window: click something in it first.
+- Tauri rejections are plain strings; `err.message` prints "undefined".
+- Settings Save with nothing changed must not error (it once did: disabling a never-enabled autostart).
+
 ## Rules
 - Test data goes into the real profile (`%LOCALAPPDATA%\Spatial`): delete what you create (DELETE routes) before finishing.
 - Never kill a process by name alone; `Stop-SpatialTest` matches the exact release exe path. If a copy from `desktop/install-smoke` or an installed copy is running, ask first.

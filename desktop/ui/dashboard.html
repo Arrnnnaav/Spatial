@@ -19,6 +19,13 @@
 <main>
   <section id="view-home">
     <h2>Home</h2>
+    <section id="welcome" class="welcome" hidden>
+      <h3>Welcome to Spatial</h3>
+      <p>Point at anything on your screen and ask about exactly that thing.</p>
+      <ul id="welcomeSteps" class="steps"></ul>
+      <p class="muted"><strong>Where your data goes:</strong> when you ask, the text and a crop of what you marked, plus your question, go to the answer provider you configure. Windows of password managers are never read. History, dictations, tasks and reminders stay on this computer, and there is no telemetry.</p>
+      <div class="actions"><button id="welcomeKeys" type="button">Add an API key</button><button id="welcomeDone" type="button">Got it</button></div>
+    </section>
     <h3>Tasks &amp; notes</h3>
     <form id="taskForm" class="inline"><input type="text" id="taskText" maxlength="500" placeholder="Add a task or note…" aria-label="New task"><button type="submit">Add</button></form>
     <div id="taskList"></div>
@@ -60,6 +67,10 @@
     <label for="apiToken">Custom server API token (leave blank for the bundled server)</label>
     <input type="password" id="apiToken" autocomplete="off">
     <button id="copyPairingToken" type="button">Copy browser extension pairing token</button>
+    <h3 id="keysSection">API keys</h3>
+    <div id="keyRows"></div>
+    <div class="actions"><button id="saveKeys" type="button">Save keys and restart server</button><span id="keysStatus" class="muted" role="status"></span></div>
+    <p class="muted">Keys are stored only on this computer (%LOCALAPPDATA%\Spatial\server.env) and are never shown again. Changing a key restarts Spatial's local server for a few seconds.</p>
     <h3>Answers</h3>
     <label class="check"><input type="checkbox" id="research"> Verify with web sources when needed</label>
     <label class="check"><input type="checkbox" id="systemOne"> Use TypeSafe Jev to resolve the mark (sends candidate text and the question when configured)</label>

@@ -91,6 +91,32 @@ fn paste_dictation(_target_hwnd: u64, _text: String) -> Result<(), String> {
     Err("Dictation insertion is available on Windows only".into())
 }
 
+/// Restart the bundled server so newly saved provider keys take effect (providers are read once at start).
+#[cfg(windows)]
+#[tauri::command]
+fn restart_server(app: tauri::AppHandle) -> Result<(), String> {
+    use std::os::windows::process::CommandExt;
+    {
+        let state = app.state::<std::sync::Mutex<Option<std::process::Child>>>();
+        let mut child = state.lock().map_err(|_| "server process lock failed")?;
+        let Some(mut process) = child.take() else {
+            return Err("The server was not started by Spatial; restart it manually.".into());
+        };
+        // PyInstaller onefile launches a child after extraction: stop the whole tree, as on exit.
+        let pid = process.id().to_string();
+        let _ = std::process::Command::new("taskkill").args(["/PID", pid.as_str(), "/T", "/F"]).creation_flags(0x08000000).status();
+        let _ = process.kill();
+        let _ = process.wait();
+    }
+    start_server(&app)
+}
+
+#[cfg(not(windows))]
+#[tauri::command]
+fn restart_server() -> Result<(), String> {
+    Err("Server restart is available on Windows only".into())
+}
+
 #[cfg(windows)]
 fn start_server(app: &tauri::AppHandle) -> Result<(), String> {
     use std::os::windows::process::CommandExt;
@@ -234,7 +260,7 @@ fn main() {
                 })
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![own_pid, desktop_token, pairing_token, startup_notice, foreground_target, paste_dictation, set_dictation_active])
+        .invoke_handler(tauri::generate_handler![own_pid, desktop_token, pairing_token, startup_notice, foreground_target, paste_dictation, set_dictation_active, restart_server])
         .setup(move |app| {
             use tauri_plugin_global_shortcut::GlobalShortcutExt;
             #[cfg(windows)]

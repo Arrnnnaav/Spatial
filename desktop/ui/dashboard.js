@@ -58,6 +58,7 @@
     $('statusCards').replaceChildren(...D.statusCards(health, snoozed(), shortcutIssues()).map(([title, value]) =>
       el('div', { class: 'status-card' }, [el('small', {}, [title]), el('strong', {}, [value])])));
     renderActivity();
+    refreshWelcome();
   }
 
   async function show(next) {
@@ -74,6 +75,58 @@
   async function reveal(next) {
     await show(next);
     await win.show(); await win.unminimize(); await win.setFocus();
+  }
+
+  async function refreshWelcome() {
+    const card = $('welcome');
+    if (Spatial.load('spatial.onboarded', '0') === '1') { card.hidden = true; return; }
+    let hasAsked = false;
+    try { hasAsked = (await api('/api/contexts?limit=1')).length > 0; } catch (_) { /* server not ready yet */ }
+    let keyStatus = null;
+    try { keyStatus = await api('/api/keys'); } catch (_) { /* server not ready yet */ }
+    const steps = D.onboardingSteps({ providerConfigured: D.answerProviderReady(health, keyStatus), hasAsked });
+    $('welcomeSteps').replaceChildren(...steps.map((step) => el('li', { class: step.done ? 'done' : '' }, [step.label])));
+    $('welcomeDone').textContent = D.onboardingComplete(steps) ? 'All set — hide this' : 'Got it';
+    card.hidden = false;
+  }
+
+  async function loadKeys() {
+    const host = $('keyRows');
+    try {
+      const rows = D.keyRows(await api('/api/keys'));
+      host.replaceChildren(...rows.map((row) => {
+        const input = el('input', { type: 'password', id: 'key-' + row.name, autocomplete: 'off', placeholder: row.configured ? 'paste to replace' : 'paste key', 'aria-label': row.label });
+        const remove = el('button', { type: 'button', class: 'danger', title: 'Remove this key' }, ['Remove']);
+        remove.hidden = !row.configured;
+        remove.onclick = async () => {
+          if (!window.confirm('Remove the ' + row.label.split(' (')[0] + ' key from this computer?')) return;
+          try { await api('/api/keys', 'PUT', { name: row.name, value: '' }); await restartServer(); loadKeys(); } catch (_) { addNotice('Could not remove the key.'); }
+        };
+        return el('div', { class: 'key-row' }, [el('span', {}, [row.label]), el('span', { class: 'state' + (row.configured ? ' on' : '') }, [row.configured ? 'Configured' : 'Not set']), input, remove]);
+      }));
+    } catch (_) { host.replaceChildren(el('p', { class: 'muted' }, ['Keys need the server to be running.'])); }
+  }
+
+  async function restartServer() {
+    $('keysStatus').textContent = 'Restarting the server…';
+    await T.core.invoke('restart_server');
+    for (let i = 0; i < 40; i++) {  // up to ~40 s for the bundled server to come back
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      try { const r = await fetch(Spatial.server() + '/api/health', { headers: await Spatial.headers() }); if (r.ok) { $('keysStatus').textContent = 'Server restarted.'; refreshStatus(); return; } } catch (_) { /* still starting */ }
+    }
+    $('keysStatus').textContent = 'The server is taking a while to restart. Check Home status.';
+  }
+
+  async function saveKeys() {
+    const inputs = [...document.querySelectorAll('#keyRows input')].filter((input) => input.value.trim());
+    if (!inputs.length) { $('keysStatus').textContent = 'Paste a key first.'; return; }
+    try {
+      for (const input of inputs) await api('/api/keys', 'PUT', { name: input.id.replace('key-', ''), value: input.value.trim() });
+      inputs.forEach((input) => { input.value = ''; });
+      activity('API keys changed');
+      await restartServer();
+      loadKeys();
+    } catch (error) { $('keysStatus').textContent = ''; addNotice('Could not save the key: it must be the provider key text only (no spaces).'); }
   }
 
   async function api(path, method, body) {
@@ -249,6 +302,7 @@
 
   let savedRetention = '';
   let savedCloud = false;
+  let savedAutostart = false;
 
   async function loadSettings() {
     $('saved').textContent = '';
@@ -258,7 +312,9 @@
     $('systemOne').checked = Spatial.load('spatial.systemOne', '1') === '1';
     $('dictatePolish').checked = Spatial.load('spatial.dictatePolish', '0') === '1';
     $('dictionary').value = Spatial.load('spatial.dictionary', '');
-    $('autostart').checked = await T.autostart.isEnabled().catch(() => false);
+    savedAutostart = await T.autostart.isEnabled().catch(() => false);
+    $('autostart').checked = savedAutostart;
+    loadKeys();
     try { savedRetention = String((await api('/api/retention')).days || ''); $('retention').value = savedRetention; }
     catch (_) { $('retention').disabled = true; }
     try {
@@ -298,9 +354,12 @@
       } else { $('retention').value = savedRetention; }
     }
     try {
-      if ($('autostart').checked) await T.autostart.enable(); else await T.autostart.disable();
+      const action = D.autostartAction(savedAutostart, $('autostart').checked);
+      if (action === 'enable') await T.autostart.enable();
+      else if (action === 'disable') await T.autostart.disable();
+      savedAutostart = $('autostart').checked;
       $('saved').textContent = 'Saved.';
-    } catch (err) { addNotice('Could not update autostart: ' + err.message); $('saved').textContent = 'Saved, except autostart.'; }
+    } catch (err) { addNotice('Could not update autostart: ' + D.errorText(err)); $('saved').textContent = 'Saved, except autostart.'; }
   }
 
   Spatial.save('spatial.snoozed', '0');
@@ -322,6 +381,9 @@
   };
   $('reminderForm').onsubmit = (event) => { event.preventDefault(); addReminder(D.localInputToIso($('reminderWhen').value)); };
   document.querySelectorAll('[data-quick]').forEach((b) => { b.onclick = () => addReminder(D.quickDue(b.dataset.quick)); });
+  $('saveKeys').onclick = saveKeys;
+  $('welcomeKeys').onclick = async () => { await show('settings'); $('keysSection').scrollIntoView({ block: 'start' }); };
+  $('welcomeDone').onclick = () => { Spatial.save('spatial.onboarded', '1'); $('welcome').hidden = true; };
   $('refreshHistory').onclick = refreshHistory;
   $('refreshDictations').onclick = refreshDictations;
   $('clearDictations').onclick = clearDictations;
@@ -331,7 +393,7 @@
     try {
       await navigator.clipboard.writeText(await T.core.invoke('pairing_token'));
       $('copyPairingToken').textContent = 'Copied — paste into the extension API token field';
-    } catch (err) { addNotice('Could not copy pairing token: ' + err.message); }
+    } catch (err) { addNotice('Could not copy pairing token: ' + D.errorText(err)); }
   };
   window.addEventListener('storage', () => { if (view === 'home') renderActivity(); });
 

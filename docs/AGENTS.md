@@ -30,6 +30,8 @@ structured, inspectable reference (`SpatialContext`) and answers about it.
 | `docs/HOW_TO_RUN_AND_USE.md`, `PROVIDERS.md`, `AUDIO.md`, `LEARNING_PATH.md` | User/learner guides | Behaviour they describe changes |
 | `docs/SPATIAL_STANDALONE_MASTER_PLAN.md` | Long-horizon vision (60 sections, 13 phases). Reference, not the task list | Rarely |
 | `docs/SPATIAL_PRODUCTION_CHECKLIST.md` | Release checklist | Release process changes |
+| `docs/SIGNING.md` | Authenticode signing pipeline + how to get a certificate | Signing process or certificate changes |
+| `docs/USER_TEST.md` | Small user-test plan (script, questions, success thresholds) | Before/after each user-test round |
 
 ## Working loop (every session)
 

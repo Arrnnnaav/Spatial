@@ -55,6 +55,7 @@ from app import (
     bridge,
     desktop,
     dictations,
+    keys,
     personal,
     prefs,
     retention,
@@ -1305,6 +1306,26 @@ def remove_reminder(reminder_id: str):
             404, {"code": "REMINDER_NOT_FOUND", "message": "reminder not found"}
         )
     return {"deleted": reminder_id}
+
+
+class KeyBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(max_length=40)
+    value: str = Field(default="", max_length=500)
+
+
+@app.get("/api/keys", dependencies=_PERSONAL)
+def get_keys():
+    return keys.status()  # booleans only, never a key value
+
+
+@app.put("/api/keys", dependencies=_PERSONAL)
+def put_key(payload: KeyBody):
+    try:
+        configured = keys.set_key(payload.name, payload.value)
+    except ValueError:
+        raise HTTPException(422, {"code": "BAD_KEY", "message": "unknown provider key or malformed value"})
+    return {"name": payload.name, "configured": configured, "restart_required": True}
 
 
 class CloudSpeechBody(BaseModel):

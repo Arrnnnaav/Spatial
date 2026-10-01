@@ -1,7 +1,24 @@
 {
   "bundle": {
     "active": true,
-    "targets": ["nsis"],
-    "resources": ["resources/spatial-server/"]
+    "targets": [
+      "nsis"
+    ],
+    "resources": [
+      "resources/spatial-server/"
+    ],
+    "windows": {
+      "signCommand": {
+        "cmd": "powershell.exe",
+        "args": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "../sign-one.ps1",
+          "%1"
+        ]
+      }
+    }
   }
 }
