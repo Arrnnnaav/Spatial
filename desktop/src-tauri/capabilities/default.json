@@ -2,11 +2,12 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Overlay + panel: window placement, events and opening cited HTTP(S) sources. The UI talks to the local server with fetch.",
-  "windows": ["overlay", "panel", "dictate"],
+  "windows": ["overlay", "panel", "dictate", "dashboard"],
   "permissions": [
     "core:default",
     "core:window:allow-show",
     "core:window:allow-hide",
+    "core:window:allow-unminimize",
     "core:window:allow-set-focus",
     "core:window:allow-set-position",
     "core:window:allow-set-size",

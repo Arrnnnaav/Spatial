@@ -66,7 +66,10 @@
     }
     return value;
   }
-  root.SpatialDictation = { clean, format: clean };
+  // Never keep what the user dictated into a password field / protected window, even as a Copy fallback.
+  const PROTECTED = new Set(['protected_window', 'protected_field', 'unsupported_field', 'unsupported']);
+  function shouldSaveEntry(inserted, reason) { return inserted || !PROTECTED.has(reason); }
+  root.SpatialDictation = { clean, format: clean, shouldSaveEntry };
   if (typeof module !== 'undefined') module.exports = root.SpatialDictation;
 })(typeof window === 'undefined' ? globalThis : window);
 
@@ -135,7 +138,7 @@
         else { finishLive(); win.hide(); }
       };
       recorder.start();
-      if (destination === 'composer') startLive(stream, id).catch(() => {});
+      startLive(stream, id).catch(() => {});
       $('status').textContent = destination === 'composer' ? 'Dictating into Spatial · click Dictate to stop' : 'Dictating · release to finish or press again to stop';
       if (destination === 'composer') {
         T.event.emit('spatial://dictation-state', { state: 'recording', destination, id });
@@ -190,7 +193,10 @@
         for (const frame of session.queue.splice(0)) socket.send(frame);
       } else if (message.type === 'transcript') {
         session.text = message.text || session.text;
-        if (session.text && live === session && !session.closed) T.event.emit('spatial://dictation-preview', { id, text: session.text });
+        if (session.text && live === session && !session.closed) {
+          if (destination === 'composer') T.event.emit('spatial://dictation-preview', { id, text: session.text });
+          else $('status').textContent = '● ' + (session.text.length > 60 ? '…' + session.text.slice(-60) : session.text);
+        }
       } else if (message.type === 'done' || message.type === 'error') {
         if (message.type === 'error') session.error = message.message;
         session.resolve();
@@ -231,13 +237,25 @@
     return session.text || '';
   }
 
+  // Hotkey dictation leaves a saved entry (final text + source app only; never audio). Best effort: never blocks insertion.
+  function saveEntry(text, sttProvider, cleanup) {
+    if (destination === 'composer') return;
+    Spatial.post('/api/dictations', { text, target_hwnd: targetHwnd || undefined, stt_provider: String(sttProvider || '').slice(0, 40),
+      cleanup_provider: String(cleanup || '').slice(0, 40) })
+      .then(() => T.event.emit('spatial://dictation-saved', {})).catch(() => {});
+  }
+
   async function transcribe(audio, id, liveText) {
     try {
       const form = new FormData();
       form.append('audio', audio, 'dictation.webm');
       let transcript;
-      try { transcript = (await (await Spatial.send('/api/stt', form)).json()).text || ''; }
-      catch (error) { if (!liveText) throw error; transcript = liveText; }
+      let sttProvider = 'live';
+      try {
+        const result = await (await Spatial.send('/api/stt', form)).json();
+        transcript = result.text || '';
+        sttProvider = result.backend || '';
+      } catch (error) { if (!liveText) throw error; transcript = liveText; }
       if (!transcript) transcript = liveText;
       transcript = SpatialDictation.clean(transcript, Spatial.load('spatial.dictionary', ''));
       if (!transcript) throw new Error('No speech was recognized.');
@@ -247,17 +265,21 @@
         transcript = polish.text || transcript;
         status = polish.status;
       }
+      let refusal = '';
       if (targetHwnd) {
         const check = await Spatial.post('/api/desktop/dictation-safe', { target_hwnd: targetHwnd });
+        refusal = check.safe ? '' : String(check.reason || '');
         if (check.safe) {
           try {
             await T.core.invoke('paste_dictation', { targetHwnd, text: transcript });
             await T.event.emit('spatial://dictation-inserted', { status });
+            saveEntry(transcript, sttProvider, status);
             await win.hide();
             return;
           } catch (_) { /* Focus can still change between the UIA check and insertion. Keep the text for Copy. */ }
         }
       }
+      if (destination !== 'composer' && SpatialDictation.shouldSaveEntry(false, refusal)) saveEntry(transcript, sttProvider, status);
       await T.event.emit('spatial://dictation-result', { text: transcript, id,
         destination: destination === 'composer' ? 'composer' : 'external',
         reason: destination === 'composer' ? '' : 'Focus changed or the target field is protected; copy the transcript instead.', status });

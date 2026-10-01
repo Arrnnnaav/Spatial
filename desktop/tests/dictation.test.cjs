@@ -33,3 +33,13 @@ test('dictation removes an explicit scratch-that restart and applies dictionary 
     'we will meet Tuesday.',
   );
 });
+
+test('protected targets are never saved to the dictation log', () => {
+  const { shouldSaveEntry } = require('../ui/dictation.js');
+  assert.equal(shouldSaveEntry(true, ''), true);
+  assert.equal(shouldSaveEntry(false, 'focus_changed'), true);
+  assert.equal(shouldSaveEntry(false, ''), true);
+  for (const reason of ['protected_window', 'protected_field', 'unsupported_field', 'unsupported']) {
+    assert.equal(shouldSaveEntry(false, reason), false, reason);
+  }
+});

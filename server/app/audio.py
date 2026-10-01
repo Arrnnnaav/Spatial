@@ -4,6 +4,7 @@ instead of failing the server. `SPATIAL_SPEECH_BACKEND=auto|nvidia|local`."""
 from __future__ import annotations
 
 import gc
+import sys
 import io
 import threading
 import time
@@ -51,7 +52,13 @@ def _prepare_downloads() -> None:
 def _whisper():
     _prepare_downloads()
     from faster_whisper import WhisperModel
-    return WhisperModel(_cached_whisper_dir(settings.stt_model), device=settings.stt_device, compute_type="int8" if settings.stt_device == "cpu" else "float16")
+    return WhisperModel(
+        _cached_whisper_dir(settings.stt_model),
+        device=settings.stt_device,
+        compute_type="int8" if settings.stt_device == "cpu" else "float16",
+        cpu_threads=2 if settings.stt_device == "cpu" else 0,
+        num_workers=1,
+    )
 
 
 def _cached_whisper_dir(size: str) -> str:
@@ -106,12 +113,49 @@ def _local_synthesize(text: str, voice: str | None = None) -> tuple[bytes | None
         model = _tts()
         state = _voice(voice or settings.tts_voice)
     except Exception as exc:
+        if sys.platform == "win32":
+            try:
+                wav = _windows_synthesize(text)
+                import wave
+                with wave.open(io.BytesIO(wav), "rb") as audio_file:
+                    seconds = round(audio_file.getnframes() / audio_file.getframerate(), 2)
+                return wav, {"status": "ok", "voice": "system", "backend": "windows-sapi", "seconds": seconds}
+            except Exception:
+                pass
         return None, {"status": "unavailable", "error": f"{type(exc).__name__}: {str(exc)[:160]}"}
     import numpy as np
     with _lock:
         audio = model.generate_audio(state, text[:2000])
     pcm = audio.detach().cpu().numpy() if hasattr(audio, "detach") else np.asarray(audio)
     return _wav_bytes(pcm, model.sample_rate), {"status": "ok", "sample_rate": model.sample_rate, "voice": voice or settings.tts_voice, "seconds": round(len(pcm) / model.sample_rate, 2), "backend": "local"}
+
+
+def _windows_synthesize(text: str) -> bytes:
+    """Use the Windows system voice in memory when optional pocket-tts is unavailable."""
+    import wave
+    import pythoncom
+    import win32com.client
+
+    stream = speaker = None
+    pythoncom.CoInitialize()
+    try:
+        stream = win32com.client.Dispatch("SAPI.SpMemoryStream")
+        stream.Format.Type = 18  # SAFT16kHz16BitMono
+        speaker = win32com.client.Dispatch("SAPI.SpVoice")
+        speaker.AudioOutputStream = stream
+        speaker.Speak(text[:2000])
+        pcm = bytes(stream.GetData())
+        output = io.BytesIO()
+        with wave.open(output, "wb") as wav:
+            wav.setnchannels(1)
+            wav.setsampwidth(2)
+            wav.setframerate(16000)
+            wav.writeframes(pcm)
+        return output.getvalue()
+    finally:
+        speaker = None
+        stream = None
+        pythoncom.CoUninitialize()
 
 
 def _wav_bytes(pcm, sample_rate: int) -> bytes:
@@ -197,6 +241,7 @@ def audio_status() -> dict:
     from importlib.util import find_spec
 
     active = backend()
+    pocket_tts_installed = find_spec("pocket_tts") is not None
     return {
         "backend": active,
         "stt": {
@@ -206,9 +251,9 @@ def audio_status() -> dict:
             "fallback": settings.stt_model if find_spec("faster_whisper") else None,
         },
         "tts": {
-            "voice": settings.nvidia_tts_voice if active == "nvidia" else settings.tts_voice,
+            "voice": settings.nvidia_tts_voice if active == "nvidia" else settings.tts_voice if pocket_tts_installed else "system",
             "enabled": settings.tts_enabled,
-            "installed": active == "nvidia" or find_spec("pocket_tts") is not None,
-            "fallback": settings.tts_voice if find_spec("pocket_tts") else None,
+            "installed": active == "nvidia" or pocket_tts_installed or sys.platform == "win32",
+            "fallback": settings.tts_voice if pocket_tts_installed else ("Windows system voice" if sys.platform == "win32" else None),
         },
     }

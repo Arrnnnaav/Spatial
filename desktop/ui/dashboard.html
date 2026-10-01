@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spatial</title>
+<link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+<aside>
+  <h1>Spatial</h1>
+  <nav id="nav" aria-label="Dashboard sections">
+    <button data-view="home" aria-selected="true">Home</button>
+    <button data-view="ask" aria-selected="false">Ask logs</button>
+    <button data-view="dictation" aria-selected="false">Dictation logs</button>
+    <button data-view="settings" aria-selected="false">Settings <span id="noticeBadge" hidden>!</span></button>
+  </nav>
+  <p class="hint">Alt+Shift+S point &amp; ask<br>Alt+Shift+D dictate</p>
+</aside>
+<main>
+  <section id="view-home">
+    <h2>Home</h2>
+    <h3>Tasks &amp; notes</h3>
+    <form id="taskForm" class="inline"><input type="text" id="taskText" maxlength="500" placeholder="Add a task or note…" aria-label="New task"><button type="submit">Add</button></form>
+    <div id="taskList"></div>
+    <h3>Reminders</h3>
+    <form id="reminderForm" class="inline">
+      <input type="text" id="reminderText" maxlength="500" placeholder="Remind me to…" aria-label="Reminder text">
+      <input type="datetime-local" id="reminderWhen" aria-label="When">
+      <button type="submit">Add</button>
+    </form>
+    <div class="actions"><span class="muted">Quick:</span><button type="button" data-quick="10m">in 10 min</button><button type="button" data-quick="1h">in 1 hour</button><button type="button" data-quick="tomorrow9">tomorrow 9:00</button></div>
+    <div id="reminderList"></div>
+    <p class="muted" id="reminderNote">Reminders pop up in the corner even when this window is closed, as long as Spatial is running in the tray.</p>
+    <h3>Status</h3>
+    <div class="status-cards" id="statusCards"></div>
+    <div class="actions"><button id="refreshStatus">Refresh</button><button id="clearActivity">Clear activity</button><button id="copyDiagnostics">Copy diagnostics</button></div>
+    <h3>Recent activity · this device</h3>
+    <ul id="activityList"></ul>
+    <p class="muted">Activity keeps event types and times only. It is not sent anywhere.</p>
+  </section>
+  <section id="view-ask" hidden>
+    <h2>Ask logs</h2>
+    <p class="muted">Saved Ask conversations on this device. You can read and delete them.</p>
+    <div class="actions"><button id="refreshHistory">Refresh</button><button id="clearHistory" class="danger">Clear all</button></div>
+    <div id="historyList"></div>
+  </section>
+  <section id="view-dictation" hidden>
+    <h2>Dictation logs</h2>
+    <p class="muted">Finished Alt+Shift+D dictations, saved on this device (text only, never audio). Edit or delete them any time.</p>
+    <div class="actions"><button id="refreshDictations">Refresh</button><button id="clearDictations" class="danger">Clear all</button></div>
+    <div id="dictationList"></div>
+  </section>
+  <section id="view-settings" hidden>
+    <h2>Settings</h2>
+    <h3>Status</h3>
+    <ul id="noticeList"></ul>
+    <h3>Server</h3>
+    <label for="server">Server URL</label>
+    <input type="url" id="server" placeholder="http://127.0.0.1:8787">
+    <label for="apiToken">Custom server API token (leave blank for the bundled server)</label>
+    <input type="password" id="apiToken" autocomplete="off">
+    <button id="copyPairingToken" type="button">Copy browser extension pairing token</button>
+    <h3>Answers</h3>
+    <label class="check"><input type="checkbox" id="research"> Verify with web sources when needed</label>
+    <label class="check"><input type="checkbox" id="systemOne"> Use TypeSafe Jev to resolve the mark (sends candidate text and the question when configured)</label>
+    <h3>Dictation</h3>
+    <label class="check"><input type="checkbox" id="dictatePolish"> Polish dictation with the configured answer provider (sends transcript text only)</label>
+    <label for="dictionary">Personal dictionary (one “heard phrase|preferred spelling” per line; stays on this device)</label>
+    <textarea id="dictionary" rows="4" maxlength="4000" spellcheck="false"></textarea>
+    <p class="muted">Microphone audio goes to NVIDIA speech when configured; otherwise transcription runs on this computer.</p>
+    <h3>App</h3>
+    <label class="check"><input type="checkbox" id="autostart"> Start Spatial when I sign in</label>
+    <p class="muted">Hotkeys: Alt+Shift+S and Alt+Shift+D anywhere. The mark is a reference only: Spatial explains, it never clicks or types.</p>
+    <div class="actions"><button id="saveSettings" type="button">Save</button><span id="saved" class="muted" role="status"></span></div>
+  </section>
+</main>
+<script src="shared.js"></script>
+<script src="dashboard-model.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>

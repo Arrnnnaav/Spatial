@@ -54,40 +54,17 @@
   textarea#question { flex: 1; min-width: 0; min-height: 36px; max-height: 120px; resize: vertical; padding: 7px 9px; border-radius: 8px;
           border: 1px solid var(--line); background: var(--bg); color: var(--fg); font: inherit; line-height: 1.35; }
   input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-  form button, .settings button { padding: 7px 12px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; font: inherit; cursor: pointer; }
+  form button { padding: 7px 12px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; font: inherit; cursor: pointer; }
   form button.secondary { background: var(--chip); color: var(--fg); padding-left: 8px; padding-right: 8px; }
   form button:disabled { opacity: .5; cursor: default; }
-  .home { display: none; padding: 12px; overflow-y: auto; }
-  .home h2 { margin: 2px 0 8px; font-size: 15px; }
-  .home ul { margin: 4px 0 14px; padding-left: 20px; }
-  .home li { margin: 3px 0; color: var(--muted); }
-  .home .actions { display: flex; gap: 8px; margin: 10px 0 16px; }
-  .home button { padding: 6px 10px; border: 0; border-radius: 7px; background: var(--chip); color: var(--fg); cursor: pointer; }
-  body.show-home main, body.show-home form, body.show-home .settings { display: none; }
-  body.show-home .home { display: block; }
-  .settings { display: none; padding: 12px; overflow-y: auto; min-height: 0; }
-  .settings label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
-  .settings input, .settings textarea { width: 100%; }
-  .settings .row { display: flex; gap: 8px; margin-top: 14px; }
-  .settings p { font-size: 12px; color: var(--muted); }
-  body.show-settings main, body.show-settings form { display: none; }
-  body.show-settings .settings { display: block; }
 </style>
 </head>
 <body>
 <header data-tauri-drag-region>
   <span class="app" id="app" data-tauri-drag-region>Spatial</span>
-  <button id="homeButton" title="Status & Activity">Status</button>
-  <button id="gear" title="Settings">⚙</button>
   <button id="close" title="Close (Esc)">✕</button>
 </header>
 <main id="thread"></main>
-<section class="home" id="home">
-  <h2>Status & Activity</h2>
-  <ul id="statusList"><li>Checking server…</li></ul>
-  <div class="actions"><button id="refreshStatus">Refresh</button><button id="clearActivity">Clear activity</button><button id="copyDiagnostics">Copy diagnostics</button></div>
-  <h2>Recent activity</h2><ul id="activityList"></ul>
-</section>
 <form id="ask">
   <textarea id="question" placeholder="Ask about what you marked…" autocomplete="off" maxlength="12000" rows="1" aria-label="Ask or dictate about the marked content"></textarea>
   <button id="dictateButton" type="button" class="icon" title="Dictate into this composer">Dictate</button>
@@ -95,24 +72,9 @@
   <button id="downloadDocx" type="button" class="secondary" title="Download the composer text as a Word document" disabled>.docx</button>
   <button id="send" type="submit">Ask</button>
 </form>
-<section class="settings" id="settings">
-  <label for="server">Server URL</label>
-  <input type="url" id="server" placeholder="http://127.0.0.1:8787">
-  <label for="apiToken">Custom server API token (leave blank for bundled server)</label>
-  <input type="password" id="apiToken" autocomplete="off">
-  <button id="copyPairingToken" type="button">Copy browser extension pairing token</button>
-  <label><input type="checkbox" id="research"> Verify with web sources when needed</label>
-  <label><input type="checkbox" id="systemOne"> Use TypeSafe Jev to resolve the mark (sends candidate text and the question when configured)</label>
-  <label><input type="checkbox" id="dictatePolish"> Polish dictation with the configured answer provider (sends transcript text only)</label>
-  <label for="dictionary">Personal dictionary (one “heard phrase|preferred spelling” per line; stays on this device)</label>
-  <textarea id="dictionary" rows="4" maxlength="4000" spellcheck="false"></textarea>
-  <label><input type="checkbox" id="autostart"> Start Spatial when I sign in</label>
-  <p>Microphone audio goes to NVIDIA speech when configured; otherwise transcription runs on this computer. The mic tooltip shows the active backend after the server connects.</p>
-  <p>Hotkey: Alt+Shift+S anywhere. The mark is a reference only: Spatial explains, it never clicks or types.</p>
-  <div class="row"><button id="saveSettings" type="button">Save</button></div>
-</section>
 <script src="geometry.js"></script>
 <script src="shared.js"></script>
+<script src="dashboard-model.js"></script>
 <script src="panel.js"></script>
 </body>
 </html>

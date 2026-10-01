@@ -14,72 +14,17 @@
   let state = null; // { capture_id, monitor, mark, candidates, window, contextId }
   let ownPid = null;
   let speechWhere = ' — speech provider unknown until the server connects';
-  const ACTIVITY_KEY = 'spatial.activity';
-  const MAX_ACTIVITY = 40;
-  let statusTimer = null;
-  let serverWasReady = null;
   let dictationDraft = null;
   let activeDictationId = null;
 
-  function recordActivity(kind) {
-    const events = JSON.parse(Spatial.load(ACTIVITY_KEY, '[]'));
-    events.unshift({ at: new Date().toISOString(), kind });
-    Spatial.save(ACTIVITY_KEY, JSON.stringify(events.slice(0, MAX_ACTIVITY)));
-    if (document.body.classList.contains('show-home')) renderActivity();
-  }
+  function recordActivity(kind) { SpatialDashboard.recordActivity(Spatial, kind); }
 
-  function renderActivity() {
-    const list = $('activityList');
-    const events = JSON.parse(Spatial.load(ACTIVITY_KEY, '[]'));
-    list.replaceChildren(...events.map((item) => el('li', {}, [new Date(item.at).toLocaleString() + ' · ' + item.kind])));
-    if (!events.length) list.append(el('li', {}, ['No recent activity.']));
-  }
-
-  async function refreshStatus() {
-    const list = $('statusList');
-    const items = ['Shortcut: Alt+Shift+S (' + (Spatial.load('spatial.snoozed', '0') === '1' ? 'snoozed' : 'enabled') + ')'];
-    try {
-      const response = await fetch(Spatial.server() + '/api/health', { headers: await Spatial.headers() });
-      if (!response.ok) throw new Error('health check failed');
-      const health = await response.json();
-      items.unshift('Server: Ready');
-      items.push('Dictate shortcut: Alt+Shift+D (or Dictate button)');
-      items.push('Dictation polish: ' + (Spatial.load('spatial.dictatePolish', '0') === '1' ? 'on' : 'off'));
-      if (serverWasReady === false) recordActivity('Server reconnected');
-      serverWasReady = true;
-      items.push('Answer providers: ' + ((health.providers || []).some((p) => p.configured) ? 'configured' : 'none configured'));
-      items.push('Speech backend: ' + ((health.audio && health.audio.backend) || 'unknown'));
-    } catch (_) {
-      items.unshift('Server: Needs attention');
-      serverWasReady = false;
-      items.push('Answer providers: unavailable');
-      items.push('Speech backend: unavailable');
-    }
-    list.replaceChildren(...items.map((item) => el('li', {}, [item])));
-    renderActivity();
-  }
-
-  function openHome() {
-    document.body.classList.remove('show-settings');
-    document.body.classList.add('show-home');
-    $('app').textContent = 'Status & Activity';
-    if (statusTimer) clearInterval(statusTimer);
-    statusTimer = setInterval(() => { if (document.body.classList.contains('show-home')) refreshStatus(); }, 10000);
-    refreshStatus();
-    showWindow();
-  }
-
-  Spatial.save('spatial.snoozed', '0');
-  recordActivity('App started');
 
   T.core.invoke('own_pid').then((pid) => { ownPid = pid; });
   setupMic($('mic'));
 
   T.event.listen('spatial://mark', (event) => onMark(event.payload));
   T.event.listen('spatial://error', (event) => showError(event.payload.message));
-  T.event.listen('spatial://settings', () => openSettings());
-  T.event.listen('spatial://home', openHome);
-  T.event.listen('spatial://snooze', () => { Spatial.save('spatial.snoozed', '1'); recordActivity('Ask shortcut snoozed'); if (document.body.classList.contains('show-home')) refreshStatus(); });
   T.event.listen('spatial://dictation-result', (event) => showDictationResult(event.payload || {}));
   T.event.listen('spatial://dictation-preview', (event) => onDictationPreview(event.payload || {}));
   T.event.listen('spatial://dictation-inserted', () => recordActivity('Dictation inserted'));
@@ -88,18 +33,8 @@
   $('close').onclick = () => hidePanel();
   $('dictateButton').onclick = () => T.event.emitTo('dictate', 'spatial://dictate-down', { target_hwnd: 0, destination: 'composer' })
     .catch(() => showError('Could not start dictation.'));
-  T.core.invoke('startup_notice').then((notice) => { if (notice) showError(notice); }).catch(() => {});
-  $('gear').onclick = () => (document.body.classList.contains('show-settings') ? closeSettings() : openSettings());
-  $('homeButton').onclick = openHome;
-  $('refreshStatus').onclick = refreshStatus;
-  $('clearActivity').onclick = () => { Spatial.save(ACTIVITY_KEY, '[]'); renderActivity(); };
-  $('copyDiagnostics').onclick = async () => {
-    const diagnostics = ['Spatial diagnostics', $('statusList').children[0]?.textContent || 'Server: unknown', 'Shortcut: Alt+Shift+S (' + (Spatial.load('spatial.snoozed', '0') === '1' ? 'snoozed' : 'enabled') + ')', 'Recent event categories: ' + JSON.parse(Spatial.load(ACTIVITY_KEY, '[]')).map((item) => item.kind).join(', ')].join('\n');
-    try { await navigator.clipboard.writeText(diagnostics); $('copyDiagnostics').textContent = 'Copied'; } catch (_) { showError('Could not copy diagnostics.'); }
-  };
   window.addEventListener('keydown', (event) => { if (event.key === 'Escape') hidePanel(); });
   function hidePanel() {
-    if (statusTimer) { clearInterval(statusTimer); statusTimer = null; }
     stopRecording();
     if (player) { player.pause(); player = null; }
     if (utterance) { window.speechSynthesis.cancel(); utterance = null; }
@@ -131,27 +66,6 @@
   input.addEventListener('input', updateDocxButton);
   updateDocxButton();
   $('downloadDocx').onclick = downloadDocx;
-  $('saveSettings').onclick = async () => {
-    Spatial.save('spatial.server', $('server').value.trim());
-    Spatial.save('spatial.apiToken', $('apiToken').value.trim());
-    Spatial.save('spatial.research', $('research').checked ? '1' : '0');
-    Spatial.save('spatial.systemOne', $('systemOne').checked ? '1' : '0');
-    Spatial.save('spatial.dictatePolish', $('dictatePolish').checked ? '1' : '0');
-    Spatial.save('spatial.dictionary', $('dictionary').value.slice(0, 4000));
-    try {
-      if ($('autostart').checked) await T.autostart.enable();
-      else await T.autostart.disable();
-    } catch (err) { showError('Could not update autostart: ' + err.message); }
-    closeSettings();
-  };
-  $('copyPairingToken').onclick = async () => {
-    try {
-      const token = await T.core.invoke('pairing_token');
-      await navigator.clipboard.writeText(token);
-      $('copyPairingToken').textContent = 'Copied — paste into the extension API token field';
-    } catch (err) { showError('Could not copy pairing token: ' + err.message); }
-  };
-
   function el(tag, attrs, children) {
     const node = document.createElement(tag);
     Object.entries(attrs || {}).forEach(([k, v]) => { if (k === 'class') node.className = v; else node.setAttribute(k, v); });
@@ -163,26 +77,6 @@
     refreshSpeechWhere();
     await win.show();
     await win.setFocus();
-  }
-
-  async function openSettings() {
-    if (statusTimer) { clearInterval(statusTimer); statusTimer = null; }
-    document.body.classList.remove('show-home');
-    $('server').value = Spatial.server();
-    $('apiToken').value = Spatial.load('spatial.apiToken', '');
-    $('research').checked = Spatial.load('spatial.research', '1') === '1';
-    $('systemOne').checked = Spatial.load('spatial.systemOne', '1') === '1';
-    $('dictatePolish').checked = Spatial.load('spatial.dictatePolish', '0') === '1';
-    $('dictionary').value = Spatial.load('spatial.dictionary', '');
-    $('autostart').checked = await T.autostart.isEnabled().catch(() => false);
-    document.body.classList.add('show-settings');
-    await showWindow();
-  }
-
-  function closeSettings() {
-    document.body.classList.remove('show-settings');
-    $('app').textContent = 'Spatial';
-    input.focus();
   }
 
   async function showError(message) {
@@ -201,7 +95,6 @@
       input.disabled = true;
       $('dictateButton').textContent = 'Stop';
       $('dictateButton').title = 'Stop dictation';
-      document.body.classList.remove('show-home', 'show-settings');
       $('app').textContent = 'Dictating…';
       showWindow();
     } else if (payload.id === activeDictationId && (payload.state === 'cancelled' || payload.state === 'transcribing')) {
@@ -237,7 +130,6 @@
 
   async function showDictationResult(payload) {
     if (payload.id !== undefined && payload.destination === 'composer' && payload.id !== activeDictationId) return;
-    document.body.classList.remove('show-home', 'show-settings');
     if (payload.error) $('app').textContent = 'Dictation';
     else if (payload.destination === 'composer') {
       if (dictationDraft) {
@@ -314,9 +206,6 @@
   }
 
   async function onMark(payload) {
-    if (statusTimer) { clearInterval(statusTimer); statusTimer = null; }
-    closeSettings();
-    document.body.classList.remove('show-home');
     recordActivity('Ask started');
     thread.replaceChildren();
     state = { ...payload, candidates: [], window: null, contextId: null };

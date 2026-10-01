@@ -33,6 +33,33 @@
         "resizable": true
       },
       {
+        "label": "dashboard",
+        "url": "dashboard.html",
+        "title": "Spatial",
+        "width": 960,
+        "height": 680,
+        "minWidth": 640,
+        "minHeight": 480,
+        "visible": false,
+        "decorations": true,
+        "resizable": true,
+        "center": true
+      },
+      {
+        "label": "reminder",
+        "url": "reminder.html",
+        "title": "Spatial Reminder",
+        "width": 340,
+        "height": 190,
+        "visible": false,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false,
+        "focus": false,
+        "focusable": false
+      },
+      {
         "label": "dictate",
         "url": "dictate.html",
         "title": "Spatial Dictation",

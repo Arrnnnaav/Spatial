@@ -116,6 +116,32 @@ def test_tts_disabled(monkeypatch):
     assert audio.synthesize("hi") == (None, {"status": "disabled"})
 
 
+def test_windows_tts_uses_system_voice_if_local_model_missing(monkeypatch):
+    monkeypatch.setattr(settings, "tts_enabled", True)
+    monkeypatch.setattr(settings, "audio_idle_unload_seconds", 0)
+    monkeypatch.setattr(audio.sys, "platform", "win32")
+
+    def missing_model():
+        raise ModuleNotFoundError("pocket_tts")
+
+    monkeypatch.setattr(audio, "_tts", missing_model)
+    monkeypatch.setattr(audio, "_windows_synthesize", lambda text: wav_bytes())
+    wav, meta = audio._local_synthesize("hello")
+    assert wav.startswith(b"RIFF")
+    assert meta["backend"] == "windows-sapi" and meta["voice"] == "system"
+
+
+def test_windows_tts_status_reports_system_fallback(monkeypatch):
+    import importlib.util
+
+    monkeypatch.setattr(audio.sys, "platform", "win32")
+    monkeypatch.setattr(settings, "speech_backend", "local")
+    find_spec = importlib.util.find_spec
+    monkeypatch.setattr(importlib.util, "find_spec", lambda name: None if name == "pocket_tts" else find_spec(name))
+    status = audio.audio_status()
+    assert status["tts"]["installed"] and status["tts"]["fallback"] == "Windows system voice"
+
+
 # --- hosted client: retries, time budget, chunking, model routing -----------------------------------------------
 
 

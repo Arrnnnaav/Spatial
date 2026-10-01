@@ -50,8 +50,19 @@ SENSITIVE_PROCESSES = {
     "protonpass.exe",
 }
 # Portable / renamed builds: also match the window title.
-SENSITIVE_TITLE_WORDS = ("keepass", "1password", "bitwarden", "lastpass", "dashlane", "enpass", "keeper",
-                         "roboform", "nordpass", "proton pass", "password manager")
+SENSITIVE_TITLE_WORDS = (
+    "keepass",
+    "1password",
+    "bitwarden",
+    "lastpass",
+    "dashlane",
+    "enpass",
+    "keeper",
+    "roboform",
+    "nordpass",
+    "proton pass",
+    "password manager",
+)
 TOKEN_HEADER = "X-Spatial-Desktop"
 _captures: "OrderedDict[str, dict]" = OrderedDict()
 _lock = threading.Lock()
@@ -133,9 +144,12 @@ def _cloaked(hwnd: int) -> bool:
     """Windows 11 keeps suspended UWP apps / other-desktop windows 'visible' but cloaked (not on screen)."""
     import ctypes
     import ctypes.wintypes
+
     value = ctypes.c_int(0)
     try:
-        ctypes.windll.dwmapi.DwmGetWindowAttribute(ctypes.wintypes.HWND(hwnd), 14, ctypes.byref(value), ctypes.sizeof(value))
+        ctypes.windll.dwmapi.DwmGetWindowAttribute(
+            ctypes.wintypes.HWND(hwnd), 14, ctypes.byref(value), ctypes.sizeof(value)
+        )
     except Exception:
         return False
     return bool(value.value)
@@ -152,7 +166,11 @@ def _windows_topdown() -> list[dict]:
     out: list[dict] = []
 
     def visit(hwnd, _):
-        if not win32gui.IsWindowVisible(hwnd) or win32gui.IsIconic(hwnd) or _cloaked(hwnd):
+        if (
+            not win32gui.IsWindowVisible(hwnd)
+            or win32gui.IsIconic(hwnd)
+            or _cloaked(hwnd)
+        ):
             return
         title = win32gui.GetWindowText(hwnd)
         if not title:
@@ -187,15 +205,21 @@ def _uia_client():
         return cached
     import comtypes.client
     import pythoncom
+
     pythoncom.CoInitialize()
     comtypes.client.GetModule("UIAutomationCore.dll")
     from comtypes.gen import UIAutomationClient as UIA
-    automation = comtypes.client.CreateObject(UIA.CUIAutomation, interface=UIA.IUIAutomation)
+
+    automation = comtypes.client.CreateObject(
+        UIA.CUIAutomation, interface=UIA.IUIAutomation
+    )
     _uia_local.client = (automation, UIA)
     return _uia_local.client
 
 
-def _uia_read(hwnd: int, region: tuple[int, int, int, int], pid: int | None = None) -> list[dict]:
+def _uia_read(
+    hwnd: int, region: tuple[int, int, int, int], pid: int | None = None
+) -> list[dict]:
     """UIA elements under a grid of points in the screen-pixel region (plus a few ancestors each), from `pid` only,
     plus editor lines via TextPattern. Point probes are ~100x cheaper than walking a big window's whole tree and
     follow real z-order; the overlay must be hidden while this runs (the client does that after the mark)."""
@@ -203,8 +227,11 @@ def _uia_read(hwnd: int, region: tuple[int, int, int, int], pid: int | None = No
 
     automation, UIA = _uia_client()
     walker = automation.ControlViewWalker
-    names = {getattr(UIA, n): n.replace("UIA_", "").replace("ControlTypeId", "") for n in dir(UIA)
-             if n.startswith("UIA_") and n.endswith("ControlTypeId")}
+    names = {
+        getattr(UIA, n): n.replace("UIA_", "").replace("ControlTypeId", "")
+        for n in dir(UIA)
+        if n.startswith("UIA_") and n.endswith("ControlTypeId")
+    }
     left, top, right, bottom = region
     out: list[dict] = []
     seen: set[tuple] = set()
@@ -212,12 +239,17 @@ def _uia_read(hwnd: int, region: tuple[int, int, int, int], pid: int | None = No
     steps = 6
     for i in range(steps + 1):
         for j in range(steps + 1):
-            point = ctypes.wintypes.POINT(int(left + (right - left) * i / steps), int(top + (bottom - top) * j / steps))
+            point = ctypes.wintypes.POINT(
+                int(left + (right - left) * i / steps),
+                int(top + (bottom - top) * j / steps),
+            )
             try:
                 element = automation.ElementFromPoint(point)
             except Exception:
                 continue
-            for _ in range(4):  # the element and a few ancestors (a button's group, a line's document)
+            for _ in range(
+                4
+            ):  # the element and a few ancestors (a button's group, a line's document)
                 if element is None:
                     break
                 try:
@@ -227,21 +259,48 @@ def _uia_read(hwnd: int, region: tuple[int, int, int, int], pid: int | None = No
                         element = walker.GetParentElement(element)
                         continue
                     rect = element.CurrentBoundingRectangle
-                    key = (element.CurrentControlType, rect.left, rect.top, rect.right, rect.bottom)
+                    key = (
+                        element.CurrentControlType,
+                        rect.left,
+                        rect.top,
+                        rect.right,
+                        rect.bottom,
+                    )
                     if key not in seen:
                         seen.add(key)
-                        control = names.get(element.CurrentControlType, str(element.CurrentControlType))
+                        control = names.get(
+                            element.CurrentControlType, str(element.CurrentControlType)
+                        )
                         text = (element.CurrentName or "").strip()
                         if not text:
                             try:
-                                value = element.GetCurrentPropertyValue(UIA.UIA_ValueValuePropertyId)
-                                text = (value or "").strip() if isinstance(value, str) else ""
+                                value = element.GetCurrentPropertyValue(
+                                    UIA.UIA_ValueValuePropertyId
+                                )
+                                text = (
+                                    (value or "").strip()
+                                    if isinstance(value, str)
+                                    else ""
+                                )
                             except Exception:
                                 text = ""
                         if text and rect.right > rect.left and rect.bottom > rect.top:
-                            out.append({"type": control, "text": text[:1500], "bbox": {"x": rect.left, "y": rect.top,
-                                        "width": rect.right - rect.left, "height": rect.bottom - rect.top}})
-                        if element.CurrentControlType in (UIA.UIA_DocumentControlTypeId, UIA.UIA_EditControlTypeId):
+                            out.append(
+                                {
+                                    "type": control,
+                                    "text": text[:1500],
+                                    "bbox": {
+                                        "x": rect.left,
+                                        "y": rect.top,
+                                        "width": rect.right - rect.left,
+                                        "height": rect.bottom - rect.top,
+                                    },
+                                }
+                            )
+                        if element.CurrentControlType in (
+                            UIA.UIA_DocumentControlTypeId,
+                            UIA.UIA_EditControlTypeId,
+                        ):
                             text_hosts.append(element)
                     element = walker.GetParentElement(element)
                 except Exception:
@@ -356,14 +415,23 @@ def _intersects(rect: tuple, region: tuple) -> bool:
 
 
 def _contains(rect: tuple, region: tuple) -> bool:
-    return rect[0] <= region[0] and rect[1] <= region[1] and rect[2] >= region[2] and rect[3] >= region[3]
+    return (
+        rect[0] <= region[0]
+        and rect[1] <= region[1]
+        and rect[2] >= region[2]
+        and rect[3] >= region[3]
+    )
 
 
 def is_sensitive(window: dict) -> bool:
     """Fails closed: an unknown process (elevated/protected, name unreadable) counts as sensitive."""
     process = (window.get("process") or "").lower()
     title = (window.get("title") or "").lower()
-    return not process or process in SENSITIVE_PROCESSES or any(w in title for w in SENSITIVE_TITLE_WORDS)
+    return (
+        not process
+        or process in SENSITIVE_PROCESSES
+        or any(w in title for w in SENSITIVE_TITLE_WORDS)
+    )
 
 
 def dictation_target_safe(target_hwnd: int) -> tuple[bool, str]:
@@ -377,17 +445,30 @@ def dictation_target_safe(target_hwnd: int) -> tuple[bool, str]:
         hwnd = int(target_hwnd)
         if hwnd <= 0 or win32gui.GetForegroundWindow() != hwnd:
             return False, "focus_changed"
-        target = next((window for window in _windows_topdown() if window["hwnd"] == hwnd), None)
+        target = next(
+            (window for window in _windows_topdown() if window["hwnd"] == hwnd), None
+        )
         if target is None or is_sensitive(target):
             return False, "protected_window"
         automation, UIA = _uia_client()
         focused = automation.GetFocusedElement()
-        if focused is None or focused.CurrentIsPassword or not focused.CurrentIsEnabled or not focused.CurrentIsKeyboardFocusable:
+        if (
+            focused is None
+            or focused.CurrentIsPassword
+            or not focused.CurrentIsEnabled
+            or not focused.CurrentIsKeyboardFocusable
+        ):
             return False, "protected_field"
         _, target_pid = win32process.GetWindowThreadProcessId(hwnd)
-        if focused.CurrentProcessId != target_pid or focused.CurrentNativeWindowHandle != hwnd:
+        if (
+            focused.CurrentProcessId != target_pid
+            or focused.CurrentNativeWindowHandle != hwnd
+        ):
             return False, "focus_changed"
-        if focused.CurrentControlType not in (UIA.UIA_EditControlTypeId, UIA.UIA_DocumentControlTypeId):
+        if focused.CurrentControlType not in (
+            UIA.UIA_EditControlTypeId,
+            UIA.UIA_DocumentControlTypeId,
+        ):
             return False, "unsupported_field"
         if focused.CurrentControlType == UIA.UIA_EditControlTypeId:
             value = focused.GetCurrentPattern(UIA.UIA_ValuePatternId)
@@ -405,11 +486,15 @@ def block_windows(capture_id: str, windows: list[dict]) -> None:
     with _lock:
         item = _captures.get(capture_id)
         if item is not None:
-            item.setdefault("bridge_blocked", set()).update((w["title"], tuple(w["rect"])) for w in windows)
+            item.setdefault("bridge_blocked", set()).update(
+                (w["title"], tuple(w["rect"])) for w in windows
+            )
 
 
 def window_sensitive(item: dict, window: dict) -> bool:
-    return is_sensitive(window) or (window["title"], tuple(window["rect"])) in item.get("bridge_blocked", set())
+    return is_sensitive(window) or (window["title"], tuple(window["rect"])) in item.get(
+        "bridge_blocked", set()
+    )
 
 
 def _screen_rect(monitor: dict, region: dict) -> tuple:
@@ -450,6 +535,21 @@ def _app_name(window: dict) -> str:
     return (window.get("process") or "").removesuffix(".exe") or title
 
 
+def window_label(hwnd: int) -> dict:
+    """App + window title of a top-level window for a dictation entry's source line. Sensitive or unknown windows
+    (password managers, protected processes) yield empty strings; the handle itself is never stored."""
+    empty = {"app": "", "title": ""}
+    if not SUPPORTED:
+        return empty
+    try:
+        window = next((w for w in _windows_topdown() if w["hwnd"] == int(hwnd)), None)
+    except Exception:
+        return empty
+    if window is None or is_sensitive(window):
+        return empty
+    return {"app": _app_name(window), "title": window.get("title", "")}
+
+
 def crop_box(capture_id: str, bbox: dict) -> tuple[str, CropInfo] | None:
     """Crop of the frozen frame around a monitor-pixel bbox (+ padding) as (data URL, CropInfo)."""
     item = get_capture(capture_id)
@@ -473,8 +573,12 @@ def crop_for_ask(capture_id: str, bbox: dict) -> tuple[str, CropInfo] | None:
     """The ask-path crop: never from a region where a sensitive window is visible (pixels would reach the model,
     OCR text the prompt and history)."""
     item = get_capture(capture_id)
-    padded = {"x": bbox["x"] - CROP_PADDING, "y": bbox["y"] - CROP_PADDING,
-              "width": bbox["width"] + 2 * CROP_PADDING, "height": bbox["height"] + 2 * CROP_PADDING}
+    padded = {
+        "x": bbox["x"] - CROP_PADDING,
+        "y": bbox["y"] - CROP_PADDING,
+        "width": bbox["width"] + 2 * CROP_PADDING,
+        "height": bbox["height"] + 2 * CROP_PADDING,
+    }
     if region_sensitive(item, padded, item.get("exclude_pids", ())):
         return None
     return crop_box(capture_id, bbox)
@@ -489,7 +593,12 @@ def candidates(capture_id: str, region: dict, exclude_pids: list[int]) -> dict:
     window = windows[0] if windows else None
     if windows is None or any(window_sensitive(item, w) for w in windows):
         # Never read, never OCR, never fall through; a sensitive title can name the vault or entry.
-        info = {"app": "", "process": (window or {}).get("process", ""), "title": "", "sensitive": True}
+        info = {
+            "app": "",
+            "process": (window or {}).get("process", ""),
+            "title": "",
+            "sensitive": True,
+        }
         return {"candidates": [], "window": info}
     found: list[CandidateObject] = []
     info: dict[str, Any] = {"app": "", "process": "", "title": ""}

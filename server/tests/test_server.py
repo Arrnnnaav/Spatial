@@ -145,3 +145,15 @@ def test_token_required_when_configured(monkeypatch):
 def test_clean_answer_strips_leaked_thinking():
     assert providers.clean_answer("<think>\nplan\n</think>\nThe answer.") == "The answer."
     assert providers.clean_answer("plain") == "plain"
+
+
+def test_clear_all_contexts_removes_every_row_and_needs_token(monkeypatch):
+    from app import main, store
+    with TestClient(app) as client:
+        for n in range(3):
+            store.create({"title": f"t{n}"}, f"q{n}", [], {}, {"history": []})
+        monkeypatch.setattr(main.settings, "api_token", "secret", raising=False)
+        assert client.delete("/api/contexts").status_code == 401
+        ok = client.delete("/api/contexts", headers={"Authorization": "Bearer secret"})
+        assert ok.status_code == 200 and ok.json()["deleted"] >= 3
+        assert client.get("/api/contexts?limit=200", headers={"Authorization": "Bearer secret"}).json() == []

@@ -13,11 +13,19 @@ const HOTKEY_LABEL: &str = "Alt+Shift+S";
 const DICTATION_HOTKEY_LABEL: &str = "Alt+Shift+D";
 static ASK_SNOOZED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 static DICTATION_ACTIVE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-static STARTUP_NOTICE: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+const MAX_NOTICES: usize = 5;
+static STARTUP_NOTICE: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new());
+
+/// Keep every distinct startup problem (newest last, capped) so a later hotkey error cannot hide a server error.
+fn push_notice(list: &mut Vec<String>, message: String) {
+    if list.contains(&message) { return; }
+    list.push(message);
+    if list.len() > MAX_NOTICES { list.remove(0); }
+}
 
 #[tauri::command]
-fn startup_notice() -> Option<String> {
-    STARTUP_NOTICE.lock().ok().and_then(|notice| notice.clone())
+fn startup_notice() -> Vec<String> {
+    STARTUP_NOTICE.lock().map(|notices| notices.clone()).unwrap_or_default()
 }
 
 #[tauri::command]
@@ -92,7 +100,7 @@ fn start_server(app: &tauri::AppHandle) -> Result<(), String> {
             return Ok(());
         }
     }
-    let path = app.path().resolve("resources/spatial-server.exe", BaseDirectory::Resource)
+    let path = app.path().resolve("resources/spatial-server/spatial-server.exe", BaseDirectory::Resource)
         .map_err(|e| e.to_string())?;
     if !path.is_file() {
         return Err("bundled server missing; start the development server manually".into());
@@ -162,12 +170,34 @@ fn allow_own_microphone(window: &tauri::WebviewWindow) {
     });
 }
 
+fn show_dashboard(app: &tauri::AppHandle, view: &str) {
+    if let Some(dashboard) = app.get_webview_window("dashboard") {
+        let _ = dashboard.show();
+        let _ = dashboard.unminimize();
+        let _ = dashboard.set_focus();
+    }
+    let _ = app.emit_to("dashboard", "spatial://open", serde_json::json!({ "view": view }));
+}
+
+/// App-level problems (server start, hotkey ownership, autostart) belong in Settings, never in the Ask panel.
+fn notify(app: &tauri::AppHandle, message: String) {
+    if let Ok(mut current) = STARTUP_NOTICE.lock() { push_notice(&mut current, message.clone()); }
+    let _ = app.emit_to("dashboard", "spatial://notice", serde_json::json!({ "message": message }));
+}
+
 fn start_ask(app: &tauri::AppHandle) {
     let _ = app.emit_to("overlay", "spatial://start", ());
 }
 
+/// Hotkey/tray dictation goes straight to the app that had focus (no screen marking, no Ask panel).
+/// The Ask panel's own Dictate button still targets its composer.
+fn dictation_payload(target: Option<u64>) -> serde_json::Value {
+    serde_json::json!({"target_hwnd": target.unwrap_or(0), "destination": "external"})
+}
+
 fn start_dictation(app: &tauri::AppHandle) {
-    let _ = app.emit_to("dictate", "spatial://dictate-down", serde_json::json!({"target_hwnd": 0, "destination": "composer"}));
+    // Capture the foreground window before any Spatial UI appears.
+    let _ = app.emit_to("dictate", "spatial://dictate-down", dictation_payload(foreground_target()));
 }
 
 fn main() {
@@ -177,14 +207,10 @@ fn main() {
     tauri::Builder::default()
         // Must be first: prevent duplicate processes from competing for global hotkeys/server ownership.
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            if let Some(panel) = app.get_webview_window("panel") {
-                let _ = panel.show();
-                let _ = panel.unminimize();
-                let _ = panel.set_focus();
-            }
+            show_dashboard(app, "home");
         }))
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, None))
+        .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec!["--autostart"])))
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(move |app, shortcut, event| {
@@ -210,9 +236,7 @@ fn main() {
             {
                 app.manage(std::sync::Mutex::new(None::<std::process::Child>));
                 if let Err(err) = start_server(app.handle()) {
-                    let notice = format!("Server: {err}");
-                    if let Ok(mut current) = STARTUP_NOTICE.lock() { *current = Some(notice.clone()); }
-                    let _ = app.emit_to("panel", "spatial://error", serde_json::json!({"message": notice}));
+                    notify(app.handle(), format!("Server: {err}"));
                 }
             }
             #[cfg(windows)]
@@ -225,14 +249,10 @@ fn main() {
             }
             if let Err(err) = app.global_shortcut().register(hotkey) {
                 eprintln!("could not register {HOTKEY_LABEL}: {err} (another app owns it?) — use the tray");
-                let notice = format!("Shortcut {HOTKEY_LABEL} unavailable. Use Ask from the tray. {err}");
-                if let Ok(mut current) = STARTUP_NOTICE.lock() { *current = Some(notice.clone()); }
-                let _ = app.emit_to("panel", "spatial://error", serde_json::json!({"message": notice}));
+                notify(app.handle(), format!("Shortcut {HOTKEY_LABEL} unavailable. Use Ask from the tray. {err}"));
             }
             if let Err(err) = app.global_shortcut().register(dictate_hotkey) {
-                let notice = format!("Dictate shortcut {DICTATION_HOTKEY_LABEL} unavailable. Use the Dictate button or tray. {err}");
-                if let Ok(mut current) = STARTUP_NOTICE.lock() { *current = Some(notice.clone()); }
-                let _ = app.emit_to("panel", "spatial://error", serde_json::json!({"message": notice}));
+                notify(app.handle(), format!("Dictate shortcut {DICTATION_HOTKEY_LABEL} unavailable. Use the Dictate button or tray. {err}"));
             }
             let ask = MenuItem::with_id(app, "ask", format!("Ask about the screen ({HOTKEY_LABEL})"), true, None::<&str>)?;
             let dictate = MenuItem::with_id(app, "dictate", format!("Dictate ({DICTATION_HOTKEY_LABEL})"), true, None::<&str>)?;
@@ -249,21 +269,24 @@ fn main() {
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "ask" => start_ask(app),
                     "dictate" => start_dictation(app),
-                    "open" => { if let Some(panel) = app.get_webview_window("panel") { let _ = panel.show(); let _ = panel.set_focus(); let _ = app.emit_to("panel", "spatial://home", ()); } },
-                    "snooze" => { ASK_SNOOZED.store(true, std::sync::atomic::Ordering::Relaxed); let _ = app.emit_to("panel", "spatial://snooze", ()); },
-                    "settings" => {
-                        let _ = app.emit_to("panel", "spatial://settings", ());
-                    }
+                    "open" => show_dashboard(app, "home"),
+                    "snooze" => { ASK_SNOOZED.store(true, std::sync::atomic::Ordering::Relaxed); let _ = app.emit_to("dashboard", "spatial://snooze", ()); },
+                    "settings" => show_dashboard(app, "settings"),
                     #[cfg(windows)]
                     "server" => {
                         if let Err(err) = start_server(app) {
-                            let _ = app.emit_to("panel", "spatial://error", serde_json::json!({"message": format!("Server: {err}")}));
+                            notify(app, format!("Server: {err}"));
+                            show_dashboard(app, "settings");
                         }
                     }
                     "quit" => app.exit(0),
                     _ => {}
                 })
                 .build(app)?;
+            // A normal launch opens the dashboard; sign-in autostart stays in the tray.
+            if !std::env::args().any(|arg| arg == "--autostart") {
+                show_dashboard(app.handle(), "home");
+            }
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -297,4 +320,31 @@ fn main() {
             #[cfg(not(windows))]
             let _ = (app, event);
         });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{dictation_payload, push_notice};
+
+    #[test]
+    fn hotkey_dictation_targets_the_foreground_app_and_never_the_ask_composer() {
+        let with_target = dictation_payload(Some(4242));
+        assert_eq!(with_target["destination"], "external");
+        assert_eq!(with_target["target_hwnd"], 4242);
+        let without = dictation_payload(None);
+        assert_eq!(without["destination"], "external");
+        assert_eq!(without["target_hwnd"], 0);
+    }
+
+    #[test]
+    fn startup_notices_keep_every_distinct_message_up_to_a_cap() {
+        let mut list = Vec::new();
+        push_notice(&mut list, "Server: failed".into());
+        push_notice(&mut list, "Shortcut taken".into());
+        push_notice(&mut list, "Shortcut taken".into());
+        assert_eq!(list, vec!["Server: failed", "Shortcut taken"]);
+        for n in 0..10 { push_notice(&mut list, format!("n{n}")); }
+        assert_eq!(list.len(), 5);
+        assert_eq!(list.last().unwrap(), "n9");
+    }
 }

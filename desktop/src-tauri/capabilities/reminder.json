@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "reminder",
+  "description": "Reminder popup: may only show/hide itself and position itself in the screen corner. It cannot take focus.",
+  "windows": ["reminder"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-show",
+    "core:window:allow-hide",
+    "core:window:allow-set-position"
+  ]
+}
